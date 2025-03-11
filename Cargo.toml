@@ -2,6 +2,7 @@
 name = "baselang"
 version = "0.1.0"
 edition = "2021"
+description = "Baselang is a language for describing how things work."
 homepage = "https://github.com/DenisGorbachev/baselang"
 repository = "https://github.com/DenisGorbachev/baselang"
 readme = "README.md"
@@ -15,6 +16,7 @@ announcement = ""
 readme = {}
 
 [dependencies]
+# generic dependencies
 derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive-new = "0.7.0"
 derive_more = { version = "2.0.1", features = ["full"] }
@@ -26,9 +28,3 @@ subtype = { git = "https://github.com/DenisGorbachev/subtype" }
 
 [package.metadata.cargo-machete]
 ignored = ["derive_more", "derive-getters", "derive-new", "fmt-derive", "stub-macro", "standard-traits", "helpful", "subtype"]
-
-
-
-
-
-
