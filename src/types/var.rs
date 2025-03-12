@@ -1,5 +1,5 @@
 use crate::types::typ::Typ;
-use crate::{Exp, Of};
+use crate::{Exp, InvalidApplicationError, Of};
 use derive_getters::Getters;
 use derive_more::{From, Into};
 use std::rc::Rc;
@@ -56,18 +56,14 @@ impl ToVarRc for &VarRc {
 }
 
 impl Of<VarRc> for VarRc {
-    type Output = Exp;
-
-    fn of(&self, var: VarRc) -> Self::Output {
-        Exp::App(Box::new(self.clone().into()), Box::new(var.into()))
+    fn of(&self, arg: VarRc) -> Result<Exp, InvalidApplicationError> {
+        Exp::app(self.clone(), arg)
     }
 }
 
 impl Of<&VarRc> for VarRc {
-    type Output = Exp;
-
-    fn of(&self, var: &VarRc) -> Self::Output {
-        self.of(var.clone())
+    fn of(&self, arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
+        Exp::app(self.clone(), arg.clone())
     }
 }
 

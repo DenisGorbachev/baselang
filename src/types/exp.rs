@@ -1,17 +1,18 @@
-use crate::{CheckError, Fun, InvalidApplication, One, Top, Var};
+use crate::{Fun, InvalidApplicationError, One, Top, TypBox, Var};
 use crate::{Typ, VarRc};
-use derive_more::From;
 use std::rc::Rc;
 
-#[derive(From, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Exp {
-    /// `Sol` means `solo` (a single variable)
+    /// [`Sol`] means `solo` (a single variable)
     /// Must wrap [`Var`] in [`Rc`] because a single var can be used in multiple exps (e.g. `Nat` can be used in multiple exps)
     /// Name comes from "solo" (needed a three-letter term that doesn't conflict with other terms)
     Sol(VarRc),
-    /// `App` means `application` (of one expression on another expression)
+    /// [`App`] means `application` (of one expression on another expression)
+    /// IMPORTANT: Never construct this variant directly, call [`Exp::app`] instead (which performs the type check)
     /// Must wrap [`Exp`] in [`Box`] to avoid "recursive type" error
-    App(ExpBox, ExpBox),
+    /// [`Typ`] is a cached type of this expression (calculated in [`Exp::app`])
+    App(ExpBox, ExpBox, TypBox),
 }
 
 pub use Exp::*;
@@ -21,39 +22,32 @@ pub type ExpBox = Box<Exp>;
 
 impl Exp {
     /// This function accepts `var: &VarRc` to avoid `var.clone()` in the caller (which simplifies its code)
-    /// If you want to create an [`Exp`] that takes ownership of the [`VarRc`], use [`Exp::Sol`] directly
+    /// If you want to create an [`Exp`] that takes ownership of the [`VarRc`], use [`Sol`] directly
     #[inline(always)]
     pub fn sol(var: &VarRc) -> Self {
         Sol(var.clone())
     }
 
-    #[inline(always)]
-    pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Self {
-        App(Box::new(fun.into()), Box::new(arg.into()))
-    }
-
-    pub fn check(&self) -> Result<(), CheckError> {
-        match self {
-            Sol(_) => Ok(()),
-            App(a, b) => match (a.typ()?, b.typ()?) {
-                (Top, b_typ) => Err(InvalidApplication(Top, b_typ.clone())),
-                (One(exp), b_typ) => Err(InvalidApplication(One(exp.clone()), b_typ.clone())),
-                (Fun(var, typ), b_typ) => match var.typ() == b_typ {
-                    true => Ok(()),
-                    false => Err(InvalidApplication(Fun(var.clone(), typ.clone()), b_typ.clone())),
-                },
-            },
+    pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError> {
+        let fun = fun.into();
+        let arg = arg.into();
+        match (fun.typ().clone(), arg.typ().clone()) {
+            (Top, b_typ) => Err(InvalidApplicationError::new(Top, b_typ)),
+            (One(exp), b_typ) => Err(InvalidApplicationError::new(One(exp), b_typ)),
+            (Fun(var, typ), b_typ) => {
+                if *var.typ() == b_typ {
+                    Ok(App(Box::new(fun), Box::new(arg), typ))
+                } else {
+                    Err(InvalidApplicationError::new(Fun(var, typ), b_typ))
+                }
+            }
         }
     }
 
-    pub fn typ(&self) -> Result<&Typ, CheckError> {
+    pub fn typ(&self) -> &Typ {
         match self {
-            Sol(var) => Ok(var.typ()),
-            App(a, b) => match a.typ()? {
-                Top => Err(InvalidApplication(Top, b.typ()?.clone())),
-                One(exp) => Err(InvalidApplication(One(exp.clone()), b.typ()?.clone())),
-                Fun(_input, output) => Ok(output.as_ref()),
-            },
+            Sol(var) => var.typ(),
+            App(_, _, typ) => typ,
         }
     }
 }
@@ -64,21 +58,39 @@ impl From<Var> for Exp {
     }
 }
 
-impl From<(VarRc, VarRc)> for Exp {
-    fn from((fun, arg): (VarRc, VarRc)) -> Self {
-        App(Sol(fun).into(), Sol(arg).into())
+impl From<VarRc> for Exp {
+    fn from(var: VarRc) -> Self {
+        Sol(var)
     }
 }
 
-impl From<(&VarRc, &VarRc)> for Exp {
-    fn from((fun, arg): (&VarRc, &VarRc)) -> Self {
-        App(Sol(fun.clone()).into(), Sol(arg.clone()).into())
+impl TryFrom<(VarRc, VarRc)> for Exp {
+    type Error = InvalidApplicationError;
+
+    fn try_from((fun, arg): (VarRc, VarRc)) -> Result<Self, Self::Error> {
+        Self::app(fun, arg)
     }
 }
 
-impl From<(Exp, Exp)> for Exp {
-    fn from((fun, arg): (Exp, Exp)) -> Self {
-        App(Box::new(fun), Box::new(arg))
+impl TryFrom<(&VarRc, &VarRc)> for Exp {
+    type Error = InvalidApplicationError;
+
+    fn try_from((fun, arg): (&VarRc, &VarRc)) -> Result<Self, Self::Error> {
+        Self::try_from((fun.clone(), arg.clone()))
+    }
+}
+
+impl TryFrom<(Exp, Exp)> for Exp {
+    type Error = InvalidApplicationError;
+
+    fn try_from((fun, arg): (Exp, Exp)) -> Result<Self, Self::Error> {
+        Self::app(fun, arg)
+    }
+}
+
+impl From<(ExpBox, ExpBox, TypBox)> for Exp {
+    fn from((fun, arg, typ): (ExpBox, ExpBox, TypBox)) -> Self {
+        App(fun, arg, typ)
     }
 }
 
@@ -91,7 +103,7 @@ macro_rules! exp {
         $crate::Exp::Sol($var.clone())
     };
     ($a: expr, $b: expr) => {
-        $crate::Exp::from(($crate::exp!($a), $crate::exp!($b)))
+        $crate::Exp::try_from(($crate::exp!($a), $crate::exp!($b))).expect("should pass the type check")
     };
 }
 
@@ -112,7 +124,7 @@ mod tests {
             nil,
             cons,
         } = List::default();
-        let list_bool = list.of(&bool);
+        let list_bool = list.of(&bool).expect("should succeed");
 
         // let list_bool = stub!();
     }

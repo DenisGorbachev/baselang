@@ -1,11 +1,12 @@
 use crate::Typ;
 use derive_more::{Error, From};
+use derive_new::new;
 use fmt_derive::Display;
-pub use CheckError::*;
 
-#[derive(Error, Display, From, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
-pub enum CheckError {
-    InvalidApplication(Typ, Typ),
+#[derive(new, Error, Display, From, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+pub struct InvalidApplicationError {
+    fun: Typ,
+    arg: Typ,
 }
 
-impl CheckError {}
+impl InvalidApplicationError {}
