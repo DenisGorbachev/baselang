@@ -4,6 +4,7 @@ use derive_new::new;
 
 #[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Nat {
+    /// The name of the root export, after camel-case transformation, must be equal to the name of the module
     pub nat: VarRc,
     pub zero: VarRc,
     pub succ: VarRc,

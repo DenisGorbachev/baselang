@@ -1,0 +1,35 @@
+// We still need `=` even with extended `:` because if `Theory : List Var` and `t : Theory`, `t` cannot be substituted with `l : List Var` (because a var cannot be substituted with another var that has a higher type, only a lower type)
+Theory = List Var
+
+Var : Top
+Var/New (typ : Typ) : Var
+
+Typ : Top
+Typ/Top : Typ
+Typ/One (exp : Exp) : Typ
+Typ/Fun (var : Var) (typ : Typ) : Typ
+
+Exp : Top
+Exp/Sol (var : Var) : Exp
+Exp/App (fun : Exp) (arg : Exp) : Exp
+
+Base/Bool : Var/New Typ/Top
+Base/Bool/Typ : Typ/One (Exp/Sol (Base/Bool))
+Base/True : Var/New Base/Bool/Typ
+Base/False : Var/New Base/Bool/Typ
+
+Base/Nat : Var/New Typ/Top
+Base/Nat/Typ : Typ/One (Exp/Sol (Base/Nat))
+Base/Zero : Var/New Base/Nat/Typ
+Base/Next : Var/New Base/NextT
+Base/NextT : Typ/Fun (Var/New Base/Nat/Typ) Base/Nat/Typ
+
+// I guess that's it... let me try constructing some exps
+// Btw, the name of the var is just metadata; we only need connections, not names. Names are for keeping the references during serialization (and for attaching "~meanings~").
+
+// How to deal with two vars that have the same name? Printing/Parsing may not round-trip correctly (it will round-trip sometimes if the var is just shadowed (latest var with the same name is used in the deeper code), but it won't round-trip if the earlier var is used in the deeper code)
+// A sure-fire way is to prefix the var name with its parent var name (however, it requires storing a reference to the parent in the var itself; this reference needs to be `Weak`)
+
+// List is automatically polymorphic with the new idea that a var can satisfy any type constraint in its hierarchy (both immediate type and type of its type, and so on)
+// We don't need to declare the vars at the top; the evaluator may postpone the evaluation until it sees the corresponding declaration (this slows down the evaluation but not significantly)
+List (t : Top) : Top

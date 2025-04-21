@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 #[derive(Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Var {
+    /// This field is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] to print them while the current var)
     name: String,
     /// Do we need to wrap the `typ` in [`Rc`]?
     /// * Yes: because multiple variables can have the same type (e.g. `n : Nat`, `Zero : Nat`)
@@ -36,6 +37,10 @@ impl Var {
 
     pub fn new_top_rc(name: impl Into<String>) -> Rc<Self> {
         Rc::new(Self::new_top(name))
+    }
+
+    pub fn print(&self, _name: &str) -> String {
+        todo!()
     }
 }
 
