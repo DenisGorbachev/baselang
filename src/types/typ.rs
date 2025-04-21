@@ -32,6 +32,14 @@ impl Typ {
     pub fn fun(var: &VarRc, typ: impl Into<Typ>) -> Self {
         Fun(var.clone(), Box::new(typ.into()))
     }
+
+    pub fn print(&self) -> String {
+        match self {
+            Top => "Top".to_string(),
+            One(exp) => exp.print(false),
+            Fun(var, typ) => format!("{var} -> {typ}", var = var.print(false), typ = typ.print()),
+        }
+    }
 }
 
 impl From<Var> for Typ {

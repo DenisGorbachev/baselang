@@ -11,8 +11,9 @@ pub enum Exp {
     /// [`App`] means `application` (of one expression on another expression)
     /// IMPORTANT: Never construct this variant directly, call [`Exp::app`] instead (which performs the type check)
     /// Must wrap [`Exp`] in [`Box`] to avoid "recursive type" error
-    /// [`Typ`] is a cached type of this expression (calculated in [`Exp::app`])
-    App(ExpBox, ExpBox, TypBox),
+    /// [`VarRc`] is a cached var of the fun of this expression (calculated in [`Exp::app`]) (might be unnecessary; let's see)
+    /// [`TypBox`] is a cached type of this expression (calculated in [`Exp::app`])
+    App(ExpBox, ExpBox, VarRc, TypBox),
 }
 
 pub use Exp::*;
@@ -32,13 +33,13 @@ impl Exp {
         let fun = fun.into();
         let arg = arg.into();
         match (fun.typ().clone(), arg.typ().clone()) {
-            (Top, b_typ) => Err(InvalidApplicationError::new(Top, b_typ)),
-            (One(exp), b_typ) => Err(InvalidApplicationError::new(One(exp), b_typ)),
-            (Fun(var, typ), b_typ) => {
-                if *var.typ() == b_typ {
-                    Ok(App(Box::new(fun), Box::new(arg), typ))
+            (Top, arg_typ) => Err(InvalidApplicationError::new(Top, arg_typ)),
+            (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
+            (Fun(var, typ), arg_typ) => {
+                if *var.typ() == arg_typ {
+                    Ok(App(Box::new(fun), Box::new(arg), var, typ))
                 } else {
-                    Err(InvalidApplicationError::new(Fun(var, typ), b_typ))
+                    Err(InvalidApplicationError::new(Fun(var, typ), arg_typ))
                 }
             }
         }
@@ -47,7 +48,18 @@ impl Exp {
     pub fn typ(&self) -> &Typ {
         match self {
             Sol(var) => var.typ(),
-            App(_, _, typ) => typ,
+            App(_, _, _, typ) => typ,
+        }
+    }
+
+    // TODO: this function doesn't work correctly yet
+    pub fn print(&self, is_top_level: bool) -> String {
+        match self {
+            Sol(var) => var.print(is_top_level),
+            App(fun, arg, _, typ) => match fun.as_ref() {
+                Sol(var) => format!("({var} {arg} : {typ})", var = var.print_name(is_top_level), arg = arg.print(is_top_level), typ = typ.print()),
+                App(_, _, _, _) => todo!(),
+            },
         }
     }
 }
@@ -88,12 +100,6 @@ impl TryFrom<(Exp, Exp)> for Exp {
     }
 }
 
-impl From<(ExpBox, ExpBox, TypBox)> for Exp {
-    fn from((fun, arg, typ): (ExpBox, ExpBox, TypBox)) -> Self {
-        App(fun, arg, typ)
-    }
-}
-
 /// This macro uses `$var.clone()` to avoid the "&" before variables.
 /// `$var` should have a [`VarRc`] type.
 /// `$var.clone()` is also used in [`typ`](crate::typ) macro.
@@ -124,7 +130,11 @@ mod tests {
             nil,
             cons,
         } = List::default();
-        let list_bool = list.of(&bool).expect("should succeed");
+        let list_bool = list.of(&bool).unwrap();
+        let nil_bool = nil.of(&bool).unwrap();
+        // TODO: implement printing
+        // dbg!(&nil_bool);
+        // dbg!(nil_bool.print(true));
 
         // let list_bool = stub!();
     }

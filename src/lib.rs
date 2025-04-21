@@ -2,8 +2,6 @@ mod types;
 
 pub use types::*;
 
-mod tests;
-
 mod modules;
 
 pub use modules::*;
@@ -17,3 +15,5 @@ mod traits;
 pub use traits::*;
 
 mod demo;
+mod print;
+pub use print::*;

@@ -2,11 +2,15 @@ use crate::types::typ::Typ;
 use crate::{Exp, InvalidApplicationError, Of};
 use derive_getters::Getters;
 use derive_more::{From, Into};
+use heck::ToUpperCamelCase;
+use std::borrow::Cow;
 use std::rc::Rc;
 
 #[derive(Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Var {
     /// This field is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] to print them while the current var)
+    /// TODO: inner vars names must not shadow outer vars
+    /// TODO: The name "Top" is reserved
     name: String,
     /// Do we need to wrap the `typ` in [`Rc`]?
     /// * Yes: because multiple variables can have the same type (e.g. `n : Nat`, `Zero : Nat`)
@@ -39,8 +43,24 @@ impl Var {
         Rc::new(Self::new_top(name))
     }
 
-    pub fn print(&self, _name: &str) -> String {
-        todo!()
+    pub fn print(&self, is_top_level: bool) -> String {
+        let name = self.print_name(is_top_level);
+        let typ = self.print_typ();
+        format!("({name} : {typ})")
+    }
+
+    #[inline(always)]
+    pub fn print_name(&self, is_top_level: bool) -> Cow<str> {
+        if is_top_level {
+            self.name.to_upper_camel_case().into()
+        } else {
+            self.name.as_str().into()
+        }
+    }
+
+    #[inline(always)]
+    pub fn print_typ(&self) -> String {
+        self.typ.print()
     }
 }
 
