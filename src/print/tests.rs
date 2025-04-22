@@ -1,7 +1,6 @@
 use crate::{Of, TestPrelude};
 
 #[test]
-#[ignore]
 fn must_print_app() {
     let prelude = TestPrelude::default();
     let cons = prelude.list.cons;

@@ -55,7 +55,20 @@ impl Typ {
             Fun(fun_var, typ_box) => {
                 // If this is a different variable, substitute in the resulting type
                 if !Rc::ptr_eq(fun_var, var) {
-                    Fun(fun_var.clone(), Box::new(typ_box.substitute(var, arg)))
+                    // Create a new variable with potentially updated type
+                    let fun_var_typ = fun_var.typ();
+                    let substituted_var = match fun_var_typ {
+                        // If fun_var's type is directly the var we're substituting
+                        One(Sol(v)) if Rc::ptr_eq(v, var) => {
+                            // Create a new variable with the type of arg
+                            let name = fun_var.print_name().to_string();
+                            let new_typ = One(arg.clone());
+                            Var::new_rc(name, new_typ)
+                        }
+                        // For other cases, keep the original variable
+                        _ => fun_var.clone(),
+                    };
+                    Fun(substituted_var, Box::new(typ_box.substitute(var, arg)))
                 } else {
                     // If it's the same variable, it shadows the outer one, no substitution needed
                     Fun(fun_var.clone(), typ_box.clone())

@@ -41,7 +41,7 @@ impl Exp {
                     // Create a new variable with the concrete type for later printing
                     // This ensures that when we print the type, the parameter uses the concrete type
                     let var_name = var.print_name().to_string();
-                    let concrete_var = Var::new_rc(var_name, arg_typ.clone());
+                    let concrete_var = Var::new_rc(var_name, var.typ().clone());
 
                     // Substitute the var with arg in the type
                     let typ_new = Box::new(typ_old.substitute(&var, &arg));
