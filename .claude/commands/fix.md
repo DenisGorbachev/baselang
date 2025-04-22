@@ -6,6 +6,6 @@
 * Observe the error
 * Read any files that are mentioned in the error
 * Debate potential causes of the error
-* Apply a fix (important: do not modify the test itself)
+* Fix the issue in the codebase (important: do not modify the test file at $ARGUMENTS, keep the contents of $ARGUMENTS exactly the same)
 * Execute command: `mise run test:code --nocapture` until the test is fixed
 * Execute command: `mise run fmt` after the test is fixed

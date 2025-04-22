@@ -1,6 +1,6 @@
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
-use crate::Sol;
+use crate::{App, Sol};
 use std::rc::Rc;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
@@ -37,14 +37,20 @@ impl Typ {
         match self {
             Top => Top,
             One(exp) => {
-                // For One, check if the expression contains the variable we're substituting
-                if let Sol(v) = exp {
-                    if Rc::ptr_eq(v, var) {
-                        return One(arg.clone());
+                // For One, recursively substitute in the contained expression
+                match exp {
+                    Sol(v) if Rc::ptr_eq(v, var) => One(arg.clone()),
+                    Sol(_) => One(exp.clone()),
+                    App(fun, param, _v, _typ) => {
+                        // Handle application by recursively substituting in both parts
+                        let new_fun = fun.substitute_var(var, arg);
+                        let new_param = param.substitute_var(var, arg);
+                        match Exp::app((*new_fun).clone(), (*new_param).clone()) {
+                            Ok(new_exp) => One(new_exp),
+                            Err(_) => One(exp.clone()), // Fallback to original on error
+                        }
                     }
                 }
-                // Otherwise, keep the original expression
-                One(exp.clone())
             }
             Fun(fun_var, typ_box) => {
                 // If this is a different variable, substitute in the resulting type

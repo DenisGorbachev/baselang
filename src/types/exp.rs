@@ -38,9 +38,14 @@ impl Exp {
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
             (Fun(var, typ_old), arg_typ) => {
                 if *var.typ() == arg_typ {
+                    // Create a new variable with the concrete type for later printing
+                    // This ensures that when we print the type, the parameter uses the concrete type
+                    let var_name = var.print_name().to_string();
+                    let concrete_var = Var::new_rc(var_name, arg_typ.clone());
+
                     // Substitute the var with arg in the type
                     let typ_new = Box::new(typ_old.substitute(&var, &arg));
-                    Ok(App(Box::new(fun), Box::new(arg), var, typ_new))
+                    Ok(App(Box::new(fun), Box::new(arg), concrete_var, typ_new))
                 } else {
                     Err(InvalidApplicationError::new(Fun(var, typ_old), arg_typ))
                 }
@@ -55,12 +60,28 @@ impl Exp {
         }
     }
 
+    /// Substitute variable `var` with expression `arg` in this expression
+    pub fn substitute_var(&self, var: &VarRc, arg: &Exp) -> ExpBox {
+        match self {
+            Sol(v) if Rc::ptr_eq(v, var) => Box::new(arg.clone()),
+            Sol(_) => Box::new(self.clone()),
+            App(fun, param, _, _) => {
+                let new_fun = fun.substitute_var(var, arg);
+                let new_param = param.substitute_var(var, arg);
+                // Try to create a new application with the substituted parts
+                match Exp::app((*new_fun).clone(), (*new_param).clone()) {
+                    Ok(exp) => Box::new(exp),
+                    Err(_) => Box::new(self.clone()), // Fallback to the original on error
+                }
+            }
+        }
+    }
+
     #[inline(always)]
     pub fn print(&self, with_type: bool) -> String {
         self.print_inner(true, with_type)
     }
 
-    // TODO: this function doesn't work correctly yet
     pub fn print_inner(&self, is_top_level: bool, with_type: bool) -> String {
         match self {
             Sol(var) => var.print_inner(is_top_level, with_type),
@@ -77,10 +98,6 @@ impl Exp {
                 } else {
                     format!("{fun} {arg}")
                 }
-                // match fun.as_ref() {
-                //     Sol(var) => format!("({var} {arg} : {typ})", var = var.print_name(), arg = arg.print_inner(is_top_level), typ = typ.print()),
-                //     App(_, _, _, _) => todo!(),
-                // },
             }
         }
     }
