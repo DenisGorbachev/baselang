@@ -37,6 +37,7 @@ impl Typ {
     }
 
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
+        debug_assert_eq!(var.typ(), arg.typ());
         match self {
             Top => Top,
             One(exp) => One(exp.substitute(var, arg)),

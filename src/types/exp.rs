@@ -63,17 +63,21 @@ impl Exp {
 
     /// Substitute variable `var` with expression `arg` in this expression
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
+        debug_assert_eq!(var.typ(), arg.typ());
         match self {
-            Sol(v) if Rc::ptr_eq(v, var) => arg.clone(),
-            Sol(_) => self.clone(),
-            App(fun, param, _, _) => {
-                let new_fun = fun.substitute(var, arg);
-                let new_param = param.substitute(var, arg);
-                // Try to create a new application with the substituted parts
-                match Exp::app(new_fun, new_param) {
-                    Ok(exp) => exp,
-                    Err(_) => self.clone(), // Fallback to the original on error
+            Sol(var_inner) => {
+                if Rc::ptr_eq(var_inner, var) {
+                    arg.clone()
+                } else {
+                    self.clone()
                 }
+            }
+            App(fun_inner, arg_inner, var_inner, typ_inner) => {
+                let new_fun_inner = fun_inner.substitute(var, arg);
+                let new_arg_inner = arg_inner.substitute(var, arg);
+                debug_assert_eq!(new_fun_inner.typ(), fun_inner.typ());
+                debug_assert_eq!(new_arg_inner.typ(), arg_inner.typ());
+                App(Box::new(new_fun_inner), Box::new(new_arg_inner), var_inner.clone(), typ_inner.clone())
             }
         }
     }
