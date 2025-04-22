@@ -37,8 +37,14 @@ impl Default for Bool {
 }
 
 impl Module for Bool {
+    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+
     fn vars(&self) -> Vec<VarRc> {
         vec![self.bool.clone(), self.yes.clone(), self.no.clone()]
+    }
+
+    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
+        (&self.bool, &self.yes, &self.no)
     }
 }
 

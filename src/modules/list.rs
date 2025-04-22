@@ -37,8 +37,14 @@ impl Default for List {
 }
 
 impl Module for List {
+    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+
     fn vars(&self) -> Vec<VarRc> {
         vec![self.list.clone(), self.nil.clone(), self.cons.clone()]
+    }
+
+    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
+        (&self.list, &self.nil, &self.cons)
     }
 }
 

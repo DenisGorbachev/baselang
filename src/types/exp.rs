@@ -38,8 +38,8 @@ impl Exp {
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
             (Fun(var, typ_old), arg_typ) => {
                 if *var.typ() == arg_typ {
-                    // TODO we need to construct `typ_new` by replacing the `var` with `arg`
-                    let typ_new = typ_old;
+                    // Substitute the var with arg in the type
+                    let typ_new = Box::new(typ_old.substitute(&var, &arg));
                     Ok(App(Box::new(fun), Box::new(arg), var, typ_new))
                 } else {
                     Err(InvalidApplicationError::new(Fun(var, typ_old), arg_typ))
@@ -178,8 +178,6 @@ mod tests {
         let list_bool = list.of(&bool).unwrap();
         let nil_bool = nil.of(&bool).unwrap();
         let cons_nat = cons.of(&nat).unwrap();
-        // The following line is expected to print `(cons nat) : (a : nat) -> list nat`, but it actually prints `(cons nat) : (a : t) -> list t`
-        dbg!(cons_nat.print(true));
         // let cons_nat_zero = cons_nat.of(&zero).unwrap();
         // assert!(cons_nat_zero.of(&nil_bool).is_err())
     }

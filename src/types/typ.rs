@@ -33,6 +33,31 @@ impl Typ {
         Fun(var.clone(), Box::new(typ.into()))
     }
 
+    pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
+        match self {
+            Top => Top,
+            One(exp) => {
+                // For One, check if the expression contains the variable we're substituting
+                if let Sol(v) = exp {
+                    if Rc::ptr_eq(v, var) {
+                        return One(arg.clone());
+                    }
+                }
+                // Otherwise, keep the original expression
+                One(exp.clone())
+            }
+            Fun(fun_var, typ_box) => {
+                // If this is a different variable, substitute in the resulting type
+                if !Rc::ptr_eq(fun_var, var) {
+                    Fun(fun_var.clone(), Box::new(typ_box.substitute(var, arg)))
+                } else {
+                    // If it's the same variable, it shadows the outer one, no substitution needed
+                    Fun(fun_var.clone(), typ_box.clone())
+                }
+            }
+        }
+    }
+
     pub fn print(&self) -> String {
         match self {
             Top => "top".to_string(),

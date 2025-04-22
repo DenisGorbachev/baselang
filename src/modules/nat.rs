@@ -31,8 +31,14 @@ impl Default for Nat {
 }
 
 impl Module for Nat {
+    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+
     fn vars(&self) -> Vec<VarRc> {
         vec![self.nat.clone(), self.zero.clone(), self.next.clone()]
+    }
+
+    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
+        (&self.nat, &self.zero, &self.next)
     }
 }
 

@@ -22,3 +22,7 @@ pub use nat::*;
 mod prelude;
 
 pub use prelude::*;
+
+mod test_prelude;
+
+pub use test_prelude::*;
