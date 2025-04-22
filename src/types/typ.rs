@@ -1,6 +1,6 @@
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
-use crate::{App, Sol};
+use crate::Sol;
 use std::rc::Rc;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
@@ -21,14 +21,17 @@ pub type TypRc = Rc<Typ>;
 pub type TypBox = Box<Typ>;
 
 impl Typ {
+    #[inline(always)]
     pub fn top() -> Self {
         Top
     }
 
+    #[inline(always)]
     pub fn one(exp: impl Into<Exp>) -> Self {
         One(exp.into())
     }
 
+    #[inline(always)]
     pub fn fun(var: &VarRc, typ: impl Into<Typ>) -> Self {
         Fun(var.clone(), Box::new(typ.into()))
     }
@@ -36,25 +39,13 @@ impl Typ {
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         match self {
             Top => Top,
-            One(exp) => {
-                // For One, recursively substitute in the contained expression
-                match exp {
-                    Sol(v) if Rc::ptr_eq(v, var) => One(arg.clone()),
-                    Sol(_) => One(exp.clone()),
-                    App(fun, param, _v, _typ) => {
-                        // Handle application by recursively substituting in both parts
-                        let new_fun = fun.substitute_var(var, arg);
-                        let new_param = param.substitute_var(var, arg);
-                        match Exp::app((*new_fun).clone(), (*new_param).clone()) {
-                            Ok(new_exp) => One(new_exp),
-                            Err(_) => One(exp.clone()), // Fallback to original on error
-                        }
-                    }
-                }
-            }
+            One(exp) => One(exp.substitute(var, arg)),
             Fun(fun_var, typ_box) => {
                 // If this is a different variable, substitute in the resulting type
-                if !Rc::ptr_eq(fun_var, var) {
+                if Rc::ptr_eq(fun_var, var) {
+                    // If it's the same variable, it shadows the outer one, no substitution needed
+                    Fun(fun_var.clone(), typ_box.clone())
+                } else {
                     // Create a new variable with potentially updated type
                     let fun_var_typ = fun_var.typ();
                     let substituted_var = match fun_var_typ {
@@ -69,9 +60,6 @@ impl Typ {
                         _ => fun_var.clone(),
                     };
                     Fun(substituted_var, Box::new(typ_box.substitute(var, arg)))
-                } else {
-                    // If it's the same variable, it shadows the outer one, no substitution needed
-                    Fun(fun_var.clone(), typ_box.clone())
                 }
             }
         }
@@ -148,12 +136,12 @@ impl From<(&VarRc, Exp)> for Typ {
 #[macro_export]
 macro_rules! typ {
     () => {
-        $crate::Typ::Top
+        $crate::Typ::top()
     };
     ($exp: expr) => {
-        $crate::Typ::One($exp)
+        $crate::Typ::one($exp)
     };
     ($var: ident => $typ: expr) => {
-        $crate::Typ::Fun($var.clone(), Box::new($typ))
+        $crate::Typ::fun(&$var, $typ)
     };
 }

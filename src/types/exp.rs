@@ -40,6 +40,7 @@ impl Exp {
                 if *var.typ() == arg_typ {
                     // Create a new variable with the concrete type for later printing
                     // This ensures that when we print the type, the parameter uses the concrete type
+                    // TODO: Optimize this code
                     let var_name = var.print_name().to_string();
                     let concrete_var = Var::new_rc(var_name, var.typ().clone());
 
@@ -61,17 +62,17 @@ impl Exp {
     }
 
     /// Substitute variable `var` with expression `arg` in this expression
-    pub fn substitute_var(&self, var: &VarRc, arg: &Exp) -> ExpBox {
+    pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         match self {
-            Sol(v) if Rc::ptr_eq(v, var) => Box::new(arg.clone()),
-            Sol(_) => Box::new(self.clone()),
+            Sol(v) if Rc::ptr_eq(v, var) => arg.clone(),
+            Sol(_) => self.clone(),
             App(fun, param, _, _) => {
-                let new_fun = fun.substitute_var(var, arg);
-                let new_param = param.substitute_var(var, arg);
+                let new_fun = fun.substitute(var, arg);
+                let new_param = param.substitute(var, arg);
                 // Try to create a new application with the substituted parts
-                match Exp::app((*new_fun).clone(), (*new_param).clone()) {
-                    Ok(exp) => Box::new(exp),
-                    Err(_) => Box::new(self.clone()), // Fallback to the original on error
+                match Exp::app(new_fun, new_param) {
+                    Ok(exp) => exp,
+                    Err(_) => self.clone(), // Fallback to the original on error
                 }
             }
         }
