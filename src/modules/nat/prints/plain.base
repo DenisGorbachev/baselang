@@ -1,0 +1,5 @@
+nat : top
+
+zero : nat
+
+next : (n : nat) -> nat

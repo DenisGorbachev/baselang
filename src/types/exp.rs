@@ -1,4 +1,4 @@
-use crate::{Fun, InvalidApplicationError, One, Top, TypBox, Var};
+use crate::{Fun, InvalidApplicationError, Of, One, Top, TypBox, Var};
 use crate::{Typ, VarRc};
 use std::rc::Rc;
 
@@ -13,6 +13,7 @@ pub enum Exp {
     /// Must wrap [`Exp`] in [`Box`] to avoid "recursive type" error
     /// [`VarRc`] is a cached var of the fun of this expression (calculated in [`Exp::app`]) (might be unnecessary; let's see)
     /// [`TypBox`] is a cached type of this expression (calculated in [`Exp::app`])
+    /// TODO: Remove [`VarRc`] if it turns out to be unnecessary for printing
     App(ExpBox, ExpBox, VarRc, TypBox),
 }
 
@@ -35,11 +36,13 @@ impl Exp {
         match (fun.typ().clone(), arg.typ().clone()) {
             (Top, arg_typ) => Err(InvalidApplicationError::new(Top, arg_typ)),
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
-            (Fun(var, typ), arg_typ) => {
+            (Fun(var, typ_old), arg_typ) => {
                 if *var.typ() == arg_typ {
-                    Ok(App(Box::new(fun), Box::new(arg), var, typ))
+                    // TODO we need to construct `typ_new` by replacing the `var` with `arg`
+                    let typ_new = typ_old;
+                    Ok(App(Box::new(fun), Box::new(arg), var, typ_new))
                 } else {
-                    Err(InvalidApplicationError::new(Fun(var, typ), arg_typ))
+                    Err(InvalidApplicationError::new(Fun(var, typ_old), arg_typ))
                 }
             }
         }
@@ -52,14 +55,33 @@ impl Exp {
         }
     }
 
+    #[inline(always)]
+    pub fn print(&self, with_type: bool) -> String {
+        self.print_inner(true, with_type)
+    }
+
     // TODO: this function doesn't work correctly yet
-    pub fn print(&self, is_top_level: bool) -> String {
+    pub fn print_inner(&self, is_top_level: bool, with_type: bool) -> String {
         match self {
-            Sol(var) => var.print(is_top_level),
-            App(fun, arg, _, typ) => match fun.as_ref() {
-                Sol(var) => format!("({var} {arg} : {typ})", var = var.print_name(is_top_level), arg = arg.print(is_top_level), typ = typ.print()),
-                App(_, _, _, _) => todo!(),
-            },
+            Sol(var) => var.print_inner(is_top_level, with_type),
+            App(fun, arg, _, typ) => {
+                // this const must be false because we don't want to print the types of the inner values, only the type of the current exp itself
+                // this const is defined only for clarity
+                const WITH_TYPE_INNER: bool = false;
+                let fun = fun.print(WITH_TYPE_INNER);
+                let arg = arg.print(WITH_TYPE_INNER);
+                // this `if` is necessary because we need to wrap the `{fun} {arg}` pair in braces to display the type
+                if with_type {
+                    let typ = typ.print();
+                    format!("({fun} {arg}) : {typ}")
+                } else {
+                    format!("{fun} {arg}")
+                }
+                // match fun.as_ref() {
+                //     Sol(var) => format!("({var} {arg} : {typ})", var = var.print_name(), arg = arg.print_inner(is_top_level), typ = typ.print()),
+                //     App(_, _, _, _) => todo!(),
+                // },
+            }
         }
     }
 }
@@ -73,6 +95,24 @@ impl From<Var> for Exp {
 impl From<VarRc> for Exp {
     fn from(var: VarRc) -> Self {
         Sol(var)
+    }
+}
+
+impl Of<&VarRc> for Exp {
+    fn of(&self, arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
+        Exp::app(self.clone(), arg.clone())
+    }
+}
+
+impl Of<Exp> for Exp {
+    fn of(&self, arg: Exp) -> Result<Exp, InvalidApplicationError> {
+        Exp::app(self.clone(), arg)
+    }
+}
+
+impl Of<&Exp> for Exp {
+    fn of(&self, arg: &Exp) -> Result<Exp, InvalidApplicationError> {
+        Exp::app(self.clone(), arg.clone())
     }
 }
 
@@ -115,7 +155,7 @@ macro_rules! exp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Bool, List, Of};
+    use crate::{Bool, List, Nat, Of};
 
     #[test]
     #[allow(unused_variables)]
@@ -130,12 +170,17 @@ mod tests {
             nil,
             cons,
         } = List::default();
+        let Nat {
+            nat,
+            zero,
+            next,
+        } = Nat::default();
         let list_bool = list.of(&bool).unwrap();
         let nil_bool = nil.of(&bool).unwrap();
-        // TODO: implement printing
-        // dbg!(&nil_bool);
-        // dbg!(nil_bool.print(true));
-
-        // let list_bool = stub!();
+        let cons_nat = cons.of(&nat).unwrap();
+        // The following line is expected to print `(cons nat) : (a : nat) -> list nat`, but it actually prints `(cons nat) : (a : t) -> list t`
+        dbg!(cons_nat.print(true));
+        // let cons_nat_zero = cons_nat.of(&zero).unwrap();
+        // assert!(cons_nat_zero.of(&nil_bool).is_err())
     }
 }

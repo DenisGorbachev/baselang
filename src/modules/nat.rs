@@ -4,7 +4,6 @@ use derive_new::new;
 
 #[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Nat {
-    /// The name of the root export, after camel-case transformation, must be equal to the name of the module
     pub nat: VarRc,
     pub zero: VarRc,
     /// Let's use `next` instead of `succ` because it's more understandable
@@ -37,15 +36,13 @@ impl Module for Nat {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::Nat;
-//
-//     #[test]
-//     fn must_print() {
-//         let nat = Nat::default();
-//         assert_eq!(nat.nat.print(), "Nat : Top");
-//         assert_eq!(nat.zero.print(), "Zero : Nat");
-//         assert_eq!(nat.next.print(), "Next : (n : Nat) -> Nat");
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parse_prints;
+
+    #[test]
+    fn must_print() {
+        assert_eq!(Nat::default().print(), parse_prints(include_str!("nat/prints/plain.base")))
+    }
+}

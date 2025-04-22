@@ -2,10 +2,9 @@ use crate::types::typ::Typ;
 use crate::{Exp, InvalidApplicationError, Of};
 use derive_getters::Getters;
 use derive_more::{From, Into};
-use heck::ToUpperCamelCase;
-use std::borrow::Cow;
 use std::rc::Rc;
 
+/// This type should be wrapped in [`Rc`] because earlier variables need to be referenced by later variables
 #[derive(Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Var {
     /// This field is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] to print them while the current var)
@@ -43,19 +42,27 @@ impl Var {
         Rc::new(Self::new_top(name))
     }
 
-    pub fn print(&self, is_top_level: bool) -> String {
-        let name = self.print_name(is_top_level);
+    #[inline(always)]
+    pub fn print(&self) -> String {
+        let name = self.print_name();
         let typ = self.print_typ();
-        format!("({name} : {typ})")
+        format!("{name} : {typ}")
+    }
+
+    /// This function should be called when printing inner variables (they require parentheses)
+    pub fn print_inner(&self, _is_top_level: bool, with_type: bool) -> String {
+        let name = self.print_name();
+        if with_type {
+            let typ = self.print_typ();
+            format!("({name} : {typ})")
+        } else {
+            name.to_string()
+        }
     }
 
     #[inline(always)]
-    pub fn print_name(&self, is_top_level: bool) -> Cow<str> {
-        if is_top_level {
-            self.name.to_upper_camel_case().into()
-        } else {
-            self.name.as_str().into()
-        }
+    pub fn print_name(&self) -> &str {
+        &self.name
     }
 
     #[inline(always)]

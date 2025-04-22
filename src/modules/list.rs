@@ -1,4 +1,4 @@
-use crate::{exp, typ, var, Top, VarRc};
+use crate::{exp, typ, var, Module, Top, VarRc};
 use derive_more::{From, Into};
 use derive_new::new;
 
@@ -32,6 +32,30 @@ impl Default for List {
             list,
             nil,
             cons,
+        }
+    }
+}
+
+impl Module for List {
+    fn vars(&self) -> Vec<VarRc> {
+        vec![self.list.clone(), self.nil.clone(), self.cons.clone()]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parse_prints;
+    use pretty_assertions::assert_eq;
+    use std::iter::zip;
+
+    /// Using a loop to see the error diffs more clearly
+    #[test]
+    fn must_print() {
+        let prints_actual = List::default().print();
+        let prints_expected = parse_prints(include_str!("list/prints/plain.base"));
+        for (actual, expected) in zip(prints_actual, prints_expected) {
+            assert_eq!(actual, expected);
         }
     }
 }

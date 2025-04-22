@@ -35,9 +35,9 @@ impl Typ {
 
     pub fn print(&self) -> String {
         match self {
-            Top => "Top".to_string(),
-            One(exp) => exp.print(false),
-            Fun(var, typ) => format!("{var} -> {typ}", var = var.print(false), typ = typ.print()),
+            Top => "top".to_string(),
+            One(exp) => exp.print_inner(false, false),
+            Fun(var, typ) => format!("{var} -> {typ}", var = var.print_inner(false, true), typ = typ.print()),
         }
     }
 }

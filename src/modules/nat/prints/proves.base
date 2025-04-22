@@ -1,0 +1,15 @@
+Nat
+--- proves ---
+Top
+
+Zero
+--- proves ---
+Nat
+
+Next {
+  n
+  --- proves ---
+  Nat
+}
+--- proves ---
+Nat

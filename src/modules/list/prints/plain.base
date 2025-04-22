@@ -1,0 +1,5 @@
+list : (t : top) -> top
+
+nil : (t : top) -> list t
+
+cons : (t : top) -> (a : t) -> list t

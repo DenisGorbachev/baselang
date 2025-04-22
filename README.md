@@ -6,6 +6,38 @@
 
 [![Build](https://github.com/DenisGorbachev/baselang/actions/workflows/ci.yml/badge.svg)](https://github.com/DenisGorbachev/baselang)
 
+Baselang is a language for describing how things work.
+
+This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that’s both precise and expressive.
+
+### Core Concepts
+
+* **Types**: Represented by [`Typ`][__link0], which can be top-level types [`Top`][__link1], expression types [`One`][__link2],
+  or function types [`Fun`][__link3].
+* **Expressions**: Represented by [`Exp`][__link4], which can be variables [`Sol`][__link5] or applications [`App`][__link6].
+* **Variables**: Represented by [`Var`][__link7], which have names and types.
+* **Modules**: Collections of related variables, like [`Bool`][__link8], [`List`][__link9], and [`Nat`][__link10].
+* **Type Checking**: Enforced at construction time to ensure type-safety across the language.
+
+### Features
+
+* Static type checking at compile time and runtime
+* Composable modules that model foundational concepts
+* Macros for concise expression construction
+
+   [__cargo_doc2readme_dependencies_info]: ggGkYW0BYXSEGyMws-dKI-LpG9swkVXG-rikGwSuJGhB0NVbG974QPrPJF6XYXKEGyN-XdeeWi2eG07f52kuPPWEG8vtGU2YDfwgG0ehp5TAURvjYWSLgmNBcHD2gmRCb29s9oJjRXhw9oJjRnVu9oJkTGlzdPaCY05hdPaCY09uZfaCY1NvbPaCY1RvcPaCY1R5cPaCY1ZhcvY
+ [__link0]: https://crates.io/crates/Typ
+ [__link1]: https://crates.io/crates/Top
+ [__link10]: https://crates.io/crates/Nat
+ [__link2]: https://crates.io/crates/One
+ [__link3]: https://crates.io/crates/Fun
+ [__link4]: https://crates.io/crates/Exp
+ [__link5]: https://crates.io/crates/Sol
+ [__link6]: https://crates.io/crates/App
+ [__link7]: https://crates.io/crates/Var
+ [__link8]: https://crates.io/crates/Bool
+ [__link9]: https://crates.io/crates/List
+
 ## Installation
 
 ```shell

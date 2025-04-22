@@ -1,4 +1,8 @@
-use crate::{exp, typ, var, VarRc};
+/*!
+```rust assert_eq(yes.name, "arst"); ```
+*/
+
+use crate::{Exp, Module, Typ, Var, VarRc};
 use derive_more::{From, Into};
 use derive_new::new;
 
@@ -6,26 +10,45 @@ use derive_new::new;
 pub struct Bool {
     pub bool: VarRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
+    /// Note that the printed name of this variable is "true" (in line with expectations of the users)
     pub yes: VarRc,
     /// This field is named `no` instead of `false` because `false` is a reserved keyword in Rust
+    /// /// Note that the printed name of this variable is "false" (in line with expectations of the users)
     pub no: VarRc,
 }
 
 impl Default for Bool {
     fn default() -> Self {
         // Bool : Top
-        var!(bool: typ!());
+        let bool = Var::new_rc("bool", Typ::top());
 
         // Yes : Bool
-        var!(yes: typ!(exp!(bool)));
+        let yes = Var::new_rc("true", Typ::one(Exp::sol(&bool)));
 
         // No : Bool
-        var!(no: typ!(exp!(bool)));
+        let no = Var::new_rc("false", Typ::one(Exp::sol(&bool)));
 
         Self {
             bool,
             yes,
             no,
         }
+    }
+}
+
+impl Module for Bool {
+    fn vars(&self) -> Vec<VarRc> {
+        vec![self.bool.clone(), self.yes.clone(), self.no.clone()]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parse_prints;
+
+    #[test]
+    fn must_print() {
+        assert_eq!(Bool::default().print(), parse_prints(include_str!("bool/prints/plain.base")))
     }
 }

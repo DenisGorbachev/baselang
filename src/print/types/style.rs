@@ -1,3 +1,4 @@
+use crate::PrintAll;
 use strum::Display;
 #[allow(dead_code)]
 pub use Style::*;
@@ -15,4 +16,10 @@ pub enum Style {
     // Inline printing of binary relations (n `Eq` 4) / replace the relation name with relation symbol (n = 4) / replace with plain name (n equals 4)
     // Highlighting
 }
-impl Style {}
+
+impl Style {
+    pub fn print(&self, printable: impl PrintAll) -> Vec<String> {
+        // TODO: Apply the style
+        printable.print_all()
+    }
+}
