@@ -4,8 +4,6 @@
 
 # Baselang is a language for describing how things work.
 
-[![Build](https://github.com/DenisGorbachev/baselang/actions/workflows/ci.yml/badge.svg)](https://github.com/DenisGorbachev/baselang)
-
 Baselang is a language for describing how things work.
 
 This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that’s both precise and expressive.
