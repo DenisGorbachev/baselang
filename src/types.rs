@@ -9,3 +9,7 @@ pub use typ::*;
 mod var;
 
 pub use var::*;
+
+mod nym;
+
+pub use nym::*;
