@@ -1,0 +1,7 @@
+// Each statement is on a new line + indented after parent
+// Inner vars are separated by tab characters (so that they form columns)
+// The width of the column is equal to the width of the longest value in that column
+
+Top   :   Sum   a : Nat       b : Nat   c : Nat
+          Sum   Zero          n         n             :   Sum/Zero    n : Nat
+          Sum   Next a_prev   b_prev    Next c_prev   :   Sum/Next    a_prev : Nat    b_prev : Nat    c_prev : Nat    ⟨proof of "a + b = c"⟩ : Sum a_prev b_prev c_prev

@@ -1,0 +1,24 @@
+Sum {
+  a : Nat
+  b : Nat
+  c : Nat
+} : Top
+
+Sum/Zero {
+  c : Nat
+} : Sum {
+  a = Zero
+  b = c
+  c = c
+}
+
+Sum/Next {
+  a : Nat
+  b : Nat
+  c : Nat
+  «Sum of a, b, c» : Sum a b c
+} : Sum {
+  a = Next a
+  b = b
+  c = Next c
+}

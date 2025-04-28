@@ -1,4 +1,5 @@
 use crate::{exp, typ, var, Module, VarRc};
+use crate::{Typ, Var};
 use derive_more::{From, Into};
 use derive_new::new;
 
@@ -14,6 +15,10 @@ impl Default for Nat {
     fn default() -> Self {
         // Nat : Top
         var!(nat: typ!());
+
+        // `var!(nat: typ!());` expands to the following declaration:
+        debug_assert_eq!(nat, Var::new_rc("nat", Typ::top()));
+        // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
 
         // Zero : Nat
         var!(zero: typ!(exp!(nat)));
