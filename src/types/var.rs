@@ -10,6 +10,7 @@ pub struct Var {
     /// This field is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] to print them while the current var)
     /// TODO: inner vars names must not shadow outer vars
     /// TODO: The name "Top" is reserved
+    // nym: NymRc,
     name: String,
     /// Do we need to wrap the `typ` in [`Rc`]?
     /// * Yes: because multiple variables can have the same type (e.g. `n : Nat`, `Zero : Nat`)
