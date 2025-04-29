@@ -7,8 +7,10 @@ use std::fmt::{Display, Formatter};
 /// This struct holds the canonical and capitalized names of a [`crate::Var`]
 ///
 /// ```rust
-/// # use baselang::Word;
-/// let names = Word::new("List", "list");
+/// # use baselang::{Capitalized, Word};
+/// let list = Word::new("list", Capitalized::FromCanonical);
+/// let usa = Word::new("USA", Capitalized::AsCanonical);
+/// let usa = Word::new("nat", Capitalized::Custom("Nat".to_string()));
 /// ```
 #[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Word {
