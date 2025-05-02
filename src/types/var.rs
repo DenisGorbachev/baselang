@@ -100,6 +100,12 @@ impl Of<&VarRc> for VarRc {
     }
 }
 
+impl Of<Exp> for VarRc {
+    fn of(&self, arg: Exp) -> Result<Exp, InvalidApplicationError> {
+        Exp::app(self.clone(), arg)
+    }
+}
+
 #[macro_export]
 macro_rules! vrc {
     ($name: expr) => {

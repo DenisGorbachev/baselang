@@ -2,7 +2,7 @@ use crate::{Of, TestPrelude};
 
 #[test]
 fn must_print_app() {
-    let prelude = TestPrelude::default();
+    let prelude = TestPrelude::new();
     let cons = prelude.list.cons;
     let nat = prelude.nat.nat;
     let cons_nat = cons.of(nat).unwrap();

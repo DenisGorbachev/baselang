@@ -138,19 +138,53 @@ impl Of<&Exp> for Exp {
     }
 }
 
-impl TryFrom<(VarRc, VarRc)> for Exp {
-    type Error = InvalidApplicationError;
+// impl TryFrom<(VarRc, VarRc)> for Exp {
+//     type Error = InvalidApplicationError;
+//
+//     fn try_from((fun, arg): (VarRc, VarRc)) -> Result<Self, Self::Error> {
+//         Self::app(fun, arg)
+//     }
+// }
+//
+// impl TryFrom<(VarRc, &VarRc)> for Exp {
+//     type Error = InvalidApplicationError;
+//
+//     fn try_from((fun, arg): (VarRc, &VarRc)) -> Result<Self, Self::Error> {
+//         Self::try_from((fun, arg.clone()))
+//     }
+// }
+//
+// impl TryFrom<(&VarRc, VarRc)> for Exp {
+//     type Error = InvalidApplicationError;
+//
+//     fn try_from((fun, arg): (&VarRc, VarRc)) -> Result<Self, Self::Error> {
+//         Self::try_from((fun.clone(), arg))
+//     }
+// }
 
-    fn try_from((fun, arg): (VarRc, VarRc)) -> Result<Self, Self::Error> {
-        Self::app(fun, arg)
-    }
-}
-
+/// Other `impl TryFrom` where the type argument contains a naked [`VarRc`] (without a reference) are commented out because they lead to hard-to-debug errors
+/// It's quite rare anyway that a developer would like to pass a [`VarRc`] directly, and if they do, they can always use [`Exp::app`] instead of [`Exp::try_from`]
 impl TryFrom<(&VarRc, &VarRc)> for Exp {
     type Error = InvalidApplicationError;
 
     fn try_from((fun, arg): (&VarRc, &VarRc)) -> Result<Self, Self::Error> {
-        Self::try_from((fun.clone(), arg.clone()))
+        Self::app(fun.clone(), arg.clone())
+    }
+}
+
+impl TryFrom<(Exp, &VarRc)> for Exp {
+    type Error = InvalidApplicationError;
+
+    fn try_from((fun, arg): (Exp, &VarRc)) -> Result<Self, Self::Error> {
+        Self::app(fun, arg.clone())
+    }
+}
+
+impl TryFrom<(&VarRc, Exp)> for Exp {
+    type Error = InvalidApplicationError;
+
+    fn try_from((fun, arg): (&VarRc, Exp)) -> Result<Self, Self::Error> {
+        Self::app(fun.clone(), arg)
     }
 }
 
@@ -171,7 +205,11 @@ macro_rules! exp {
         $crate::Exp::Sol($var.clone())
     };
     ($a: expr, $b: expr) => {
-        $crate::Exp::try_from(($crate::exp!($a), $crate::exp!($b))).expect("should pass the type check")
+        // we can't add references to $a or $b (e.g. `&$a, &$b`) because $a might be an `Exp`, which should be passed directly, not by reference
+        $crate::Exp::try_from(($a, $b)).expect("should pass the type check")
+    };
+    ($a: expr, $b: expr, $($rest: expr),+) => {
+        $crate::exp!($crate::exp!($a, $b), $($rest),+)
     };
 }
 
@@ -186,17 +224,17 @@ mod tests {
             bool,
             yes,
             no,
-        } = Bool::default();
+        } = Bool::new();
         let List {
             list,
             nil,
             cons,
-        } = List::default();
+        } = List::new();
         let Nat {
             nat,
             zero,
             next,
-        } = Nat::default();
+        } = Nat::new();
         let list_bool = list.of(&bool).unwrap();
         let nil_bool = nil.of(&bool).unwrap();
         let cons_nat = cons.of(&nat).unwrap();

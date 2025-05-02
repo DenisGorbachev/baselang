@@ -1,14 +1,19 @@
 use crate::{exp, typ, var, Module, VarRc};
 use crate::{Typ, Var};
-use derive_more::{From, Into};
-use derive_new::new;
+use derive_more::Into;
 
-#[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Nat {
     pub nat: VarRc,
     pub zero: VarRc,
     /// Let's use `next` instead of `succ` because it's more understandable
     pub next: VarRc,
+}
+
+impl Nat {
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 impl Default for Nat {
@@ -54,6 +59,6 @@ mod tests {
 
     #[test]
     fn must_print() {
-        assert_eq!(Nat::default().print(), parse_prints(include_str!("nat/prints/plain.base")))
+        assert_eq!(Nat::new().print(), parse_prints(include_str!("nat/prints/plain.base")))
     }
 }

@@ -4,7 +4,7 @@ use derive_more::{From, Into};
 use derive_new::new;
 
 /// The [`Default`] implementation for an aggregate module is already good enough
-#[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Default, Hash, Clone, Debug)]
+#[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Prelude {
     pub bool: Bool,
     pub nat: Nat,

@@ -3,10 +3,9 @@
 */
 
 use crate::{Exp, Module, Typ, Var, VarRc};
-use derive_more::{From, Into};
-use derive_new::new;
+use derive_more::Into;
 
-#[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Bool {
     pub bool: VarRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
@@ -15,6 +14,12 @@ pub struct Bool {
     /// This field is named `no` instead of `false` because `false` is a reserved keyword in Rust
     /// /// Note that the printed name of this variable is "false" (in line with expectations of the users)
     pub no: VarRc,
+}
+
+impl Bool {
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 impl Default for Bool {
@@ -55,6 +60,6 @@ mod tests {
 
     #[test]
     fn must_print() {
-        assert_eq!(Bool::default().print(), parse_prints(include_str!("bool/prints/plain.base")))
+        assert_eq!(Bool::new().print(), parse_prints(include_str!("bool/prints/plain.base")))
     }
 }

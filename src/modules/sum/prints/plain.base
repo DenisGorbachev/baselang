@@ -1,0 +1,5 @@
+sum : (a : nat) -> (b : nat) -> (c : nat) -> top
+
+sum_base : (c : nat) -> sum zero c c
+
+sum_step : (a : nat) -> (b : nat) -> (c : nat) -> (sum_a_b_c : sum a b c) -> sum (next a) b (next c)

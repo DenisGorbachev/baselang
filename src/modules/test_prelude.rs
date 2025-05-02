@@ -1,9 +1,7 @@
-use crate::{Bool, List, Module, Nat, VarRc};
-use derive_getters::Getters;
+use crate::{Bool, List, Nat};
 use derive_more::{From, Into};
-use derive_new::new;
 
-#[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Default, Hash, Clone, Debug)]
+#[derive(From, Into, Ord, PartialOrd, Eq, PartialEq, Default, Hash, Clone, Debug)]
 pub struct TestPrelude {
     pub bool: Bool,
     pub nat: Nat,
@@ -11,7 +9,7 @@ pub struct TestPrelude {
 }
 
 impl TestPrelude {
-    pub fn bool_list(&self) -> ((&VarRc, &VarRc, &VarRc), (&VarRc, &VarRc, &VarRc)) {
-        (self.bool.refs_tuple(), self.list.refs_tuple())
+    pub fn new() -> Self {
+        Self::default()
     }
 }

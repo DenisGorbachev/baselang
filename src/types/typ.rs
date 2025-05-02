@@ -146,3 +146,10 @@ macro_rules! typ {
         $crate::Typ::fun(&$var, $typ)
     };
 }
+
+#[macro_export]
+macro_rules! top {
+    () => {
+        $crate::Typ::top()
+    };
+}
