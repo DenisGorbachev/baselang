@@ -5,7 +5,7 @@
 use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc};
 use derive_more::Into;
 
-#[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Bool {
     pub bool: VarRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
@@ -18,12 +18,6 @@ pub struct Bool {
 
 impl Bool {
     pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl Default for Bool {
-    fn default() -> Self {
         // Bool : Top
         let bool = Var::new_rc("bool", Typ::top());
 
@@ -38,6 +32,12 @@ impl Default for Bool {
             yes,
             no,
         }
+    }
+}
+
+impl Default for Bool {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

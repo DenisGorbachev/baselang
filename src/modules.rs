@@ -59,3 +59,6 @@ pub use wat::*;
 mod int;
 
 pub use int::*;
+mod rat;
+
+pub use rat::*;

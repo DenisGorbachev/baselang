@@ -1,12 +1,12 @@
-use crate::{exp, top, typ, var, Module, Nat, VarRc};
-use derive_more::{From, Into};
+use crate::{exp, module, top, typ, var, Nat, VarRc};
 
-/// The correct name for this module is ["quantity value"](https://jcgm.bipm.org/vim/en/1.19.html), but it's too long.
-#[derive(From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct Measure {
-    pub measure: VarRc,
-    pub measure_new: VarRc,
-}
+module!(
+    /// The correct name for this module is ["quantity value"](https://jcgm.bipm.org/vim/en/1.19.html), but it's too long.
+    pub struct Measure {
+        measure,
+        measure_new,
+    }
+);
 
 impl Measure {
     pub fn new(nat: &Nat) -> Self {
@@ -26,22 +26,10 @@ impl Measure {
     }
 }
 
-impl Module for Measure {
-    type RefsTuple<'a> = (&'a VarRc, &'a VarRc);
-
-    fn vars(&self) -> Vec<VarRc> {
-        vec![self.measure.clone(), self.measure_new.clone()]
-    }
-
-    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
-        (&self.measure, &self.measure_new)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parse_prints;
+    use crate::{parse_prints, Module};
     use pretty_assertions::assert_eq;
 
     #[test]

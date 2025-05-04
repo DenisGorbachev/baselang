@@ -3,7 +3,7 @@ use derive_more::{From, Into};
 
 /// This module is based on International System of Units (SI).
 /// There's only one difference: it uses `gram` instead of `kilogram`.
-#[derive(From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(From, Into, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Units {
     pub meter: VarRc,
     pub gram: VarRc,

@@ -2,7 +2,7 @@ use crate::{exp, typ, var, Module, RefsTuple3, VarRc};
 use crate::{Typ, Var};
 use derive_more::Into;
 
-#[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Nat {
     pub nat: VarRc,
     pub zero: VarRc,
@@ -12,12 +12,6 @@ pub struct Nat {
 
 impl Nat {
     pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl Default for Nat {
-    fn default() -> Self {
         // Nat : Top
         var!(nat: typ!());
 
@@ -37,6 +31,12 @@ impl Default for Nat {
             zero,
             next,
         }
+    }
+}
+
+impl Default for Nat {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

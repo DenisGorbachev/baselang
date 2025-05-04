@@ -1,7 +1,7 @@
 use crate::{exp, top, typ, var, Module, Nat, RefsTuple3, VarRc};
 use derive_more::{From, Into};
 
-#[derive(From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(From, Into, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Sum {
     pub sum: VarRc,
     pub sum_base: VarRc,

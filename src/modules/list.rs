@@ -1,7 +1,7 @@
 use crate::{exp, typ, var, Module, RefsTuple3, Top, VarRc};
 use derive_more::Into;
 
-#[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct List {
     pub list: VarRc,
     pub nil: VarRc,
@@ -10,12 +10,6 @@ pub struct List {
 
 impl List {
     pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl Default for List {
-    fn default() -> Self {
         // List : (t : Top) -> Top
         // List (t : Top) : Top
         var!(t: Top);
@@ -38,6 +32,12 @@ impl Default for List {
             nil,
             cons,
         }
+    }
+}
+
+impl Default for List {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
