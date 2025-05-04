@@ -1,4 +1,4 @@
-use crate::{top, var, VarRc};
+use crate::{top, var, Module, RefsTuple7, VarRc};
 use derive_more::{From, Into};
 
 /// This module is based on International System of Units (SI).
@@ -42,22 +42,22 @@ impl Default for Units {
     }
 }
 
-// impl Module for Units {
-//     // type RefsTuple<'a> = RefsT;
-//
-//     fn vars(&self) -> Vec<VarRc> {
-//         vec![
-//             self.meter.clone(),
-//             self.gram.clone(),
-//             self.second.clone(),
-//             self.ampere.clone(),
-//             self.kelvin.clone(),
-//             self.mole.clone(),
-//             self.candela.clone(),
-//         ]
-//     }
-//
-//     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
-//         (&self.meter, &self.gram, &self.gram, &self.gram, &self.gram, &self.gram, &self.gram)
-//     }
-// }
+impl Module for Units {
+    type RefsTuple<'a> = RefsTuple7<'a>;
+
+    fn vars(&self) -> Vec<VarRc> {
+        vec![
+            self.meter.clone(),
+            self.gram.clone(),
+            self.second.clone(),
+            self.ampere.clone(),
+            self.kelvin.clone(),
+            self.mole.clone(),
+            self.candela.clone(),
+        ]
+    }
+
+    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
+        (&self.meter, &self.gram, &self.second, &self.ampere, &self.kelvin, &self.mole, &self.candela)
+    }
+}

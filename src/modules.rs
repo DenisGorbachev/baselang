@@ -48,6 +48,6 @@ mod measure;
 
 pub use measure::*;
 
-mod unit;
+mod units;
 
-pub use unit::*;
+pub use units::*;
