@@ -43,3 +43,7 @@ pub use test_prelude::*;
 mod sum;
 
 pub use sum::*;
+
+mod measure;
+
+pub use measure::*;
