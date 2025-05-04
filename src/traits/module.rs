@@ -1,4 +1,4 @@
-use crate::VarRc;
+use crate::{print_vars, VarRc};
 
 pub trait Module {
     type RefsTuple<'a>
@@ -10,7 +10,9 @@ pub trait Module {
     fn refs_tuple(&self) -> Self::RefsTuple<'_>;
 
     fn print(&self) -> Vec<String> {
-        self.vars().into_iter().map(|var| var.print()).collect()
+        // TODO: Reimplement using `vars_refs`
+        let vars = self.vars();
+        print_vars(vars.iter().map(VarRc::as_ref))
     }
 }
 

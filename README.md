@@ -42,6 +42,10 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 cargo add baselang
 ```
 
+## Additional binaries
+
+* `print_prelude`
+
 ## Gratitude
 
 Like the project? [⭐ Star this repo](https://github.com/DenisGorbachev/baselang) on GitHub!

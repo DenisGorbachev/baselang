@@ -1,4 +1,4 @@
-use crate::{Bool, Int, List, Nat, Rat, Wat};
+use crate::{concat_with_extend, print_vars, Bool, Int, List, Module, Nat, Rat, VarRc, Wat};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
@@ -9,6 +9,16 @@ pub struct Prelude {
     pub wat: Wat,
     pub int: Int,
     pub rat: Rat,
+}
+
+macro_rules! prelude_vars {
+    ($($name:ident),+) => {
+        pub fn vars(&self) -> Vec<VarRc> {
+            concat_with_extend(vec![
+                $(self.$name.vars()),+
+            ])
+        }
+    };
 }
 
 impl Prelude {
@@ -27,6 +37,14 @@ impl Prelude {
             int,
             rat,
         }
+    }
+
+    prelude_vars!(bool, nat, list, wat, int, rat);
+
+    pub fn print(&self) -> Vec<String> {
+        // TODO: Reconcile with `Module::print`
+        let vars = self.vars();
+        print_vars(vars.iter().map(VarRc::as_ref))
     }
 }
 
