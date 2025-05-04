@@ -2,7 +2,7 @@
 ```rust assert_eq(yes.name, "arst"); ```
 */
 
-use crate::{Exp, Module, Typ, Var, VarRc};
+use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc};
 use derive_more::Into;
 
 #[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
@@ -42,7 +42,7 @@ impl Default for Bool {
 }
 
 impl Module for Bool {
-    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+    type RefsTuple<'a> = RefsTuple3<'a>;
 
     fn vars(&self) -> Vec<VarRc> {
         vec![self.bool.clone(), self.yes.clone(), self.no.clone()]

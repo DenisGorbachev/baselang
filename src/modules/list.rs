@@ -1,4 +1,4 @@
-use crate::{exp, typ, var, Module, Top, VarRc};
+use crate::{exp, typ, var, Module, RefsTuple3, Top, VarRc};
 use derive_more::Into;
 
 #[derive(Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
@@ -42,7 +42,7 @@ impl Default for List {
 }
 
 impl Module for List {
-    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+    type RefsTuple<'a> = RefsTuple3<'a>;
 
     fn vars(&self) -> Vec<VarRc> {
         vec![self.list.clone(), self.nil.clone(), self.cons.clone()]

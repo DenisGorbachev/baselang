@@ -1,4 +1,4 @@
-use crate::{exp, top, typ, var, Module, Nat, VarRc};
+use crate::{exp, top, typ, var, Module, Nat, RefsTuple3, VarRc};
 use derive_more::{From, Into};
 
 #[derive(From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
@@ -41,7 +41,7 @@ impl Sum {
 }
 
 impl Module for Sum {
-    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+    type RefsTuple<'a> = RefsTuple3<'a>;
 
     fn vars(&self) -> Vec<VarRc> {
         vec![

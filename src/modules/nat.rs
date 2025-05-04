@@ -1,4 +1,4 @@
-use crate::{exp, typ, var, Module, VarRc};
+use crate::{exp, typ, var, Module, RefsTuple3, VarRc};
 use crate::{Typ, Var};
 use derive_more::Into;
 
@@ -41,7 +41,7 @@ impl Default for Nat {
 }
 
 impl Module for Nat {
-    type RefsTuple<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
+    type RefsTuple<'a> = RefsTuple3<'a>;
 
     fn vars(&self) -> Vec<VarRc> {
         vec![self.nat.clone(), self.zero.clone(), self.next.clone()]

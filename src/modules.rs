@@ -51,3 +51,11 @@ pub use measure::*;
 mod units;
 
 pub use units::*;
+
+mod wat;
+
+pub use wat::*;
+
+mod int;
+
+pub use int::*;

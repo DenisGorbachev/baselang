@@ -120,6 +120,12 @@ impl From<VarRc> for Exp {
     }
 }
 
+impl From<&VarRc> for Exp {
+    fn from(var: &VarRc) -> Self {
+        Self::sol(var)
+    }
+}
+
 impl Of<&VarRc> for Exp {
     fn of(&self, arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg.clone())
