@@ -27,7 +27,7 @@ impl Prelude {
         let nat = Nat::new();
         let list = List::new();
         let wat = Wat::new(&nat);
-        let int = Int::new(&wat);
+        let int = Int::new(&nat);
         let rat = Rat::new(&int, &wat);
         Self {
             bool,
