@@ -56,7 +56,13 @@ impl Module for Bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::PlainRenderer;
 
-    must_print!(Bool, PlainRenderer, "bool/prints/plain.base");
+    #[test]
+    fn test_print_plain() {
+        let module = Bool::new();
+        let renderer = PlainRenderer::new();
+        let prints = include_str!("bool/prints/plain.base");
+        crate::assert_eq_prints(&module, &renderer, prints);
+    }
 }

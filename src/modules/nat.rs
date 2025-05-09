@@ -55,7 +55,21 @@ impl Module for Nat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::{CueRenderer, PlainRenderer};
 
-    must_print!(Nat, PlainRenderer, "bool/prints/plain.base");
+    #[test]
+    fn test_print_plain() {
+        let module = Nat::new();
+        let renderer = PlainRenderer::new();
+        let prints = include_str!("nat/prints/plain.base");
+        crate::assert_eq_prints(&module, &renderer, prints);
+    }
+
+    #[test]
+    fn test_print_cue() {
+        let module = Nat::new();
+        let renderer = CueRenderer::new();
+        let prints = include_str!("nat/prints/cue.base");
+        crate::assert_eq_prints(&module, &renderer, prints);
+    }
 }

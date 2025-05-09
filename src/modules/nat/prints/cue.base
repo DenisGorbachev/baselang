@@ -1,7 +1,5 @@
-Nat : Top
-
-Zero : Nat
-
-Next {
-  n : Nat
-} : Nat
+nat : Top
+zero : nat
+next : {
+  n : nat
+} : nat

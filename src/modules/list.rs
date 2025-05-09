@@ -56,7 +56,13 @@ impl Module for List {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::PlainRenderer;
 
-    must_print!(List, PlainRenderer, "list/prints/plain.base");
+    #[test]
+    fn test_print_plain() {
+        let module = List::new();
+        let renderer = PlainRenderer::new();
+        let prints = include_str!("list/prints/plain.base");
+        crate::assert_eq_prints(&module, &renderer, prints);
+    }
 }
