@@ -1,0 +1,38 @@
+// Natural number is an idea
+// Nat is an idea
+// Nat is idea
+// Nat is Idea
+// Nat : Idea
+
+// Zero is a natural number
+// Zero is natural number
+// Zero is Nat
+// Zero : Nat
+
+// Next is a program that creates a new natural number from an existing natural number
+// Next is a program that transforms an existing natural number into a new natural number
+// Next is a transformer of existing natural number into new natural number
+// Next is a way to make a new natural number from an existing natural number
+// Next is a path from existing natural number to new natural number
+// Next is "old natural number" -> "new natural number"
+// Next is "previous natural number" -> "next natural number"
+// Next is "prev natural number" -> "next natural number"
+// Next is "natural number" -> "natural number"
+// Next is "Nat" -> "Nat"
+// Next : Nat -> Nat
+// Next (prev : Nat) : Nat
+// fn Next(prev: Nat) -> Nat
+// function Next(prev: Nat): Nat { /* ... */ }
+// const Next = (prev: Nat): Nat => { /* ... */ }
+
+0 = 0
+1 = 1 + 0
+2 = 1 + 1 + 0
+3 = 1 + 1 + 1 + 0
+...
+
+0 = Zero
+1 = Next(Zero)
+2 = Next(Next(Zero)
+3 = Next(Next(Next(Zero)
+...

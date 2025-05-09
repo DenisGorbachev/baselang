@@ -35,14 +35,16 @@ mod traits;
 
 pub use traits::*;
 
-mod print;
+mod render;
 
-pub use print::*;
+pub use render::*;
 
 #[cfg(test)]
 mod tests;
 
 #[cfg(test)]
 pub use tests::*;
+
 mod utils;
+
 pub use utils::*;

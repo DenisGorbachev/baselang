@@ -1,4 +1,4 @@
-use crate::{module, typ, var, Int, VarRc, Wat};
+use crate::{Int, VarRc, Wat, module, typ, var};
 
 module!(
     pub struct Rat {

@@ -1,4 +1,4 @@
-use crate::{module, typ, var, Nat, VarRc};
+use crate::{Nat, VarRc, module, typ, var};
 
 module!(
     /// Wat is a "wrapped Nat" (interpreted as 1 + n)

@@ -1,8 +1,20 @@
-use baselang::Prelude;
+use baselang::{Indenter, PlainRenderer, Prelude, Render, dedup_renders, render_vars};
+use std::io;
+use std::io::{Write, stdout};
 
-fn main() {
-    let lines = Prelude::new().print();
-    for line in lines {
-        println!("{line}\n");
+fn main() -> io::Result<()> {
+    let renderers: &[Box<dyn Render>] = &[Box::new(PlainRenderer::new())];
+    let indenter = Indenter::new_simple("// ");
+    let prelude = Prelude::new();
+    let vars = prelude.vars();
+    let mut stdout = stdout().lock();
+    let renders = render_vars(vars, renderers);
+    let renders = dedup_renders(renders);
+    let renders = indenter.indent_blocks(renders);
+    for blocks in renders {
+        for block in blocks {
+            stdout.write_all(block.as_ref())?;
+        }
     }
+    Ok(())
 }

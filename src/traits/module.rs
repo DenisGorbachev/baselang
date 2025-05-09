@@ -1,4 +1,4 @@
-use crate::{print_vars, VarRc};
+use crate::{VarRc, print_vars};
 
 pub trait Module {
     type RefsTuple<'a>

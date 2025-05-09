@@ -1,7 +1,7 @@
 use crate::{Of, TestPrelude};
 
 #[test]
-fn must_print_app() {
+fn must_render_app() {
     let prelude = TestPrelude::new();
     let cons = prelude.list.cons;
     let nat = prelude.nat.nat;

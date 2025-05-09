@@ -1,4 +1,4 @@
-use crate::{concat_with_extend, print_vars, Bool, Int, List, Module, Nat, Rat, VarRc, Wat};
+use crate::{Bool, Int, List, Module, Nat, Rat, VarRc, Wat, concat_with_extend, print_vars};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]

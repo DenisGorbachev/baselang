@@ -1,7 +1,7 @@
 [package]
 name = "baselang"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Baselang is a language for describing how things work."
 homepage = "https://github.com/DenisGorbachev/baselang"
 repository = "https://github.com/DenisGorbachev/baselang"
@@ -22,6 +22,7 @@ derive-new = "0.7.0"
 derive_more = { version = "2.0.1", features = ["full"] }
 fmt-derive = "0.1.2"
 helpful = { git = "https://github.com/DenisGorbachev/helpful" }
+itertools = { version = "0.14.0" }
 pretty_assertions = "1.4.1"
 standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.27.1", features = ["derive"] }

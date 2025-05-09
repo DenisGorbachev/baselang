@@ -1,6 +1,6 @@
+use crate::Sol;
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
-use crate::Sol;
 use std::rc::Rc;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]

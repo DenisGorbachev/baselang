@@ -1,4 +1,4 @@
-use crate::{module, typ, var, Nat, VarRc};
+use crate::{Nat, VarRc, module, typ, var};
 
 module!(
     /// * `int.zero` is `0`

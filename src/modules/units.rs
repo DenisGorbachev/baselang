@@ -1,4 +1,4 @@
-use crate::{top, var, Module, RefsTuple7, VarRc};
+use crate::{Module, RefsTuple7, VarRc, top, var};
 use derive_more::{From, Into};
 
 /// This module is based on International System of Units (SI).
