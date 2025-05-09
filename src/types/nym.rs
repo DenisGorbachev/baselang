@@ -1,4 +1,4 @@
-use crate::NymLang;
+use crate::{Form, NymLang};
 use derive_more::{From, Into};
 use derive_new::new;
 
@@ -10,7 +10,14 @@ pub struct Nym {
     pub long: Option<NymLang>,
 }
 
-impl Nym {}
+impl Nym {
+    pub fn get(&self, form: Form) -> Option<&NymLang> {
+        match form {
+            Form::Short => Some(&self.short),
+            Form::Long => self.long.as_ref(),
+        }
+    }
+}
 
 impl From<&str> for Nym {
     fn from(value: &str) -> Self {

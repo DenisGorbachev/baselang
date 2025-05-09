@@ -12,6 +12,7 @@ pub struct Var {
     /// Do we need to wrap the `typ` in [`Rc`]?
     /// * Yes: because multiple variables can have the same type (e.g. `n : Nat`, `Zero : Nat`)
     /// * No: because we can wrap the variables themselves in Rc and pass them into Exp
+    ///   We can't make `typ` `pub` because that would allow mutating it after the [`Var`] was used to construct an [`Exp::App`], which would break caching of [`Typ`] of the resulting expression
     typ: Typ,
 }
 
