@@ -31,7 +31,6 @@ mod tests {
     use crate::{PlainRenderer, Prelude, assert_eq_prints};
 
     #[test]
-    #[ignore]
     fn must_print() {
         let prelude = Prelude::new();
         let measure = Measure::new(&prelude.rat);

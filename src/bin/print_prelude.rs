@@ -13,8 +13,9 @@ fn main() -> io::Result<()> {
     let renders = indenter.indent_blocks(renders);
     for blocks in renders {
         for block in blocks {
-            stdout.write_all(block.as_ref())?;
+            writeln!(stdout, "{block}")?;
         }
+        writeln!(stdout)?;
     }
     Ok(())
 }
