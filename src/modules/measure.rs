@@ -32,7 +32,6 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    #[ignore]
     fn must_print() {
         let prelude = Prelude::new();
         assert_eq!(Measure::new(&prelude.rat).print(), parse_prints(include_str!("measure/prints/plain.base")))
