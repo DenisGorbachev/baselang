@@ -3,7 +3,7 @@ use std::io;
 use std::io::{Write, stdout};
 
 fn main() -> io::Result<()> {
-    let renderers: &[Box<dyn Render>] = &[Box::new(PlainRenderer::new())];
+    let renderers: &[Box<dyn Render>] = &[Box::new(PlainRenderer::default())];
     let indenter = Indenter::new_simple("// ");
     let prelude = Prelude::new();
     let vars = prelude.vars_refs();

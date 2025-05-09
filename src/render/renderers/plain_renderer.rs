@@ -3,8 +3,11 @@ use derive_getters::Getters;
 use derive_more::{From, Into};
 use derive_new::new;
 
-#[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Default, Hash, Clone, Debug)]
-pub struct PlainRenderer {}
+#[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+pub struct PlainRenderer {
+    /// The name of the [`Typ::Top`]
+    top: String,
+}
 
 impl PlainRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
@@ -19,7 +22,7 @@ impl PlainRenderer {
 
     pub fn render_typ_inner(&self, typ: &Typ) -> String {
         match typ {
-            Typ::Top => "top".to_string(),
+            Typ::Top => self.top.clone(),
             Typ::One(exp) => self.render_exp_inner(exp, false, false),
             Typ::Fun(var, typ) => {
                 format!("{var} -> {typ}", var = self.render_var_inner(var, false, true, true), typ = self.render_typ(typ))
@@ -58,5 +61,13 @@ impl Render for PlainRenderer {
 
     fn render_exp(&self, exp: &Exp) -> String {
         self.render_exp_inner(exp, true, true)
+    }
+}
+
+impl Default for PlainRenderer {
+    fn default() -> Self {
+        Self {
+            top: "top".to_string(),
+        }
     }
 }

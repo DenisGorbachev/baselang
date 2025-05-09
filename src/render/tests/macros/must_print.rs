@@ -16,8 +16,8 @@ macro_rules! must_print {
     ($module:ident, $renderer:ident, $prints_path:literal) => {
         #[test]
         fn must_print() {
-            let module = $module::new();
-            let renderer = $renderer::new();
+            let module = $module::default();
+            let renderer = $renderer::default();
             let prints = include_str!($prints_path);
             $crate::assert_eq_prints(&module, &renderer, prints);
         }

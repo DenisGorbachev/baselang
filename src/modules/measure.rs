@@ -34,7 +34,7 @@ mod tests {
     fn must_print() {
         let prelude = Prelude::new();
         let measure = Measure::new(&prelude.rat);
-        let renderer = PlainRenderer::new();
+        let renderer = PlainRenderer::default();
         let prints = include_str!("measure/prints/plain.base");
         assert_eq_prints(&measure, &renderer, prints);
     }
