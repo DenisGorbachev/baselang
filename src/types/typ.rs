@@ -53,7 +53,7 @@ impl Typ {
                         // If fun_var's type is directly the var we're substituting
                         One(Sol(v)) if Rc::ptr_eq(v, var) => {
                             // Create a new variable with the type of arg
-                            let name = fun_var.print_name().to_string();
+                            let name = fun_var.name().to_string();
                             let new_typ = One(arg.clone());
                             Var::new_rc(name, new_typ)
                         }
@@ -63,14 +63,6 @@ impl Typ {
                     Fun(substituted_var, Box::new(typ_box.substitute(var, arg)))
                 }
             }
-        }
-    }
-
-    pub fn print(&self) -> String {
-        match self {
-            Top => "top".to_string(),
-            One(exp) => exp.print_inner(false, false),
-            Fun(var, typ) => format!("{var} -> {typ}", var = var.print_inner(false, true), typ = typ.print()),
         }
     }
 }

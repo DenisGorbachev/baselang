@@ -57,5 +57,5 @@ mod tests {
     use super::*;
     use crate::{PlainRenderer, must_print};
 
-    must_print!(Nat, PlainRenderer, "bool/prints/plain.base");
+    must_print!(Nat, PlainRenderer, "nat/prints/plain.base");
 }

@@ -1,7 +1,10 @@
-use crate::Var;
+use crate::{PlainRenderer, Render, Var};
 
 pub fn print_vars<'a>(vars: impl IntoIterator<Item = &'a Var>) -> Vec<String> {
-    vars.into_iter().map(Var::print).collect()
+    let renderer = PlainRenderer::new();
+    vars.into_iter()
+        .map(|var| renderer.render_var(var))
+        .collect()
 }
 mod render_vars;
 

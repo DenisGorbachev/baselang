@@ -15,7 +15,6 @@ pub fn assert_eq_prints(module: &impl Module, renderer: &impl Render, prints: &s
 macro_rules! must_print {
     ($module:ident, $renderer:ident, $prints_path:literal) => {
         #[test]
-        #[ignore]
         fn must_print() {
             let module = $module::new();
             let renderer = $renderer::new();

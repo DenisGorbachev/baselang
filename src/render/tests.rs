@@ -1,4 +1,4 @@
-use crate::{Of, TestPrelude};
+use crate::{Of, PlainRenderer, Render, TestPrelude};
 
 #[test]
 fn must_render_app() {
@@ -6,7 +6,8 @@ fn must_render_app() {
     let cons = prelude.list.cons;
     let nat = prelude.nat.nat;
     let cons_nat = cons.of(nat).unwrap();
-    assert_eq!(cons_nat.print(true), "(cons nat) : (a : nat) -> list nat")
+    let renderer = PlainRenderer::new();
+    assert_eq!(renderer.render_exp(&cons_nat), "(cons nat) : (a : nat) -> list nat")
 }
 
 // #[test]

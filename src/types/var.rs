@@ -43,33 +43,7 @@ impl Var {
         Rc::new(Self::new_top(name))
     }
 
-    #[inline(always)]
-    pub fn print(&self) -> String {
-        let name = self.print_name();
-        let typ = self.print_typ();
-        format!("{name} : {typ}")
-    }
-
-    /// This function should be called when printing inner variables (they require parentheses)
-    pub fn print_inner(&self, _is_top_level: bool, with_type: bool) -> String {
-        let name = self.print_name();
-        if with_type {
-            let typ = self.print_typ();
-            format!("({name} : {typ})")
-        } else {
-            name.to_string()
-        }
-    }
-
-    #[inline(always)]
-    pub fn print_name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline(always)]
-    pub fn print_typ(&self) -> String {
-        self.typ.print()
-    }
+    // We don't need to define name() since derive(Getters) already provides it
 }
 
 pub trait ToVarRc {

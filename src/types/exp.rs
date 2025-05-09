@@ -41,7 +41,7 @@ impl Exp {
                     // Create a new variable with the concrete type for later printing
                     // This ensures that when we print the type, the parameter uses the concrete type
                     // TODO: Optimize this code
-                    let var_name = var.print_name().to_string();
+                    let var_name = var.name().to_string();
                     let concrete_var = Var::new_rc(var_name, var.typ().clone());
 
                     // Substitute the var with arg in the type
@@ -78,31 +78,6 @@ impl Exp {
                 debug_assert_eq!(new_fun_inner.typ(), fun_inner.typ());
                 debug_assert_eq!(new_arg_inner.typ(), arg_inner.typ());
                 App(Box::new(new_fun_inner), Box::new(new_arg_inner), var_inner.clone(), typ_inner.clone())
-            }
-        }
-    }
-
-    #[inline(always)]
-    pub fn print(&self, with_type: bool) -> String {
-        self.print_inner(true, with_type)
-    }
-
-    pub fn print_inner(&self, is_top_level: bool, with_type: bool) -> String {
-        match self {
-            Sol(var) => var.print_inner(is_top_level, with_type),
-            App(fun, arg, _, typ) => {
-                // this const must be false because we don't want to print the types of the inner values, only the type of the current exp itself
-                // this const is defined only for clarity
-                const WITH_TYPE_INNER: bool = false;
-                let fun = fun.print(WITH_TYPE_INNER);
-                let arg = arg.print(WITH_TYPE_INNER);
-                // this `if` is necessary because we need to wrap the `{fun} {arg}` pair in braces to display the type
-                if with_type {
-                    let typ = typ.print();
-                    format!("({fun} {arg}) : {typ}")
-                } else {
-                    format!("{fun} {arg}")
-                }
             }
         }
     }
