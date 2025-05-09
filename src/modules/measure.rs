@@ -1,4 +1,4 @@
-use crate::{exp, module, top, typ, var, Rat, VarRc};
+use crate::{Rat, VarRc, exp, module, top, typ, var};
 
 module!(
     /// The correct name for this module is ["quantity value"](https://jcgm.bipm.org/vim/en/1.19.html), but it's too long.
@@ -28,7 +28,7 @@ impl Measure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{parse_prints, Module, Prelude};
+    use crate::{Module, Prelude, parse_prints};
     use pretty_assertions::assert_eq;
 
     #[test]

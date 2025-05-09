@@ -1,4 +1,4 @@
-use crate::{exp, typ, var, Module, RefsTuple3, Top, VarRc};
+use crate::{Module, RefsTuple3, Top, VarRc, exp, typ, var};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
