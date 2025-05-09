@@ -44,8 +44,8 @@ impl Default for List {
 impl Module for List {
     type RefsTuple<'a> = RefsTuple3<'a>;
 
-    fn vars(&self) -> Vec<VarRc> {
-        vec![self.list.clone(), self.nil.clone(), self.cons.clone()]
+    fn vars_refs(&self) -> Vec<&VarRc> {
+        vec![&self.list, &self.nil, &self.cons]
     }
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
@@ -56,17 +56,7 @@ impl Module for List {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parse_prints;
-    use pretty_assertions::assert_eq;
-    use std::iter::zip;
+    use crate::{PlainRenderer, must_print};
 
-    /// Using a loop to see the error diffs more clearly
-    #[test]
-    fn must_print() {
-        let prints_actual = List::new().print();
-        let prints_expected = parse_prints(include_str!("list/prints/plain.base"));
-        for (actual, expected) in zip(prints_actual, prints_expected) {
-            assert_eq!(actual, expected);
-        }
-    }
+    must_print!(List, PlainRenderer, "list/prints/plain.base");
 }

@@ -6,7 +6,7 @@ fn main() -> io::Result<()> {
     let renderers: &[Box<dyn Render>] = &[Box::new(PlainRenderer::new())];
     let indenter = Indenter::new_simple("// ");
     let prelude = Prelude::new();
-    let vars = prelude.vars();
+    let vars = prelude.vars_refs();
     let mut stdout = stdout().lock();
     let renders = render_vars(vars, renderers);
     let renders = dedup_renders(renders);

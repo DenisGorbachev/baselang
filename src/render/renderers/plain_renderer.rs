@@ -10,14 +10,14 @@ impl PlainRenderer {}
 
 impl Render for PlainRenderer {
     fn render_var(&self, _var: &Var) -> String {
-        todo!()
+        String::new()
     }
 
     fn render_typ(&self, _typ: &Typ) -> String {
-        todo!()
+        String::new()
     }
 
     fn render_exp(&self, _exp: &Exp) -> String {
-        todo!()
+        String::new()
     }
 }

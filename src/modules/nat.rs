@@ -43,8 +43,8 @@ impl Default for Nat {
 impl Module for Nat {
     type RefsTuple<'a> = RefsTuple3<'a>;
 
-    fn vars(&self) -> Vec<VarRc> {
-        vec![self.nat.clone(), self.zero.clone(), self.next.clone()]
+    fn vars_refs(&self) -> Vec<&VarRc> {
+        vec![&self.nat, &self.zero, &self.next]
     }
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
@@ -55,10 +55,7 @@ impl Module for Nat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parse_prints;
+    use crate::{PlainRenderer, must_print};
 
-    #[test]
-    fn must_print() {
-        assert_eq!(Nat::new().print(), parse_prints(include_str!("nat/prints/plain.base")))
-    }
+    must_print!(Nat, PlainRenderer, "bool/prints/plain.base");
 }

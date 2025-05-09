@@ -14,3 +14,5 @@ pub use dedup_renders::*;
 mod parse_prints;
 
 pub use parse_prints::*;
+mod render_module;
+pub use render_module::*;

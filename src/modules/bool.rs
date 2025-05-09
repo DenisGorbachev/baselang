@@ -44,8 +44,8 @@ impl Default for Bool {
 impl Module for Bool {
     type RefsTuple<'a> = RefsTuple3<'a>;
 
-    fn vars(&self) -> Vec<VarRc> {
-        vec![self.bool.clone(), self.yes.clone(), self.no.clone()]
+    fn vars_refs(&self) -> Vec<&VarRc> {
+        vec![&self.bool, &self.yes, &self.no]
     }
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
@@ -56,10 +56,7 @@ impl Module for Bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parse_prints;
+    use crate::{PlainRenderer, must_print};
 
-    #[test]
-    fn must_print() {
-        assert_eq!(Bool::new().print(), parse_prints(include_str!("bool/prints/plain.base")))
-    }
+    must_print!(Bool, PlainRenderer, "bool/prints/plain.base");
 }

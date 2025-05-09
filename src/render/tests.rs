@@ -14,3 +14,6 @@ fn must_render_app() {
 //     var!(t: Top);
 //     var!(_test_var: typ!(t => Top));
 // }
+mod macros;
+
+pub use macros::*;

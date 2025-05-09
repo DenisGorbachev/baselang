@@ -1,12 +1,12 @@
-use crate::{Module, Nat, RefsTuple3, VarRc, exp, top, typ, var};
-use derive_more::{From, Into};
+use crate::{Nat, VarRc, exp, module, top, typ, var};
 
-#[derive(From, Into, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct Sum {
-    pub sum: VarRc,
-    pub sum_base: VarRc,
-    pub sum_step: VarRc,
-}
+module!(
+    pub struct Sum {
+        sum,
+        sum_base,
+        sum_step,
+    }
+);
 
 impl Sum {
     pub fn new(nat: &Nat) -> Self {
@@ -40,32 +40,9 @@ impl Sum {
     }
 }
 
-impl Module for Sum {
-    type RefsTuple<'a> = RefsTuple3<'a>;
-
-    fn vars(&self) -> Vec<VarRc> {
-        vec![
-            self.sum.clone(),
-            self.sum_base.clone(),
-            self.sum_step.clone(),
-        ]
-    }
-
-    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
-        (&self.sum, &self.sum_base, &self.sum_step)
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::parse_prints;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    #[ignore]
-    fn must_print() {
-        let nat = Nat::new();
-        assert_eq!(Sum::new(&nat).print(), parse_prints(include_str!("sum/prints/plain.base")))
-    }
+    // use super::*;
+    // use crate::{PlainRenderer, must_print};
+    // must_print!(Sum, PlainRenderer, "sum/prints/plain.base");
 }

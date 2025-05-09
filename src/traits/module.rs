@@ -1,26 +1,20 @@
-use crate::{VarRc, print_vars};
+use crate::VarRc;
 
 pub trait Module {
     type RefsTuple<'a>
     where
         Self: 'a;
 
-    fn vars(&self) -> Vec<VarRc>;
+    fn vars_refs(&self) -> Vec<&VarRc>;
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_>;
-
-    fn print(&self) -> Vec<String> {
-        // TODO: Reimplement using `vars_refs`
-        let vars = self.vars();
-        print_vars(vars.iter().map(VarRc::as_ref))
-    }
 }
 
 #[macro_export]
-macro_rules! vars {
+macro_rules! vars_refs {
     ($($name:ident),+) => {
-        fn vars(&self) -> Vec<VarRc> {
-            vec![$(self.$name.clone()),+]
+        fn vars_refs(&self) -> Vec<&VarRc> {
+            vec![$(&self.$name),+]
         }
     };
 }
@@ -52,7 +46,7 @@ macro_rules! module {
             type RefsTuple<'a> = $crate::refs_tuple_type!($($var),+);
             // type RefsTuple<'a> = $crate::RefsTuple4<'a>;
 
-            $crate::vars!($($var),+);
+            $crate::vars_refs!($($var),+);
 
             $crate::refs_tuple!($($var),+);
         }
