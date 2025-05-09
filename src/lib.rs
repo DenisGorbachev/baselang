@@ -48,3 +48,5 @@ pub use tests::*;
 mod utils;
 
 pub use utils::*;
+
+mod macros;

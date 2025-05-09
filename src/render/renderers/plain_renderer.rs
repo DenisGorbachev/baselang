@@ -8,7 +8,7 @@ pub struct PlainRenderer {}
 
 impl PlainRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
-        let name = &var.nym().en.singular;
+        let name = &var.nym().short.en.singular;
         if with_type {
             let typ = self.render_typ(var.typ());
             if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }

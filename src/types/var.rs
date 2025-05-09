@@ -40,7 +40,9 @@ impl Var {
         Rc::new(Self::new_top(nym))
     }
 
-    // We don't need to define name() since derive(Getters) already provides it
+    pub fn set_nym(&mut self, nym: impl Into<Nym>) {
+        self.nym = nym.into()
+    }
 }
 
 pub trait ToVarRc {
@@ -94,5 +96,8 @@ macro_rules! var {
     };
     ($name: ident: $typ: expr) => {
         let $name = $crate::Var::new_rc(stringify!($name), $typ);
+    };
+    ($name: ident: $typ: expr; $nym: expr) => {
+        let $name = $crate::Var::new_rc($nym, $typ);
     };
 }
