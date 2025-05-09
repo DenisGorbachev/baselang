@@ -11,10 +11,8 @@ pub enum Exp {
     /// [`App`] means `application` (of one expression on another expression)
     /// IMPORTANT: Never construct this variant directly, call [`Exp::app`] instead (which performs the type check)
     /// Must wrap [`Exp`] in [`Box`] to avoid "recursive type" error
-    /// [`VarRc`] is a cached var of the fun of this expression (calculated in [`Exp::app`]) (might be unnecessary; let's see)
     /// [`TypBox`] is a cached type of this expression (calculated in [`Exp::app`])
-    /// TODO: Remove [`VarRc`] if it turns out to be unnecessary for printing
-    App(ExpBox, ExpBox, VarRc, TypBox),
+    App(ExpBox, ExpBox, TypBox),
 }
 
 pub use Exp::*;
@@ -38,15 +36,8 @@ impl Exp {
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
             (Fun(var, typ_old), arg_typ) => {
                 if *var.typ() == arg_typ {
-                    // Create a new variable with the concrete type for later printing
-                    // This ensures that when we print the type, the parameter uses the concrete type
-                    // TODO: Optimize this code
-                    let var_name = var.name().to_string();
-                    let concrete_var = Var::new_rc(var_name, var.typ().clone());
-
-                    // Substitute the var with arg in the type
                     let typ_new = Box::new(typ_old.substitute(&var, &arg));
-                    Ok(App(Box::new(fun), Box::new(arg), concrete_var, typ_new))
+                    Ok(App(Box::new(fun), Box::new(arg), typ_new))
                 } else {
                     Err(InvalidApplicationError::new(Fun(var, typ_old), arg_typ))
                 }
@@ -57,7 +48,7 @@ impl Exp {
     pub fn typ(&self) -> &Typ {
         match self {
             Sol(var) => var.typ(),
-            App(_, _, _, typ) => typ,
+            App(_, _, typ) => typ,
         }
     }
 
@@ -72,12 +63,12 @@ impl Exp {
                     self.clone()
                 }
             }
-            App(fun_inner, arg_inner, var_inner, typ_inner) => {
+            App(fun_inner, arg_inner, typ_inner) => {
                 let new_fun_inner = fun_inner.substitute(var, arg);
                 let new_arg_inner = arg_inner.substitute(var, arg);
                 debug_assert_eq!(new_fun_inner.typ(), fun_inner.typ());
                 debug_assert_eq!(new_arg_inner.typ(), arg_inner.typ());
-                App(Box::new(new_fun_inner), Box::new(new_arg_inner), var_inner.clone(), typ_inner.clone())
+                App(Box::new(new_fun_inner), Box::new(new_arg_inner), typ_inner.clone())
             }
         }
     }

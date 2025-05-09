@@ -8,7 +8,7 @@ pub struct PlainRenderer {}
 
 impl PlainRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
-        let name = var.name();
+        let name = &var.nym().en.singular;
         if with_type {
             let typ = self.render_typ(var.typ());
             if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
@@ -30,7 +30,7 @@ impl PlainRenderer {
     pub fn render_exp_inner(&self, exp: &Exp, is_top_level: bool, with_type: bool) -> String {
         match exp {
             Exp::Sol(var) => self.render_var_inner(var, is_top_level, with_type, true),
-            Exp::App(fun, arg, _, typ) => {
+            Exp::App(fun, arg, typ) => {
                 // We don't want to print the types of inner values, only the type of the current exp itself
                 const WITH_TYPE_INNER: bool = false;
                 let fun = self.render_exp_inner(fun, false, WITH_TYPE_INNER);

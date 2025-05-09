@@ -43,6 +43,9 @@ impl Typ {
             One(exp) => One(exp.substitute(var, arg)),
             Fun(fun_var, typ_box) => {
                 // If this is a different variable, substitute in the resulting type
+                // TODO: I think this case should not be possible (in the introduction position, a single var must be referenced at most once)
+                // TODO: We can enforce it by changing the `Typ::fun` constructor to take a (nym, typ) instead of (var) and create the var within the constructor itself
+                // TODO: It might be necessary to also change the arg `typ` to a closure `impl FnOnce(&VarRc) -> Typ`, so that we could use the newly created var to construct a typ
                 if Rc::ptr_eq(fun_var, var) {
                     // If it's the same variable, it shadows the outer one, no substitution needed
                     Fun(fun_var.clone(), typ_box.clone())
@@ -53,9 +56,11 @@ impl Typ {
                         // If fun_var's type is directly the var we're substituting
                         One(Sol(v)) if Rc::ptr_eq(v, var) => {
                             // Create a new variable with the type of arg
-                            let name = fun_var.name().to_string();
+                            // TODO: is it correct to clone the nym?
+                            // TODO: the whole branch for Fun might be incorrect
+                            let nym = fun_var.nym().clone();
                             let new_typ = One(arg.clone());
-                            Var::new_rc(name, new_typ)
+                            Var::new_rc(nym, new_typ)
                         }
                         // For other cases, keep the original variable
                         _ => fun_var.clone(),

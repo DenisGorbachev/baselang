@@ -4,9 +4,15 @@ use derive_new::new;
 
 #[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct NymEn {
-    singular: Word,
+    pub singular: Word,
     /// If this field is equal to [`None`], then apply a regular pluralization rule to a singular word
-    plural: Option<Word>,
+    pub plural: Option<Word>,
+}
+
+impl From<&str> for NymEn {
+    fn from(value: &str) -> Self {
+        Self::from(value.to_string())
+    }
 }
 
 impl From<String> for NymEn {
