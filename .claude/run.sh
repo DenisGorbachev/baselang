@@ -7,7 +7,7 @@ set -xeuo pipefail
 child_branch=${usage_child_branch:?}
 prompt_file=${usage_prompt_file:?}
 
-git checkout -b "$child_branch"
+git checkout -b --track=inherit "$child_branch"
 cat "$prompt_file" | claude --debug --verbose --output-format stream-json --print
 mise run test
 mise run fmt
