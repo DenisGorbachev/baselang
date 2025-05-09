@@ -1,5 +1,5 @@
 use itertools::Itertools;
 
-pub fn dedup_renders(renders: impl Iterator<Item = impl Iterator<Item = String>>) -> impl Iterator<Item = impl Iterator<Item = String>> {
-    renders.map(|blocks| blocks.dedup())
+pub fn dedup_inner_iter<T: PartialEq>(outer: impl Iterator<Item = impl Iterator<Item = T>>) -> impl Iterator<Item = impl Iterator<Item = T>> {
+    outer.map(|inner| inner.dedup())
 }

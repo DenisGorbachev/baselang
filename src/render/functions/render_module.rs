@@ -4,5 +4,5 @@ pub fn render_module(module: &impl Module, renderer: &impl Render) -> impl Itera
     module
         .vars_refs()
         .into_iter()
-        .map(|x| renderer.render_var(x.as_ref()))
+        .flat_map(|x| renderer.render_var(x.as_ref()))
 }

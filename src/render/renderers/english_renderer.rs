@@ -12,9 +12,9 @@ pub struct EnglishRenderer {
 
 impl EnglishRenderer {
     pub fn render_var_inner(&self, _var: &Var, _is_top_level: bool, _with_type: bool, _wrapped: bool) -> String {
-        // let name = &var.nym().get(self.form)?.en.singular;
+        // let name = &var.nym().get(self.form)?;
         // if with_type {
-        //     let typ = self.render_typ(var.typ());
+        //     let typ = self.render_typ(var.typ()).unwrap_or_default();
         //     if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
         // } else {
         //     name.to_string()
@@ -27,7 +27,9 @@ impl EnglishRenderer {
         //     Typ::Top => self.top.clone(),
         //     Typ::One(exp) => self.render_exp_inner(exp, false, false),
         //     Typ::Fun(var, typ) => {
-        //         format!("{var} -> {typ}", var = self.render_var_inner(var, false, true, true), typ = self.render_typ(typ))
+        //         format!("{var} -> {typ}",
+        //             var = self.render_var_inner(var, false, true, true),
+        //             typ = self.render_typ(typ).unwrap_or_default())
         //     }
         // }
         todo!()
@@ -43,7 +45,7 @@ impl EnglishRenderer {
         //         let arg = self.render_exp_inner(arg, false, WITH_TYPE_INNER);
         //
         //         if with_type {
-        //             let typ = self.render_typ(typ);
+        //             let typ = self.render_typ(typ).unwrap_or_default();
         //             format!("({fun} {arg}) : {typ}")
         //         } else {
         //             format!("{fun} {arg}")
@@ -55,16 +57,17 @@ impl EnglishRenderer {
 }
 
 impl Render for EnglishRenderer {
-    fn render_var(&self, var: &Var) -> String {
-        self.render_var_inner(var, true, true, false)
+    fn render_var(&self, var: &Var) -> Option<String> {
+        // We catch the panic from todo!() and convert it to None
+        std::panic::catch_unwind(|| self.render_var_inner(var, true, true, false)).ok()
     }
 
-    fn render_typ(&self, typ: &Typ) -> String {
-        self.render_typ_inner(typ)
+    fn render_typ(&self, typ: &Typ) -> Option<String> {
+        std::panic::catch_unwind(|| self.render_typ_inner(typ)).ok()
     }
 
-    fn render_exp(&self, exp: &Exp) -> String {
-        self.render_exp_inner(exp, true, true)
+    fn render_exp(&self, exp: &Exp) -> Option<String> {
+        std::panic::catch_unwind(|| self.render_exp_inner(exp, true, true)).ok()
     }
 }
 

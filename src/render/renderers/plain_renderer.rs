@@ -13,7 +13,7 @@ impl PlainRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
         let name = &var.nym().short.en.singular;
         if with_type {
-            let typ = self.render_typ(var.typ());
+            let typ = self.render_typ_inner(var.typ());
             if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
         } else {
             name.to_string()
@@ -25,7 +25,7 @@ impl PlainRenderer {
             Typ::Top => self.top.clone(),
             Typ::One(exp) => self.render_exp_inner(exp, false, false),
             Typ::Fun(var, typ) => {
-                format!("{var} -> {typ}", var = self.render_var_inner(var, false, true, true), typ = self.render_typ(typ))
+                format!("{var} -> {typ}", var = self.render_var_inner(var, false, true, true), typ = self.render_typ_inner(typ))
             }
         }
     }
@@ -40,7 +40,7 @@ impl PlainRenderer {
                 let arg = self.render_exp_inner(arg, false, WITH_TYPE_INNER);
 
                 if with_type {
-                    let typ = self.render_typ(typ);
+                    let typ = self.render_typ_inner(typ);
                     format!("({fun} {arg}) : {typ}")
                 } else {
                     format!("{fun} {arg}")
@@ -51,16 +51,16 @@ impl PlainRenderer {
 }
 
 impl Render for PlainRenderer {
-    fn render_var(&self, var: &Var) -> String {
-        self.render_var_inner(var, true, true, false)
+    fn render_var(&self, var: &Var) -> Option<String> {
+        Some(self.render_var_inner(var, true, true, false))
     }
 
-    fn render_typ(&self, typ: &Typ) -> String {
-        self.render_typ_inner(typ)
+    fn render_typ(&self, typ: &Typ) -> Option<String> {
+        Some(self.render_typ_inner(typ))
     }
 
-    fn render_exp(&self, exp: &Exp) -> String {
-        self.render_exp_inner(exp, true, true)
+    fn render_exp(&self, exp: &Exp) -> Option<String> {
+        Some(self.render_exp_inner(exp, true, true))
     }
 }
 
