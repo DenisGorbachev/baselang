@@ -1,4 +1,4 @@
-use crate::{Phrase, impl_from_str_as_from_string};
+use crate::{Phrase, impl_from_via};
 use derive_more::{From, Into};
 use derive_new::new;
 
@@ -9,7 +9,7 @@ pub struct NymEn {
     pub plural: Option<Phrase>,
 }
 
-impl_from_str_as_from_string!(NymEn);
+impl_from_via!(&str, String, NymEn);
 
 impl From<String> for NymEn {
     fn from(value: String) -> Self {

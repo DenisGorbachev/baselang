@@ -1,4 +1,4 @@
-use crate::{Form, NymLang};
+use crate::{Form, NymEn, NymLang, impl_from_via};
 use derive_more::{From, Into};
 use derive_new::new;
 
@@ -39,3 +39,5 @@ impl From<NymLang> for Nym {
         }
     }
 }
+
+impl_from_via!(NymEn, NymLang, Nym);

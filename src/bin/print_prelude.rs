@@ -1,9 +1,13 @@
-use baselang::{Indenter, PlainRenderer, Prelude, Render, dedup_inner_iter, filter_renders, render_vars};
+use baselang::{EnglishRenderer, Indenter, PlainRenderer, Prelude, Render, dedup_inner_iter, filter_renders, render_vars};
 use std::io;
 use std::io::{Write, stdout};
 
 fn main() -> io::Result<()> {
-    let renderers: &[Box<dyn Render>] = &[Box::new(PlainRenderer::default())];
+    let renderers: &[Box<dyn Render>] = &[
+        Box::new(EnglishRenderer::long()),
+        Box::new(EnglishRenderer::default()),
+        Box::new(PlainRenderer::new("idea")),
+    ];
     let indenter = Indenter::new_simple("// ");
     let prelude = Prelude::new();
     let vars = prelude.vars_refs();

@@ -16,7 +16,7 @@ impl Rat {
         var!(den: typ!(&wat.wat));
 
         var!(rat: typ!());
-        var!(new: typ!(num => typ!(den => typ!(&rat))));
+        var!(new: typ!(num => typ!(den => typ!(&rat))); "rat.new");
 
         Self {
             rat,

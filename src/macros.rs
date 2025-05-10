@@ -1,1 +1,1 @@
-mod impl_from_str_as_from_string;
+mod impl_from_via;

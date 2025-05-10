@@ -1,10 +1,10 @@
-use crate::{Nat, VarRc, module, typ, var};
+use crate::{Nat, NymEn, VarRc, module, typ, var};
 
 module!(
     /// Wat is a "wrapped Nat" (interpreted as 1 + n)
     pub struct Wat {
         wat,
-        wat_wrap,
+        wrap,
     }
 );
 
@@ -13,11 +13,11 @@ impl Wat {
         var!(wat: typ!());
 
         var!(n: typ!(&nat.nat));
-        var!(wat_wrap: typ!(n => &wat));
+        var!(wrap: typ!(n => &wat); NymEn::from("wat.wrap"));
 
         Self {
             wat,
-            wat_wrap,
+            wrap,
         }
     }
 }

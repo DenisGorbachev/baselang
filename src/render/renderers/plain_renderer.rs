@@ -6,6 +6,7 @@ use derive_new::new;
 #[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct PlainRenderer {
     /// The name of the [`Typ::Top`]
+    #[new(into)]
     top: String,
 }
 

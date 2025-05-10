@@ -23,8 +23,13 @@ impl Indenter {
             head_prefix,
             tail_prefix,
         } = self;
-        iter.enumerate()
-            .map(move |(index, string)| if index == 0 { format!("{head_prefix}{string}") } else { format!("{tail_prefix}{string}") })
+        iter.map(move |string| {
+            string
+                .split('\n')
+                .enumerate()
+                .map(move |(index, string)| if index == 0 { format!("{head_prefix}{string}") } else { format!("{tail_prefix}{string}") })
+                .collect()
+        })
     }
 
     pub fn indent_blocks(&self, iter: impl Iterator<Item = impl Iterator<Item = String>>) -> impl Iterator<Item = impl Iterator<Item = String>> {

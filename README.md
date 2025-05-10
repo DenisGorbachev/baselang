@@ -38,8 +38,32 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 ## Installation
 
+Install as executable:
+
+```shell
+cargo install --locked baselang
+```
+
+Install as library dependency in your package:
+
 ```shell
 cargo add baselang
+```
+
+## Usage
+
+```shell
+Baselang is a language for describing how things work.
+
+Usage: baselang <COMMAND>
+
+Commands:
+  print  
+  help   Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ## Additional binaries

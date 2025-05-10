@@ -1,4 +1,4 @@
-use crate::{Capitalized, impl_from_str_as_from_string};
+use crate::{Capitalized, impl_from_via};
 use Cow::*;
 use derive_more::{From, Into};
 use derive_new::new;
@@ -38,7 +38,7 @@ impl Phrase {
     }
 }
 
-impl_from_str_as_from_string!(Phrase);
+impl_from_via!(&str, String, Phrase);
 
 impl From<String> for Phrase {
     fn from(canonical: String) -> Self {
