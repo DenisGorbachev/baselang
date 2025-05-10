@@ -2,6 +2,7 @@ use crate::{Exp, Form, NymEn, Render, Typ, Var};
 use derive_getters::Getters;
 use derive_more::{From, Into};
 use derive_new::new;
+use std::borrow::Cow;
 
 #[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct EnglishRenderer {
@@ -11,18 +12,20 @@ pub struct EnglishRenderer {
 }
 
 impl EnglishRenderer {
-    pub fn render_var_inner(&self, _var: &Var, _is_top_level: bool, _with_type: bool, _wrapped: bool) -> String {
-        // let name = &var.nym().get(self.form)?;
-        // if with_type {
-        //     let typ = self.render_typ(var.typ()).unwrap_or_default();
-        //     if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
-        // } else {
-        //     name.to_string()
-        // }
-        todo!()
+    pub fn render_var_inner<'a>(&self, var: &'a Var, is_top_level: bool, with_type: bool, _wrapped: bool) -> Option<Cow<'a, str>> {
+        let name = &var.nym().get(self.form)?.en.singular;
+        if with_type {
+            let typ = self.render_typ_inner(var.typ())?;
+            let name_render = if is_top_level { name.to_capitalized() } else { name.to_canonical() };
+            let article = Self::render_article(&typ);
+            Some(Cow::Owned(format!("{name_render} is {article} {typ}")))
+            // if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
+        } else {
+            Some(name.into())
+        }
     }
 
-    pub fn render_typ_inner(&self, _typ: &Typ) -> String {
+    pub fn render_typ_inner(&self, _typ: &Typ) -> Option<Cow<str>> {
         // match typ {
         //     Typ::Top => self.top.clone(),
         //     Typ::One(exp) => self.render_exp_inner(exp, false, false),
@@ -35,7 +38,7 @@ impl EnglishRenderer {
         todo!()
     }
 
-    pub fn render_exp_inner(&self, _exp: &Exp, _is_top_level: bool, _with_type: bool) -> String {
+    pub fn render_exp_inner(&self, _exp: &Exp, _is_top_level: bool, _with_type: bool) -> Option<Cow<str>> {
         // match exp {
         //     Exp::Sol(var) => self.render_var_inner(var, is_top_level, with_type, true),
         //     Exp::App(fun, arg, typ) => {
@@ -54,20 +57,27 @@ impl EnglishRenderer {
         // }
         todo!()
     }
+
+    pub fn render_article(input: &str) -> &'static str {
+        if input.starts_with(Self::VOWELS) { "an" } else { "a" }
+    }
+
+    pub const VOWELS: [char; 5] = ['a', 'e', 'u', 'o', 'i'];
 }
 
 impl Render for EnglishRenderer {
     fn render_var(&self, var: &Var) -> Option<String> {
-        // We catch the panic from todo!() and convert it to None
-        std::panic::catch_unwind(|| self.render_var_inner(var, true, true, false)).ok()
+        self.render_var_inner(var, true, true, false)
+            .map(|cow| cow.into_owned())
     }
 
     fn render_typ(&self, typ: &Typ) -> Option<String> {
-        std::panic::catch_unwind(|| self.render_typ_inner(typ)).ok()
+        self.render_typ_inner(typ).map(|cow| cow.into_owned())
     }
 
     fn render_exp(&self, exp: &Exp) -> Option<String> {
-        std::panic::catch_unwind(|| self.render_exp_inner(exp, true, true)).ok()
+        self.render_exp_inner(exp, true, true)
+            .map(|cow| cow.into_owned())
     }
 }
 

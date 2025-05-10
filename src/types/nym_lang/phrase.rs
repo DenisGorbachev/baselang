@@ -1,4 +1,5 @@
 use crate::{Capitalized, impl_from_str_as_from_string};
+use Cow::*;
 use derive_more::{From, Into};
 use derive_new::new;
 use std::borrow::Cow;
@@ -23,9 +24,12 @@ pub struct Phrase {
 }
 
 impl Phrase {
+    pub fn to_canonical(&self) -> Cow<str> {
+        Borrowed(&self.canonical)
+    }
+
     pub fn to_capitalized(&self) -> Cow<str> {
         use Capitalized::*;
-        use Cow::*;
         match &self.capitalized {
             FromCanonical => Owned(Capitalized::from_canonical(&self.canonical)),
             AsCanonical => Borrowed(&self.canonical),
@@ -48,5 +52,11 @@ impl From<String> for Phrase {
 impl Display for Phrase {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.canonical)
+    }
+}
+
+impl<'a> From<&'a Phrase> for Cow<'a, str> {
+    fn from(value: &'a Phrase) -> Self {
+        Borrowed(value.canonical.as_str())
     }
 }
