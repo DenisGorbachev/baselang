@@ -1,4 +1,4 @@
-use crate::{Rat, VarRc, exp, module, top, typ, var};
+use crate::{Rat, exp, module, top, typ, var};
 
 module!(
     /// The correct name for this module is ["quantity value"](https://jcgm.bipm.org/vim/en/1.19.html), but it's too long.
@@ -28,13 +28,13 @@ impl Measure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BaseRenderer, Prelude, assert_eq_prints};
+    use crate::{PlainRenderer, Prelude, assert_eq_prints};
 
     #[test]
     fn must_print() {
         let prelude = Prelude::new();
         let measure = Measure::new(&prelude.rat);
-        let renderer = BaseRenderer::default();
+        let renderer = PlainRenderer::default();
         let prints = include_str!("measure/prints/plain.base");
         assert_eq_prints(&measure, &renderer, prints);
     }

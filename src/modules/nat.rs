@@ -1,4 +1,4 @@
-use crate::{Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple3, VarRc, exp, typ, var};
+use crate::{Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple3, VarRc, exp, impl_vars_vec, typ, var};
 use crate::{Typ, Var};
 use derive_more::Into;
 
@@ -62,12 +62,10 @@ impl Default for Nat {
     }
 }
 
+impl_vars_vec!(Nat, nat, zero, next);
+
 impl Module for Nat {
     type RefsTuple<'a> = RefsTuple3<'a>;
-
-    fn vars_refs(&self) -> Vec<&VarRc> {
-        vec![&self.nat, &self.zero, &self.next]
-    }
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
         (&self.nat, &self.zero, &self.next)
@@ -77,7 +75,7 @@ impl Module for Nat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BaseRenderer, must_print};
+    use crate::{PlainRenderer, must_print};
 
-    must_print!(Nat, BaseRenderer, "nat/prints/plain.base");
+    must_print!(Nat, PlainRenderer, "nat/prints/plain.base");
 }

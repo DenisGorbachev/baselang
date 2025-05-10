@@ -1,12 +1,12 @@
-use crate::{Module, RefsTuple3, Top, VarRc, exp, typ, var};
-use derive_more::Into;
+use crate::{Top, exp, module, typ, var};
 
-#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct List {
-    pub list: VarRc,
-    pub nil: VarRc,
-    pub cons: VarRc,
-}
+module!(
+    pub struct List {
+        list,
+        nil,
+        cons,
+    }
+);
 
 impl List {
     pub fn new() -> Self {
@@ -41,22 +41,10 @@ impl Default for List {
     }
 }
 
-impl Module for List {
-    type RefsTuple<'a> = RefsTuple3<'a>;
-
-    fn vars_refs(&self) -> Vec<&VarRc> {
-        vec![&self.list, &self.nil, &self.cons]
-    }
-
-    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
-        (&self.list, &self.nil, &self.cons)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BaseRenderer, must_print};
+    use crate::{PlainRenderer, must_print};
 
-    must_print!(List, BaseRenderer, "list/prints/plain.base");
+    must_print!(List, PlainRenderer, "list/prints/plain.base");
 }

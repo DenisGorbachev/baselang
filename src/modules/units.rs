@@ -1,4 +1,4 @@
-use crate::{VarRc, module, top, var};
+use crate::{module, top, var};
 
 module!(
     /// This module is based on International System of Units (SI).

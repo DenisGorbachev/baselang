@@ -2,7 +2,7 @@
 ```rust assert_eq(yes.name, "arst"); ```
 */
 
-use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc};
+use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc, impl_vars_vec};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
@@ -41,12 +41,10 @@ impl Default for Bool {
     }
 }
 
+impl_vars_vec!(Bool, bool, yes, no);
+
 impl Module for Bool {
     type RefsTuple<'a> = RefsTuple3<'a>;
-
-    fn vars_refs(&self) -> Vec<&VarRc> {
-        vec![&self.bool, &self.yes, &self.no]
-    }
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
         (&self.bool, &self.yes, &self.no)
@@ -56,7 +54,7 @@ impl Module for Bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BaseRenderer, must_print};
+    use crate::{PlainRenderer, must_print};
 
-    must_print!(Bool, BaseRenderer, "bool/prints/plain.base");
+    must_print!(Bool, PlainRenderer, "bool/prints/plain.base");
 }

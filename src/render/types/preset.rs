@@ -4,6 +4,6 @@ use strum::EnumIter;
 pub enum Preset {
     EnglishShort,
     EnglishLong,
-    BaseDefault,
-    BaseIdea,
+    PlainDefault,
+    PlainIdea,
 }

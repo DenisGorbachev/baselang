@@ -1,4 +1,4 @@
-use baselang::{Indenter, Prelude, Preset, Renderer, dedup_inner_iter, filter_renders, render_vars};
+use baselang::{Indenter, Prelude, Preset, Renderer, VarsVec, dedup_inner_iter, filter_renders, render_vars};
 use itertools::Itertools;
 use std::io;
 use std::io::{Write, stdout};
@@ -8,7 +8,7 @@ fn main() -> io::Result<()> {
     let renderers: Vec<Renderer> = Preset::iter().map(Renderer::from).collect_vec();
     let indenter = Indenter::new_simple("// ");
     let prelude = Prelude::new();
-    let vars = prelude.vars_refs();
+    let vars = prelude.vars_vec();
     let mut stdout = stdout().lock();
     let renders = render_vars(vars, &renderers);
     let renders = filter_renders(renders);

@@ -38,7 +38,7 @@ macro_rules! renderer {
 renderer!(
     #[derive(From, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
     pub enum Renderer {
-        Base(BaseRenderer),
+        Base(PlainRenderer),
         English(EnglishRenderer),
     }
 );
@@ -51,15 +51,15 @@ impl From<Preset> for Renderer {
         match discriminant {
             EnglishShort => EnglishRenderer::short().into(),
             EnglishLong => EnglishRenderer::long().into(),
-            BaseDefault => BaseRenderer::default().into(),
-            BaseIdea => BaseRenderer::default().into(),
+            PlainDefault => PlainRenderer::default().into(),
+            PlainIdea => PlainRenderer::idea().into(),
         }
     }
 }
 
-mod base_renderer;
+mod plain_renderer;
 
-pub use base_renderer::*;
+pub use plain_renderer::*;
 
 mod english_renderer;
 

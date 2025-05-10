@@ -1,4 +1,4 @@
-use crate::{Bool, List, Nat};
+use crate::{Bool, List, Nat, impl_vars_vec_aggregate};
 use derive_more::{From, Into};
 
 #[derive(From, Into, Eq, PartialEq, Default, Hash, Clone, Debug)]
@@ -13,3 +13,5 @@ impl TestPrelude {
         Self::default()
     }
 }
+
+impl_vars_vec_aggregate!(TestPrelude, bool, nat, list);

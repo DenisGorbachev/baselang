@@ -5,13 +5,13 @@ use derive_new::new;
 use std::borrow::Cow;
 
 #[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct BaseRenderer {
+pub struct PlainRenderer {
     /// The name of the [`Typ::Top`]
     #[new(into)]
     top: Cow<'static, str>,
 }
 
-impl BaseRenderer {
+impl PlainRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
         let name = &var.nym().short.en.singular;
         if with_type {
@@ -51,14 +51,14 @@ impl BaseRenderer {
         }
     }
 
-    pub fn idea() -> BaseRenderer {
+    pub fn idea() -> PlainRenderer {
         Self {
             top: "idea".into(),
         }
     }
 }
 
-impl Render for BaseRenderer {
+impl Render for PlainRenderer {
     fn render_var(&self, var: &Var) -> Option<String> {
         Some(self.render_var_inner(var, true, true, false))
     }
@@ -72,10 +72,22 @@ impl Render for BaseRenderer {
     }
 }
 
-impl Default for BaseRenderer {
+impl Default for PlainRenderer {
     fn default() -> Self {
         Self {
             top: "top".into(),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{PlainRenderer, TestPrelude, must_print};
+
+    must_print!(
+        #[ignore]
+        TestPrelude,
+        PlainRenderer,
+        "plain_renderer/test_prelude.plain.base"
+    );
 }

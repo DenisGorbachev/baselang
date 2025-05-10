@@ -1,4 +1,4 @@
-use crate::{Nat, VarRc, exp, module, top, typ, var};
+use crate::{Nat, exp, module, top, typ, var};
 
 module!(
     pub struct Sum {
