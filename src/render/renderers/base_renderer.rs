@@ -2,15 +2,16 @@ use crate::{Exp, Render, Typ, Var};
 use derive_getters::Getters;
 use derive_more::{From, Into};
 use derive_new::new;
+use std::borrow::Cow;
 
 #[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct PlainRenderer {
+pub struct BaseRenderer {
     /// The name of the [`Typ::Top`]
     #[new(into)]
-    top: String,
+    top: Cow<'static, str>,
 }
 
-impl PlainRenderer {
+impl BaseRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
         let name = &var.nym().short.en.singular;
         if with_type {
@@ -23,7 +24,7 @@ impl PlainRenderer {
 
     pub fn render_typ_inner(&self, typ: &Typ) -> String {
         match typ {
-            Typ::Top => self.top.clone(),
+            Typ::Top => self.top.clone().into_owned(),
             Typ::One(exp) => self.render_exp_inner(exp, false, false),
             Typ::Fun(var, typ) => {
                 format!("{var} -> {typ}", var = self.render_var_inner(var, false, true, true), typ = self.render_typ_inner(typ))
@@ -49,9 +50,15 @@ impl PlainRenderer {
             }
         }
     }
+
+    pub fn idea() -> BaseRenderer {
+        Self {
+            top: "idea".into(),
+        }
+    }
 }
 
-impl Render for PlainRenderer {
+impl Render for BaseRenderer {
     fn render_var(&self, var: &Var) -> Option<String> {
         Some(self.render_var_inner(var, true, true, false))
     }
@@ -65,10 +72,10 @@ impl Render for PlainRenderer {
     }
 }
 
-impl Default for PlainRenderer {
+impl Default for BaseRenderer {
     fn default() -> Self {
         Self {
-            top: "top".to_string(),
+            top: "top".into(),
         }
     }
 }

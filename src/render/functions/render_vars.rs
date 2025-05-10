@@ -1,6 +1,6 @@
-use crate::{Render, Var};
+use crate::{Render, Renderer, Var};
 
-pub fn render_vars<VarRef: AsRef<Var>>(vars: impl IntoIterator<Item = VarRef>, renderers: &[Box<dyn Render>]) -> impl Iterator<Item = impl Iterator<Item = Option<String>>> {
+pub fn render_vars<VarRef: AsRef<Var>>(vars: impl IntoIterator<Item = VarRef>, renderers: &[Renderer]) -> impl Iterator<Item = impl Iterator<Item = Option<String>>> {
     vars.into_iter().map(|var| {
         renderers
             .iter()

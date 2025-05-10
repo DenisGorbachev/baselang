@@ -77,7 +77,7 @@ impl Module for Nat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::{BaseRenderer, must_print};
 
-    must_print!(Nat, PlainRenderer, "nat/prints/plain.base");
+    must_print!(Nat, BaseRenderer, "nat/prints/plain.base");
 }

@@ -56,7 +56,7 @@ impl Module for Bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::{BaseRenderer, must_print};
 
-    must_print!(Bool, PlainRenderer, "bool/prints/plain.base");
+    must_print!(Bool, BaseRenderer, "bool/prints/plain.base");
 }

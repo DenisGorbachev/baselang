@@ -28,13 +28,13 @@ impl Measure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, Prelude, assert_eq_prints};
+    use crate::{BaseRenderer, Prelude, assert_eq_prints};
 
     #[test]
     fn must_print() {
         let prelude = Prelude::new();
         let measure = Measure::new(&prelude.rat);
-        let renderer = PlainRenderer::default();
+        let renderer = BaseRenderer::default();
         let prints = include_str!("measure/prints/plain.base");
         assert_eq_prints(&measure, &renderer, prints);
     }

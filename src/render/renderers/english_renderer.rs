@@ -105,6 +105,10 @@ impl EnglishRenderer {
 
     pub const VOWELS: [char; 5] = ['a', 'e', 'u', 'o', 'i'];
 
+    pub fn short() -> Self {
+        Self::default()
+    }
+
     pub fn long() -> Self {
         Self {
             form: Form::Long,

@@ -56,7 +56,7 @@ impl Module for List {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::{BaseRenderer, must_print};
 
-    must_print!(List, PlainRenderer, "list/prints/plain.base");
+    must_print!(List, BaseRenderer, "list/prints/plain.base");
 }

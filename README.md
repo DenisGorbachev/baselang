@@ -68,7 +68,7 @@ Options:
 
 ## Additional binaries
 
-* `print_prelude`
+* `render_prelude`
 
 ## Gratitude
 
