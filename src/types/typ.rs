@@ -1,6 +1,6 @@
-use crate::Sol;
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
+use Exp::*;
 use std::rc::Rc;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
@@ -28,6 +28,8 @@ impl Typ {
 
     #[inline(always)]
     pub fn one(exp: impl Into<Exp>) -> Self {
+        // TODO: validate that Exp contains only vars that are either constructors or bound variables (e.g. reject a case where `n : nat` is created with the intention of being a bound var, but not added to a fun type)
+        // TODO: This is related to a TODO in Self::substitute
         One(exp.into())
     }
 
@@ -46,6 +48,7 @@ impl Typ {
                 // TODO: I think this case should not be possible (in the introduction position, a single var must be referenced at most once)
                 // TODO: We can enforce it by changing the `Typ::fun` constructor to take a (nym, typ) instead of (var) and create the var within the constructor itself
                 // TODO: It might be necessary to also change the arg `typ` to a closure `impl FnOnce(&VarRc) -> Typ`, so that we could use the newly created var to construct a typ
+                // TODO: This is related to a TODO in Self::one
                 if Rc::ptr_eq(fun_var, var) {
                     // If it's the same variable, it shadows the outer one, no substitution needed
                     Fun(fun_var.clone(), typ_box.clone())

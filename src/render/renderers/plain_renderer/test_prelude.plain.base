@@ -1,0 +1,3 @@
+if type is idea
+and element is type
+then cons(type, element) is list(type)
