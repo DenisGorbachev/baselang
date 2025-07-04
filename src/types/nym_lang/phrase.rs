@@ -24,11 +24,11 @@ pub struct Phrase {
 }
 
 impl Phrase {
-    pub fn to_canonical(&self) -> Cow<str> {
+    pub fn to_canonical(&self) -> Cow<'_, str> {
         Borrowed(&self.canonical)
     }
 
-    pub fn to_capitalized(&self) -> Cow<str> {
+    pub fn to_capitalized(&self) -> Cow<'_, str> {
         use Capitalized::*;
         match &self.capitalized {
             FromCanonical => Owned(Capitalized::from_canonical(&self.canonical)),
