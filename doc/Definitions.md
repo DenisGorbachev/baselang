@@ -1,5 +1,37 @@
 # Definitions
 
+## Character
+
+Any printable non-whitespace Unicode character.
+
+Examples:
+
+* `a`
+* `å`
+* `β`
+
+Counter-examples:
+
+* Space character
+* Tab character
+* Linefeed character
+
+## Space
+
+The " " [character](#character) (U+0020).
+
+## Word
+
+A non-empty list of [characters](#character) without [spaces](#space).
+
+## Expression
+
+A non-empty list of [words](#word).
+
+Notes:
+
+* When rendered, the words are separated by spaces.
+
 ## Earlier variable
 
 Variable `A` is said to be "earlier" than `B` if it is defined at the same level but before `B`.
