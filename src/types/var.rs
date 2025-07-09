@@ -44,6 +44,11 @@ impl Var {
     pub fn set_nym(&mut self, nym: impl Into<Nym>) {
         self.nym = nym.into()
     }
+
+    /// Returns `true` if the current var is a type family that is total in every arg except the last, and also unique in the last arg
+    pub fn is_function(&self) -> bool {
+        todo!()
+    }
 }
 
 pub trait ToVarRc {
