@@ -81,16 +81,6 @@ impl Of<Exp> for VarRc {
 }
 
 #[macro_export]
-macro_rules! vrc {
-    ($name: expr) => {
-        $crate::Var::new_top_rc($name)
-    };
-    ($name: expr, $typ: expr) => {
-        $crate::Var::new_rc($name, $typ)
-    };
-}
-
-#[macro_export]
 macro_rules! var {
     ($name:ident) => {
         let $name = $crate::Var::new_top_rc(stringify!($name));
@@ -100,5 +90,16 @@ macro_rules! var {
     };
     ($name: ident: $typ: expr; $nym: expr) => {
         let $name = $crate::Var::new_rc($nym, $typ);
+    };
+}
+
+#[macro_export]
+#[deprecated(note = "Use var! with $nym instead")]
+macro_rules! vrc {
+    ($name: expr) => {
+        $crate::Var::new_top_rc($name)
+    };
+    ($name: expr, $typ: expr) => {
+        $crate::Var::new_rc($name, $typ)
     };
 }
