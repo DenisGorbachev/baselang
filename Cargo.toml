@@ -2,6 +2,7 @@
 name = "baselang"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85.0"
 description = "Baselang is a language for describing how things work."
 homepage = "https://github.com/DenisGorbachev/baselang"
 repository = "https://github.com/DenisGorbachev/baselang"
@@ -10,6 +11,7 @@ keywords = []
 categories = []
 
 [package.metadata.details]
+title = "Baselang"
 tagline = ""
 summary = ""
 announcement = ""

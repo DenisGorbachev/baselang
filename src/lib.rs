@@ -3,7 +3,7 @@ Baselang is a language for describing how things work.
 
 This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that's both precise and expressive.
 
-## Core Concepts
+# Core Concepts
 
 - **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`],
   or function types [`Fun`].
@@ -12,11 +12,12 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 - **Modules**: Collections of related variables, like [`Bool`], [`List`], and [`Nat`].
 - **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
-## Features
+# Features
 
 - Static type checking at compile time and runtime
 - Composable modules that model foundational concepts
 - Macros for concise expression construction
+
 */
 
 mod types;
