@@ -1,0 +1,22 @@
+Asset : Type
+
+A = Asset
+
+Supply = #newtype(Nat)
+
+CurrentSupply
+  (a : Asset)
+  (s : Supply)
+  : Type
+
+EquivalenceRelation (t : Type) : Type
+
+EquivalenceRelation.New
+  (t : Type)
+  (rel : t -> t -> Type)
+  (_ : Reflexive rel)
+  (_ : Symmetric rel)
+  (_ : Transitive rel)
+  : EquivalenceRelation t
+
+EqRel = EquivalenceRelation

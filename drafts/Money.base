@@ -1,0 +1,37 @@
+// A module that imports this module may pass its own types (use top-level vars as args)
+
+Balance : Type
+
+#import(nat.base, [Nat, Zero, Next, Plus], [(Nat, Balance)])
+#use(Balance.*)
+
+Account : Type
+
+State : Type
+State.Initial : State
+State.Mint : Balance -> Account -> State -> State
+State.Burn : Balance -> Account -> State -> State
+State.Transfer : Balance -> (from : Account) -> (to : Account) -> State -> State
+
+#use(State.*)
+
+Total : Balance -> State -> Type
+Total.Initial : Total Zero Initial
+Total.Mint
+  (total_balance_prev : Balance)
+  (total_balance_next : Balance)
+  (account_balance_delta : Balance)
+  (account : Account)
+  (state_prev : State)
+  (_ : Plus account_balance_delta total_balance_prev total_balance_next)
+  (_ : Total total_balance_prev state_prev)
+  state_next = state_prev >> State.Mint account_balance_delta account
+  : Total balance_next state_next
+// TODO: Add Total axioms
+
+BalanceOf (a : Account) (b : Balance) (s : State) : Type
+BalanceOf.Initial (a : Account) : BalanceOf a Zero Initial
+// TODO: Define the BalanceOf constructors
+// I'm finding it hard to define the BalanceOf relation because I'm not used to relational programming
+// I actually don't need to define this relation right now, only the constructors of State
+// It's quite hard to switch from imperative to relational thinking
