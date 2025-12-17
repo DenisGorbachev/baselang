@@ -1,0 +1,19 @@
+Atom : Type
+
+Gold : Atom
+
+Coords : Type
+
+Coords.New x y z : Coords
+  x : Int
+  y : Int
+  z : Int
+
+// What basis to choose for the whole world?
+// Options: 1) Center of Earth 2) Center of Sun
+
+// Counterfeiting is adding more atoms of another metal to an object that represents "gold"
+
+State : Type
+
+// I want to describe an operation that depends on the pre-existing gold ore, but if State is built from the static constructors, then there must be an operation that forms the gold ore
