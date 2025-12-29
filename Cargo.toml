@@ -9,6 +9,20 @@ repository = "https://github.com/DenisGorbachev/baselang"
 readme = "README.md"
 keywords = []
 categories = []
+exclude = [
+    ".*",
+    "*.local.*",
+    "README.ts",
+    "AGENTS*.md",
+    "CLAUDE*.md",
+    "deno.json",
+    "commitlint.config.mjs",
+    "lefthook.yml",
+    "mise.toml",
+    "rumdl.toml",
+    "rustfmt.toml",
+    "yolobox"
+]
 
 [package.metadata.details]
 title = "Baselang"

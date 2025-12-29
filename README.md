@@ -4,39 +4,39 @@
 
 # Baselang
 
+<!-- crate documentation start -->
 Baselang is a language for describing how things work.
 
-This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that’s both precise and expressive.
+This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that's both precise and expressive.
 
 ## Core Concepts
 
-* **Types**: Represented by [`Typ`][__link0], which can be top-level types [`Top`][__link1], expression types [`One`][__link2],
-  or function types [`Fun`][__link3].
-* **Expressions**: Represented by [`Exp`][__link4], which can be variables [`Sol`][__link5] or applications [`App`][__link6].
-* **Variables**: Represented by [`Var`][__link7], which have names and types.
-* **Modules**: Collections of related variables, like [`Bool`][__link8], [`List`][__link9], and [`Nat`][__link10].
-* **Type Checking**: Enforced at construction time to ensure type-safety across the language.
+- **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`],
+  or function types [`Fun`].
+- **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
+- **Variables**: Represented by [`Var`], which have names and types.
+- **Modules**: Collections of related variables, like [`Bool`], [`List`], and [`Nat`].
+- **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
 ## Features
 
-* Static type checking at compile time and runtime
-* Composable modules that model foundational concepts
-* Macros for concise expression construction
+- Static type checking at compile time and runtime
+- Composable modules that model foundational concepts
+- Macros for concise expression construction
 
-  <!-- markdownlint-disable-next-line MD053 -->
-   [__cargo_doc2readme_dependencies_info]: ggGkYW0BYXSEGwRMRGbH1AbAG78ahRChZMnDG7NOmnrbzMhqG4hAmpcrnsxRYXKEG29pCeGOVAnzG8FpvBLlJDbjG13n1NM05eVxG81d9xy7VbDYYWSLgmNBcHD2gmRCb29s9oJjRXhw9oJjRnVu9oJkTGlzdPaCY05hdPaCY09uZfaCY1NvbPaCY1RvcPaCY1R5cPaCY1ZhcvY
+[`App`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.App
+[`Bool`]: https://docs.rs/baselang/latest/baselang/struct.Bool.html
+[`Exp`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html
+[`Fun`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Fun
+[`List`]: https://docs.rs/baselang/latest/baselang/struct.List.html
+[`Nat`]: https://docs.rs/baselang/latest/baselang/struct.Nat.html
+[`One`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.One
+[`Sol`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.Sol
+[`Top`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Top
+[`Typ`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html
+[`Var`]: https://docs.rs/baselang/latest/baselang/struct.Var.html
 
- [__link0]: https://crates.io/crates/Typ
- [__link1]: https://crates.io/crates/Top
- [__link10]: https://crates.io/crates/Nat
- [__link2]: https://crates.io/crates/One
- [__link3]: https://crates.io/crates/Fun
- [__link4]: https://crates.io/crates/Exp
- [__link5]: https://crates.io/crates/Sol
- [__link6]: https://crates.io/crates/App
- [__link7]: https://crates.io/crates/Var
- [__link8]: https://crates.io/crates/Bool
- [__link9]: https://crates.io/crates/List
+<!-- crate documentation end -->
 
 ## Installation
 
@@ -70,7 +70,7 @@ Options:
 
 ## Additional binaries
 
-* `render_prelude`
+- `render_prelude`
 
 ## Gratitude
 
