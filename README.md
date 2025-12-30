@@ -4,6 +4,8 @@
 
 # Baselang
 
+[![Build](https://github.com/DenisGorbachev/baselang/actions/workflows/ci.yml/badge.svg)](https://github.com/DenisGorbachev/baselang)
+
 <!-- crate documentation start -->
 Baselang is a language for describing how things work.
 

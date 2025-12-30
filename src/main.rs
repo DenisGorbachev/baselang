@@ -1,8 +1,11 @@
-use baselang::{Cli, Outcome};
+use baselang::Cli;
 use clap::Parser;
+use errgonomic::exit_result;
+use std::process::ExitCode;
 
 #[tokio::main]
-async fn main() -> Outcome {
+async fn main() -> ExitCode {
     let args = Cli::parse();
-    args.run().await
+    let result = args.run().await;
+    exit_result(result)
 }

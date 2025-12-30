@@ -1,7 +1,3 @@
-mod outcome;
-
-pub use outcome::*;
-
 mod exp;
 
 pub use exp::*;
