@@ -1463,13 +1463,13 @@ mod tests {
 
 ```toml
 [package]
-name = "rust-private-lib-template"
+name = "baselang"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85.0"
-description = "A template for creating Rust private repositories."
-homepage = "https://github.com/DenisGorbachev/rust-private-template"
-repository = "https://github.com/DenisGorbachev/rust-private-template"
+description = "Baselang is a language for describing how things work."
+homepage = "https://github.com/DenisGorbachev/baselang"
+repository = "https://github.com/DenisGorbachev/baselang"
 readme = "README.md"
 keywords = []
 categories = []
@@ -1491,39 +1491,102 @@ exclude = [
 ]
 
 [package.metadata.details]
-title = "Rust private template"
+title = "Baselang"
 tagline = ""
 summary = ""
 announcement = ""
-readme = { generate = false }
+readme = { }
 
 [dependencies]
+clap = { version = "4.5.11", features = ["derive"] }
+# generic dependencies
 derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive-new = "0.7.0"
-derive_more = { version = "2.0.1", features = ["full"] }
+derive_more = { version = "2.1.1", features = ["full"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-fmt-derive = "0.1.2"
+itertools = { version = "0.14.0" }
+pretty_assertions = "1.4.1"
 standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
-strum = { version = "0.27.1", features = ["derive"] }
-stub-macro = { version = "0.1.3" }
+strum = { version = "0.27.2", features = ["derive"] }
+stub-macro = { version = "0.2.1" }
 subtype = { git = "https://github.com/DenisGorbachev/subtype" }
+thiserror = "2.0.17"
+tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [package.metadata.cargo-machete]
-ignored = [
-    "derive-getters",
-    "derive-new",
-    "derive_more",
-    "fmt-derive",
-    "errgonomic",
-    "standard-traits",
-    "strum",
-    "stub-macro",
-    "subtype"
-]
+ignored = ["stub-macro", "standard-traits", "helpful", "subtype"]
+```
+
+### src/main.rs
+
+```rust
+use baselang::Cli;
+use clap::Parser;
+use errgonomic::exit_result;
+use std::process::ExitCode;
+
+#[tokio::main]
+async fn main() -> ExitCode {
+    let args = Cli::parse();
+    let result = args.run().await;
+    exit_result(result)
+}
 ```
 
 ### src/lib.rs
 
 ```rust
-//! This is a module-level comment for a Rust lib
+/*!
+Baselang is a language for describing how things work.
+
+This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that's both precise and expressive.
+
+# Core Concepts
+
+* **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`],
+  or function types [`Fun`].
+* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
+* **Variables**: Represented by [`Var`], which have names and types.
+* **Modules**: Collections of related variables, like [`Bool`], [`List`], and [`Nat`].
+* **Type Checking**: Enforced at construction time to ensure type-safety across the language.
+
+# Features
+
+* Static type checking at compile time and runtime
+* Composable modules that model foundational concepts
+* Macros for concise expression construction
+
+*/
+
+mod types;
+
+pub use types::*;
+
+mod modules;
+
+pub use modules::*;
+
+mod errors;
+
+pub use errors::*;
+
+mod traits;
+
+pub use traits::*;
+
+mod render;
+
+pub use render::*;
+
+#[cfg(test)]
+mod tests;
+
+#[cfg(test)]
+pub use tests::*;
+
+mod utils;
+
+pub use utils::*;
+
+mod macros;
 ```
