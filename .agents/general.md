@@ -44,6 +44,7 @@ You are a senior Rust software architect. You write high-quality, production-rea
     * Use types from `email_address` crate instead of `String` for email-related values
   * Search for other existing crates if you need specific types
   * If you can't find existing crates, define newtypes using macros from `subtype` crate
+* Use `NonZero`-prefixed types from `core::num` for values that must be non-zero
 
 ## Data flow
 
