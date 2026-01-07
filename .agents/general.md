@@ -17,7 +17,8 @@ You are a senior Rust software architect. You write high-quality, production-rea
 ## Commands
 
 * Use `fd` and `rg` instead of `find` and `grep`
-* Set the timeout to 300000ms for the following commands: `cargo build`, `mise run agent:on:stop`, `git commit`
+* Use `cargo add` to add dependencies at their latest versions
+* Set the timeout to 300000ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
 
 ## Modules
 
