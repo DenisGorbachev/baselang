@@ -52,10 +52,6 @@ You are a senior Rust software architect. You write high-quality, production-rea
 * Don't hardcode the values (accept arguments instead)
 * Use `let` instead of `const`
 
-## Error handling
-
-* Never convert a `Result` into an `Option`, always propagate the error up the call stack
-
 ## Struct derives
 
 * Derive `new` from `derive_new` crate for types that need `fn new`
