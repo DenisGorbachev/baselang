@@ -137,6 +137,10 @@ repomix \
     $dir
 """
 
+[tasks."agent:docs:list"]
+run = "[ -d .agents/extra ] && find .agents/extra -type f -print || true"
+quiet = true
+
 [tasks."agent:on:stop"]
 depends = ["fix", "agent:test"]
 
