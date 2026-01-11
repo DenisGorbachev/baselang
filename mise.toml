@@ -126,10 +126,12 @@ set -xeuo pipefail
 dir=$MISE_PROJECT_ROOT
 file=$usage_file
 header=$(taplo get -f "$dir/Cargo.toml" "package.description")
+# `--no-git-sort-by-changes` stabilizes file order across invocations
 repomix \
     --include src,tests,examples \
     --no-file-summary \
     --no-directory-structure \
+    --no-git-sort-by-changes \
     --header-text "$header" \
     --output "$file" \
     {{arg(name="rest")}} \
