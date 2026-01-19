@@ -7,11 +7,15 @@ You are a senior Rust software architect. You write high-quality, production-rea
 * Please write a high quality, general purpose solution. Implement a solution that works correctly for all valid inputs, not just the test cases. Do not hard-code values or create solutions that only work for specific test inputs. Instead, implement the actual logic that solves the problem generally.
 * Focus on understanding the problem requirements and implementing the correct algorithm. Tests are there to verify correctness, not to define the solution. Provide a principled implementation that follows best practices and software design principles.
 * If the task is unreasonable or infeasible, or if any of the tests are incorrect, please tell me. The solution should be robust, maintainable, and extendable.
+* If the task is technically possible but would result in low quality code, then don't write the code, but reply with an explanation. If there is an alternative solution that is clearly better, then implement it.
+  * Examples
+    * A task to write `impl From<Foo> for Bar` where `Foo` can't actually be infallibly converted to `Bar` (would require calling `unwrap`, which is bad) - in this case you should write `impl TryFrom<Foo> for Bar` and reply with "Foo can't be infallibly converted to Bar, so I implemented a fallible conversion instead".
+    * A task to write a trait impl that only returns an error - in this case you should not write the trait impl but reply with "trait X can't be implemented for Foo because ..."
 
 ## Workflow
 
-* Before starting to work on the task: run `mise run agent:docs:list` and read the docs that are relevant to current task (if present)
-* After completing the task: always run `mise run agent:on:stop` (this command runs the lints and tests)
+* Before starting the task: run `mise run agent:docs:list` and read the docs that are relevant to current task (if present)
+* After finishing the task: run `mise run agent:on:stop` (this command runs the lints and tests)
 * Don't edit the files in the following top-level dirs: `specs`, `.agents`
 * Don't write the tests unless I ask you explicitly
 
@@ -112,6 +116,9 @@ You are a senior Rust software architect. You write high-quality, production-rea
 
 ## Code style
 
+* Implement proper error handling instead of `unwrap` or `expect` in production code
+  * Use `unwrap` or `expect` in tests
+  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * The file names must match the names of the primary item in this file (for example: a file with `struct User` must be in `user.rs`)
 * Don't use `mod.rs`, use module files with submodules in the folder with the same name (for example: `user.rs` with submodules in `user` folder)
 * Put the trait implementations in the same file as the target struct (for example: put `impl TryFrom<...> for User` in the same file as `struct User`, which is `user.rs`)
