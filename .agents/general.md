@@ -42,18 +42,18 @@ You are a senior Rust software architect. You write high-quality, production-rea
 
 ## Types
 
+* Always use the most specific types (enforce semantic difference through syntactic difference):
+  * Use types from existing crates
+    * Use types from `url` crate instead of `String` for URL-related values
+    * Use types from `time` crate instead of `String` or `u64` for datetime-related values
+    * Use types from `phonenumber` crate instead of `String` for phone-related values
+    * Use types from `email_address` crate instead of `String` for email-related values
+    * Use types from `core::num` module that are prefixed with `NonZero` for values that must be non-zero
+  * Search for other existing crates if you need specific types
+  * If you can't find existing crates, define newtypes using macros from `subtype` crate
 * Every `struct`, `enum`, `union` must be in a separate file (except for error types that implement `Error`)
   * Error types that implement `Error` must be in the same files as the functions that return them
 * Prefer attaching the types as child modules to src/types.rs
-* Always use the most specific types
-  * Use types from existing crates
-    * Use types from `url` crate instead of `String` for URL-related values
-    * Use types from `time` crate instead of `String` for datetime-related values
-    * Use types from `phonenumber` crate instead of `String` for phone-related values
-    * Use types from `email_address` crate instead of `String` for email-related values
-  * Search for other existing crates if you need specific types
-  * If you can't find existing crates, define newtypes using macros from `subtype` crate
-* Use `NonZero`-prefixed types from `core::num` for values that must be non-zero
 
 ## Data flow
 
@@ -105,6 +105,10 @@ You are a senior Rust software architect. You write high-quality, production-rea
 ## Setters
 
 * Use setters that take `&mut self` instead of setters that take `self` and return `Self` (because passing a `foo: &mut Foo` is better than passing `foo: Foo` and returning `Foo` through the call stack)
+
+## Constructors
+
+* If the type constructor doesn't have side effects, then use the name `new`, else use the name `create`
 
 ## Newtypes
 

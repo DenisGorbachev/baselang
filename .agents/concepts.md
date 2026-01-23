@@ -4,13 +4,16 @@
 
 A structure with the following fields:
 
-* Name (required [name](#name) value)
-* Definition (required [definition](#definition) value)
-* Constructors (optional list of [constructor](#constructor) values that contains all possible constructors of a concept)
-* Examples (optional [listmap](#listmap) of [example](#example) values)
-* Requirements (optional [listmap](#listmap) of [requirement](#requirement) values)
-* Preferences (optional [listmap](#listmap) of [preference](#preference) values)
-* Notes (optional [listmap](#listmap) of [note](#note) values)
+* Name (required [name](#name))
+* Definition (required [definition](#definition))
+* Synonyms (optional list of strings)
+* Constructors (optional list of [constructors](#constructor) that contains all possible constructors of a concept)
+* Examples (optional [listmap](#listmap) of [examples](#example))
+* Requirements (optional [listmap](#listmap) of [requirements](#requirement))
+* Preferences (optional [listmap](#listmap) of [preferences](#preference))
+* Propositions (optional [listmap](#listmap) of [propositions](#proposition))
+* Methods (optional map from method names to [method specifications](#method-specification))
+* Notes (optional [listmap](#listmap) of [notes](#note))
 
 Examples:
 
@@ -27,20 +30,21 @@ Preferences:
 
 Notes:
 
-* A list of constuctors is exhaustive, while a list of examples is not exhaustive.
+* A list of constructors is exhaustive, while a list of examples is not exhaustive.
 
 ## Definition
 
-A single sentence that defines a concept.
+A string value that defines a concept.
 
-Requirements:
+Preferences:
 
-* Must end with a period.
+* Should end with a period.
 
-Non-requirements:
+Notes:
 
 * May start with an article ("A", "An", "The").
 * May start with the name of the concept being defined.
+* May be a multiline string.
 
 ## Constructor
 
@@ -48,28 +52,47 @@ A string that represents a constructor of a type.
 
 ## Example
 
-A [stringtree](#stringtree) that [represents](#representation) an instance of a [concept](#concept).
+A [stringtree](#stringtree) that [represents](#representation) an instance of a parent object.
 
 ## Requirement
 
-A [stringtree](#stringtree) that [represents](#representation) a boolean test of an instance of a [concept](#concept).
+A [stringtree](#stringtree) that [represents](#representation) a boolean test of an instance of a parent object.
 
 Notes:
 
-* If an input doesn't pass the requirement test, then it is not an instance of a concept.
+* If an input doesn't pass the requirement test, then it is not an instance of a parent object.
 
 ## Preference
 
-A [stringtree](#stringtree) that [represents](#representation) a less-than-or-equal relation on a pair of instances of a [concept](#concept).
+A [stringtree](#stringtree) that [represents](#representation) a less-than-or-equal relation on a pair of instances of a parent object.
 
 Notes:
 
 * Preferences must be sorted by importance (most important first).
 * Preferences should be used to make a choice between two inputs that pass the [requirements](#requirement).
 
+## Proposition
+
+A [stringtree](#stringtree) that [represents](#representation) a proposition about an instance of a parent object.
+
+## Method specification
+
+A structure with the following fields:
+
+* Requirements (optional [listmap](#listmap) of [requirements](#requirement))
+* Preferences (optional [listmap](#listmap) of [preferences](#preference))
+* Propositions (optional [listmap](#listmap) of [propositions](#proposition))
+* Notes (optional [listmap](#listmap) of [notes](#note))
+
+Methods:
+
+* Render as Markdown:
+  * Requirements:
+    * Must output a list where the top-level items correspond to the structure fields.
+
 ## Note
 
-A [stringtree](#stringtree) that [represents](#representation) additional information about a [concept](#concept).
+A [stringtree](#stringtree) that [represents](#representation) additional information about a parent object.
 
 ## Concepts document
 
@@ -79,7 +102,10 @@ A Markdown document that renders a list of [concepts](#concept) with the followi
 * For each concept:
   * Name: heading level 2.
   * Definition: paragraph after heading.
-  * Other fields: paragraph that is exactly equal to the field name with ":" in the end, followed by an unordered list of items for each element in the field value.
+  * Other fields:
+    * Paragraph that is exactly equal to the field name with ":" in the end.
+    * Field value:
+      * If the field type has a "Render as Markdown" method, then call it, otherwise render the most direct representation (e.g. render strings directly).
 
 Requirements:
 
@@ -98,6 +124,13 @@ A listmap of type A is one of:
 * A list of values of type A.
 * A map from [names](#name) to values of type A.
 
+Methods:
+
+* Render as Markdown:
+  * Requirements:
+    * If the value is a list: must output a Markdown list.
+    * If the value is a map: must output a Markdown list where each item is rendered as `{key}: {value}`.
+
 Notes:
 
 * If a listmap is a map, its iteration order is the insertion order of keys as they appear in the source text.
@@ -108,6 +141,12 @@ A stringtree is a structure with the following fields:
 
 * Text (string)
 * Children (a list of stringtrees)
+
+Methods:
+
+* Render as Markdown:
+  * Requirements:
+    * Must output a multi-level Markdown list.
 
 ## Representation
 
@@ -120,6 +159,8 @@ Notes:
 ## Association test
 
 A function from two strings to a boolean.
+
+Synonyms: is-test.
 
 Examples:
 
@@ -135,10 +176,6 @@ Notes:
 * May represent a subtype-supertype relation ("function" is a subtype of "relation").
 * May represent a term-predicate relation ("leaf" is "green").
 * System prompt for association testing by LLMs: "Evaluate whether the statement in the user message is true or false in general".
-
-Synonyms:
-
-* is-test
 
 ## Agent
 
