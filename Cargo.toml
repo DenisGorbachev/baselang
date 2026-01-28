@@ -40,7 +40,7 @@ derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive-new = "0.7.0"
 derive_more = { version = "2.1.1", features = ["full"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-itertools = { version = "0.14.0" }
+itertools = "0.14.0"
 pretty_assertions = "1.4.1"
 standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.27.2", features = ["derive"] }
@@ -50,4 +50,9 @@ thiserror = "2.0.17"
 tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [package.metadata.cargo-machete]
-ignored = ["stub-macro", "standard-traits", "helpful", "subtype"]
+ignored = [
+    "stub-macro",
+    "standard-traits",
+    "helpful",
+    "subtype"
+]

@@ -98,7 +98,7 @@ A [stringtree](#stringtree) that [represents](#representation) additional inform
 
 A Markdown document that renders a list of [concepts](#concept) with the following elements:
 
-* Heading level 1: "Concepts"
+* Heading level 1: document name that starts with "Concepts"
 * For each concept:
   * Name: heading level 2.
   * Definition: paragraph after heading.

@@ -234,6 +234,31 @@ You are a senior Rust software architect. You write high-quality, production-rea
     /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec, which is bad for performance
     pub fn bar(inputs: impl IntoIterator<Item = String>) {}
     ```
+* Prefer `.map()` instead of `match` when you need to modify the value in the `Option` or `Result`. For example:
+  * Good:
+    ```rust
+    impl core::str::FromStr for UserId {
+        type Err = core::num::ParseIntError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            s.parse::<u64>().map(Self::new)
+        }
+    }
+    ```
+  * Bad:
+  ```rust
+  impl core::str::FromStr for UserId {
+      type Err = core::num::ParseIntError;
+  
+      fn from_str(s: &str) -> Result<Self, Self::Err> {
+          // This is bad because it uses more code to express the same idea
+          match s.parse::<u64>() {
+              Ok(value) => Ok(Self::new(value)),
+              Err(error) => Err(error),
+          }
+      }
+  }
+  ```
 * Write `macro_rules!` macros to reduce boilerplate
 * If you see similar code in different places, write a macro and replace the similar code with a macro call
 
