@@ -20,6 +20,10 @@ Examples:
 * A definition of a Rust package.
 * A definition of a Rust function.
 
+Requirements:
+
+* Synonyms must contain only exact semantic synonyms, not just similar words.
+
 Preferences:
 
 * Should be specific.
@@ -147,6 +151,13 @@ Methods:
 * Render as Markdown:
   * Requirements:
     * Must output a multi-level Markdown list.
+      * The "Text" field must be rendered as the top-level list item.
+      * The "Children" field must be rendered as child list items.
+
+Notes:
+
+* In Markdown, a stringtree is just a nested list.
+* In this document, every "Notes", "Requirements", "Preferences" contain examples of stringtrees as nested lists.
 
 ## Representation
 

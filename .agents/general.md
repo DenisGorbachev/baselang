@@ -18,6 +18,12 @@ You are a senior Rust software architect. You write high-quality, production-rea
 * After finishing the task: run `mise run agent:on:stop` (this command runs the lints and tests)
 * Don't edit the files in the following top-level dirs: `specs`, `.agents`
 * Don't write the tests unless I ask you explicitly
+* If you notice unexpected edits, keep them
+
+## Review workflow
+
+* Output a numbered list of issues (I will reference the issues by number in my answer)
+* If there are no issues, then start your reply with "No issues found"
 
 ## Commands
 
