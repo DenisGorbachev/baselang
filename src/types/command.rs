@@ -1,6 +1,7 @@
 use Command::*;
 use clap::Parser;
 use errgonomic::map_err;
+use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(Parser, Clone, Debug)]
@@ -9,7 +10,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub async fn run(self) -> Result<(), CommandRunError> {
+    pub async fn run(self) -> Result<ExitCode, CommandRunError> {
         use CommandRunError::*;
         match self {
             Print(command) => map_err!(command.run().await, PrintCommandRunFailed),

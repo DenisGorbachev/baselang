@@ -1,6 +1,7 @@
 use crate::{Command, CommandRunError};
 use clap::Parser;
 use errgonomic::map_err;
+use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(Parser, Debug)]
@@ -13,7 +14,7 @@ pub struct Cli {
 }
 
 impl Cli {
-    pub async fn run(self) -> Result<(), CliRunError> {
+    pub async fn run(self) -> Result<ExitCode, CliRunError> {
         use CliRunError::*;
         let Self {
             command,

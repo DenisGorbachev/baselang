@@ -18,10 +18,16 @@ You are a senior Rust software architect. You write high-quality, production-rea
 
 ### Workflow
 
-* Before starting the task: run `mise run agent:docs:list` and read the docs that are relevant to current task (if present)
 * After finishing the task: run `mise run agent:on:stop` (this command runs the lints and tests)
+  * `mise run agent:on:stop` may modify `README.md`, `AGENTS.md`, `Cargo.toml` (this is normal, don't mention it)
 * Don't edit the files in the following top-level dirs: `specs`, `.agents`
 * Don't write the tests unless I ask you explicitly
+* If you notice unexpected edits, keep them
+
+### Review workflow
+
+* Output a numbered list of issues (I will reference the issues by number in my answer)
+* If there are no issues, then start your reply with "No issues found"
 
 ### Commands
 
@@ -75,6 +81,10 @@ You are a senior Rust software architect. You write high-quality, production-rea
       * Keyspace name
   * Recommendations:
     * When in doubt, prefer accepting a parameter instead of defining a constant
+
+### Memory usage
+
+* Prefer streaming and iterating (avoid large in-memory `Vec`)
 
 ### Conversions
 
@@ -328,14 +338,11 @@ use futures::StreamExt;
 use std::pin::pin;
 
 /// Converts a [`Result`] into an [`ExitCode`], printing a detailed error trace on failure.
-pub fn exit_result<E: Error>(result: Result<(), E>) -> ExitCode {
-    match result {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(err) => {
-            eprintln_error(&err);
-            ExitCode::FAILURE
-        }
-    }
+pub fn exit_result<E: Error>(result: Result<ExitCode, E>) -> ExitCode {
+    result.unwrap_or_else(|err| {
+        eprintln_error(&err);
+        ExitCode::FAILURE
+    })
 }
 
 /// Converts an [`impl IntoIterator<Item = Result<(), E>>`](IntoIterator) into an [`ExitCode`], printing a detailed error trace on the first failure.
@@ -941,7 +948,7 @@ cfg_if::cfg_if! {
 //! # #[derive(Error, Debug)]
 //! # enum Err {}
 //! #
-//! # fn run() -> Result<(), Err> { Ok(()) }
+//! # fn run() -> Result<ExitCode, Err> { Ok(ExitCode::SUCCESS) }
 //! #
 //! pub fn main() -> ExitCode {
 //!     exit_result(run())
