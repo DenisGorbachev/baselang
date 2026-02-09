@@ -1,7 +1,8 @@
 min_version = "2025.10.11"
 
 [tools]
-rust = "1.89.0"
+# "rust-src" is needed to stabilize trybuild output, which contains extra lines from "rust-src" if it's installed
+rust = { version = "1.89.0", components = "rust-src" }
 node = "22.12.0"
 deno = "1.46.1"
 cargo-binstall = "1.10.15"
