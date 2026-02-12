@@ -64,6 +64,47 @@ Preferences:
 
 * Should not use [optimization hacks](#optimization-hack).
 
+## Constructor of type T
+
+A function whose return type is exactly `T`.
+
+Notes:
+
+* Every constructor is a [producer](#producer-of-type-t)
+
+## Producer of type T
+
+A function whose return type mentions `T`.
+
+Examples:
+
+* `fn foo(a: A, b: B) -> Result<K, M>` is a producer of `Result`, `K`, `M`
+
+## Producing expression of type T
+
+An expression whose return type mentions `T`.
+
+Synonyms: ProdExp.
+
+Examples:
+
+* `UserBuilder::default().name("Alice").build()?` is a ProdExp of `User`
+
+Requirements:
+
+* Must set a value for every field that can be set
+  * Should use the most explicit constructor
+
+Preferences:
+
+* Should rely on `impl Into` to reduce the code size
+  * Examples:
+    * `Article::new`
+      * Constructor: `impl Article { pub fn new(title: impl Into<String>, text: impl Into<String>) -> Self { ... } }`
+      * ProdExp:
+        * Bad: `Article::new("Title".to_string(), "Text".to_string())` (bad because it explicitly converts str to String using to_string)
+        * Good: `Article::new("Title", "Text")` (good because it relies on `impl Into`)
+
 ## Total order on projects
 
 Project A is better than Project B if it has a lower total loss.
@@ -125,6 +166,9 @@ There is a hierarchy of costs and hard constraints. Every host environment impos
 Costs can also be shifted over time. We can accept a one-time setup cost in order to reduce ongoing costs. This is what programming is: we pay the upfront cost of writing software to reduce the recurring cost of executing a process in the future.
 
 A concrete example: a program that reads an entire dataset into memory and processes it all at once may crash if there is not enough memory. For a large enough dataset, this crash is guaranteed. A crash is an extreme form of loss: time is wasted, work may be discarded, and data may be corrupted or left in an inconsistent state. The better design is one that respects constraints—streaming, batching, incremental processing, backpressure, and explicit resource bounds—so the program continues to produce results instead of failing catastrophically.
+
+Some losses are reversible (e.g. a program allocates the memory, then frees it).
+Some losses are irreversible (e.g. time)
 
 ---
 
