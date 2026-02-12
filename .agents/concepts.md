@@ -4,9 +4,9 @@
 
 A structure with the following fields:
 
-* Name (required [name](#name))
-* Definition (required [definition](#definition))
-* Synonyms (optional list of strings)
+* [Name](#name)
+* [Definition](#definition)
+* [Aliases](#aliases)
 * Constructors (optional list of [constructors](#constructor) that contains all possible constructors of a concept)
 * Examples (optional [listmap](#listmap) of [examples](#example))
 * Requirements (optional [listmap](#listmap) of [requirements](#requirement))
@@ -14,6 +14,7 @@ A structure with the following fields:
 * Propositions (optional [listmap](#listmap) of [propositions](#proposition))
 * Methods (optional map from method names to [method specifications](#method-specification))
 * Notes (optional [listmap](#listmap) of [notes](#note))
+* Custom sections (optional [listmap](#listmap) of [listmaps](#listmap) of [notes](#note))
 
 Examples:
 
@@ -49,6 +50,10 @@ Notes:
 * May start with an article ("A", "An", "The").
 * May start with the name of the concept being defined.
 * May be a multiline string.
+
+## Aliases
+
+An optional list of strings that represent alternative names for a concept.
 
 ## Constructor
 
