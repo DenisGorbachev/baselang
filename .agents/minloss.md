@@ -105,6 +105,22 @@ Preferences:
         * Bad: `Article::new("Title".to_string(), "Text".to_string())` (bad because it explicitly converts str to String using to_string)
         * Good: `Article::new("Title", "Text")` (good because it relies on `impl Into`)
 
+## Parameter of a producing expression of type T
+
+A variable that is passed into the [producing expression of type T](#producing-expression-of-type-t).
+
+## Input source
+
+The original location of the data that is held by the input variable (where the program has read it from).
+
+Examples:
+
+* Configuration file
+* HTTP request
+* Program arguments (`argv`)
+* Standard input (`stdin`)
+* Environment (`env`)
+
 ## Total order on projects
 
 Project A is better than Project B if it has a lower total loss.
@@ -112,11 +128,26 @@ Project A is better than Project B if it has a lower total loss.
 The total loss is calculated in the following way:
 
 * Make a list of properties of the population of users.
-  * Make a list of resources that the users possess that are relevant to the program.
+  * Make a list of resources that the users possess that are relevant to the program (see [software resources](#software-resources)).
 
 Notes:
 
 * The order is defined on projects instead of programs because we actually build projects, not programs.
+
+## Software resources
+
+TODO
+
+* Processor:
+  * CPU (speed)
+  * GPU (speed)
+  * Remote server processor (speed)
+* Memory:
+  * RAM (capacity, speed)
+  * GPU Memory (capacity, speed)
+  * Disk (capacity, speed)
+  * Remote server storage (speed)
+* Rate limits on external API
 
 ## Agent
 
@@ -176,4 +207,13 @@ Another important point: don't make up the data.
 
 Examples:
 
-* When parsing a date without timezone: don't assume UTC, return error. 
+* When parsing a date without timezone: don't assume UTC, return error.
+  * Unless the specification explicitly states that this specific date is in UTC timezone.
+
+---
+
+What about the inputs for HTTP requests?
+
+* There is a lot of different inputs
+* The user is highly unlikely to want to modify them
+* If the request is for a particular API, the user would never want to set any extra parameters, headers, cookies.
