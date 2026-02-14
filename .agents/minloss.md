@@ -22,24 +22,50 @@ Examples:
 
 Notes:
 
-* This definition is intentionally narrow.
+* This definition is intentionally broad.
 
-## Product metric
+## Metric
 
-A function from a product to a quantity value.
+A function from an object to a quantity value.
 
 Examples:
 
-* Peak RSS memory usage.
-* Average wall clock time on a specific input for a specific number of samples.
-* Count of options.
+* Peak RSS memory usage of a program.
+* Average wall clock time of running a program on a specific set of inputs for a specific number of iterations.
+* Count of CLI options.
+* Count of lines of code.
 
 Notes:
 
-* The set of applicable metrics depends on product type.
-* The architect should choose the metrics and define a total order on products using these metrics.
-  * Ways to establish a total order:
-    * As a [monomial](#monomial) of metrics with architect-defined powers.
+* The set of metrics depends on object type.
+
+## Project metric
+
+A [metric](#metric) of a [project](#project).
+
+Examples:
+
+* Count of lines of code.
+* Count of tests.
+* Build time.
+
+## Product metric
+
+A [metric](#metric) of a [product](#product).
+
+Examples:
+
+* Peak RSS memory usage of a program.
+* Size on disk for a crate.
+
+## Stat
+
+A structure where every field is a [metric](#metric).
+
+Notes:
+
+* Given an input set of objects and a function from object to stat, it is possible to calculate a Pareto front of objects.
+  * The objects that are inferior to the Pareto front objects should be discarded.
 
 ## Auxiliary file
 
@@ -106,11 +132,18 @@ Synonyms: ProdExp.
 Examples:
 
 * `UserBuilder::default().name("Alice").build()?` is a ProdExp of `User`
+* `Database::new(config)?` is a ProdExp of `Database`
 
 Requirements:
 
-* Must set a value for every field that can be set
-  * Should use the most explicit constructor
+* Must set all [relevant fields](#relevant-field)
+  * Notes:
+    * Should use the most explicit constructor
+    * The config values have a [config struct](#config-struct) type
+* Must not set any [irrelevant fields](#irrelevant-field)
+* Must not use naive types that omit crucial data
+  * Examples:
+    * Must not use `NaiveDateTime` which omits timezone data
 
 Preferences:
 
@@ -122,13 +155,45 @@ Preferences:
         * Bad: `Article::new("Title".to_string(), "Text".to_string())` (bad because it explicitly converts str to String using to_string)
         * Good: `Article::new("Title", "Text")` (good because it relies on `impl Into`)
 
+Notes:
+
+* When parsing a date without timezone: don't assume UTC unless the specification explicitly requires it.
+
 ## Parameter of a producing expression of type T
 
 A variable that is passed into the [producing expression of type T](#producing-expression-of-type-t).
 
-## External-facing fn
+## Relevant field
 
-A Rust fn that calls an [external API](#external-api).
+A field of a struct is relevant for the effect E if the effect E depends on the value of that field.
+
+Examples:
+
+* `/books/update` API call:
+  * `id` query parameter is relevant because it influences the effect of updating the book (determines which book to update).
+  * `Cookie` header is irrelevant because it doesn't influence the effect of updating the book (setting this header has no effect)
+
+## Irrelevant field
+
+A field of a struct that is not [relevant](#relevant-field) for the effect E.
+
+## Config struct
+
+A struct that contains configuration parameters.
+
+Requirements:
+
+* Must have a `Default` impl
+  * If some parameters can't have a default value, then these parameters must not be in the config struct, they must be accepted as required arguments
+* Must implement `Serialize` and `Deserialize` from `serde`
+
+Preferences:
+
+* Should be produced by `figment` crate
+
+## Frontend-facing fn
+
+A Rust fn that calls a [frontend API](#frontend-api).
 
 Preferences:
 
@@ -137,25 +202,34 @@ Preferences:
     * `FileDeleteCommand::run` (the user explicitly types "delete" when invoking this command)
   * Examples of fns that are expected to be reversible:
     * `FileShowCommand::run` (the user does not type any destructive words when invoking this command)
+* If it is irreversible: should be [atomic](#atomic-fn).
 
-## External API
+## Internal fn
 
-An API that the program uses to read the input or write the output.
+A Rust fn defined in the current crate.
+
+## External fn
+
+A Rust fn imported from an external crate.
+
+## Frontend API
+
+An API that the program calls to read the user input or write the user output.
 
 Examples:
 
 * Terminal emulator API
 * Shell API
 * Browser API
-* Filesystem API (can be either external or internal)
+* Filesystem API (can be a frontend API if it is used to read or write user-provided files)
 
-## Internal API
+## Backend API
 
-An API that the program uses to read or write the parts of the state which are not an explicit input or output.
+An API that the program calls to read or write the parts of the state which are not an explicit input or output.
 
 Examples:
 
-* Filesystem API (can be either external or internal)
+* Filesystem API (can be a backend API if it is used to read or write internal state)
 * Database API
 
 ## Reversible fn
@@ -170,6 +244,7 @@ Properties:
 * Some reversible fns call irreversible fns
   * Example:
     * `remove_file_with_backup` that makes a backup of a file before removing it
+* Every read-only fn is reversible because it has no effects
 
 Notes:
 
@@ -178,6 +253,15 @@ Notes:
 ## Irreversible fn
 
 A Rust fn that is not [reversible](#reversible-fn).
+
+## Atomic fn
+
+A Rust fn whose effects are either applied completely or not at all.
+
+Examples:
+
+* A function that wraps the database operations in a transaction.
+* A function that writes to a temp file and then atomically replaces the old file with the new file (on filesystems that support atomic renames).
 
 ## Extended state
 
@@ -195,22 +279,7 @@ Examples:
 * Standard input (`stdin`)
 * Environment (`env`)
 
-## Total order on projects
-
-Project A is better than Project B if it has a lower total loss.
-
-The total loss is calculated in the following way:
-
-* Make a list of properties of the population of users.
-  * Make a list of resources that the users possess that are relevant to the program (see [software resources](#software-resources)).
-
-Notes:
-
-* The order is defined on projects instead of programs because we actually build projects, not programs.
-
 ## Software resources
-
-TODO
 
 * Processor:
   * CPU (speed)
@@ -230,10 +299,30 @@ An entity that is assumed to be working towards a specific goal.
 Notes:
 
 * This definition is intentionally broad.
+* The distinction between "active" and "passive" programs is a false dichotomy: even the operating system can be seen as a passive program that responds to external input from an internal hardware clock.
 
 ## User
 
 An [agent](#agent) that uses an [product](#product) to work towards its goal.
+
+## User time loss expectation
+
+A mathematical expectation of the amount of time that it takes the user to achieve a fixed desirable outcome by using a [product](#product).
+
+Notes:
+
+* If the product is a program: this amount of time includes the execution time of the program itself and also the time it takes to launch it (e.g. type the arguments in a CLI or fill the form in a GUI).
+
+TODO:
+
+* Make this definition more precise.
+  * Notes:
+    * The user loses some time initially because he needs to read the docs, then install and configure the program.
+    * The user saves time because the program can execute certain actions faster (the same actions that would be done by the user manually).
+    * The user saves time because the program prevents undesirable actions which could have been executed by the user (mistakes).
+    * The user saves time because the program prevents undesirable actions which could have been executed by other agents (hacks).
+      * Examples:
+        * An ERC-20 contract prevents other actors from increasing the token supply.
 
 ## Optimization hack
 
@@ -257,11 +346,6 @@ Examples:
 
 Write code to minimize losses.
 
-Kinds of losses:
-
-* External losses incurred by users
-* Internal losses incurred by developers
-
 Types of losses:
 
 * Unavoidable losses (costs).
@@ -284,15 +368,6 @@ A concrete example: a program that reads an entire dataset into memory and proce
 
 Some losses are reversible (e.g. a program allocates the memory, then frees it).
 Some losses are irreversible (e.g. time)
-
----
-
-Another important point: don't make up the data.
-
-Examples:
-
-* When parsing a date without timezone: don't assume UTC, return error.
-  * Unless the specification explicitly states that this specific date is in UTC timezone.
 
 ---
 
