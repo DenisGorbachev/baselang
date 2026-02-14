@@ -162,10 +162,6 @@ Preferences:
 
 * Use setters that take `&mut self` instead of setters that take `self` and return `Self` (because passing a `foo: &mut Foo` is better than passing `foo: Foo` and returning `Foo` through the call stack)
 
-## Constructors
-
-* If the type constructor doesn't have side effects, then use the name `new`, else use the name `create`
-
 ## Newtypes
 
 * The macro calls that begin with `subtype` (for example, `subtype!` and `subtype_string!`) expand to newtypes

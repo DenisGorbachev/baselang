@@ -114,6 +114,16 @@ Examples:
 
 A [constructor](#constructor-of-type-t) whose return type is exactly `T`.
 
+## Most explicit constructor of type T
+
+A [constructor](#constructor-of-type-t) that allows to set more fields than other constructors of the same type.
+
+Requirements:
+
+* If it doesn't produce side effects:
+  * Then: must have a name `new`
+  * Else: must have a name `create`
+
 ## Producing expression of type T
 
 An expression whose return type mentions `T`.
