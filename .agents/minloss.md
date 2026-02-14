@@ -24,6 +24,23 @@ Notes:
 
 * This definition is intentionally narrow.
 
+## Product metric
+
+A function from a product to a quantity value.
+
+Examples:
+
+* Peak RSS memory usage.
+* Average wall clock time on a specific input for a specific number of samples.
+* Count of options.
+
+Notes:
+
+* The set of applicable metrics depends on product type.
+* The architect should choose the metrics and define a total order on products using these metrics.
+  * Ways to establish a total order:
+    * As a [monomial](#monomial) of metrics with architect-defined powers.
+
 ## Auxiliary file
 
 A file with the following properties:
@@ -225,6 +242,16 @@ An optimization that relies on a property that cannot be assumed to hold in the 
 Examples:
 
 * An optimization that relies on an implementation detail in a dependency (this property cannot be assumed to hold in the future because the implementation details are not a part of the public interface and may change without notice).
+
+## Monomial
+
+An algebraic expression which is a multiplication of a set of variables raised to specific powers.
+
+Examples:
+
+* `1` (a monomial where every variable has a power of zero)
+* `a^2`
+* `a * b * c^-1` (a monomial equivalent to `(a * b) / c`)
 
 ---
 
