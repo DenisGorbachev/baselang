@@ -9,6 +9,7 @@ A structure with the following fields:
 * [Aliases](#aliases)
 * [Examples](#examples)
 * [Requirements](#requirements)
+* [Allowances](#allowances)
 * [Preferences](#preferences)
 * [Constructors](#constructors)
 * [Properties](#properties)
@@ -20,45 +21,42 @@ Examples:
 * A definition of a Rust package.
 * A definition of a Rust function.
 
-Preferences:
+## Name
 
-* Should be specific.
-* Should contain periods at the ends of the sentences.
-  * Reasons:
-    * Periods are more common in technical texts than in conversational texts (e.g. reference docs vs forum messages).
-    * Periods provide clear boundary cues.
-
-Notes:
-
-* A list of constructors is exhaustive, while a list of examples is not exhaustive.
+A string that uniquely identifies the item within its scope.
 
 ## Definition
 
-A string value that defines a concept.
+An optional string that defines a concept.
 
 Preferences:
 
 * Should end with a period.
 
-Notes:
+Allowances:
 
 * May start with an article ("A", "An", "The").
 * May start with the name of the concept being defined.
 * May be a multiline string.
 
+Notes:
+
+* Definition is optional because some concepts have obvious definitions that can be omitted.
+  * Examples:
+    * fn main
+    * Cargo.toml
+
 ## Aliases
 
 An optional list of strings that represent alternative names for a concept.
 
-## Constructors
-
-An optional list of [constructors](#constructor) that contains all possible constructors of a concept.
-
-Aliases: "One of"
-
 ## Examples
 
 An optional [listmap](#listmap) of [examples](#example).
+
+Preferences:
+
+* Should be non-exhaustive (if the listmap is exhaustive: move it to "[Constructors](#constructors)").
 
 Notes:
 
@@ -72,9 +70,23 @@ Notes:
 
 An optional [listmap](#listmap) of [requirements](#requirement).
 
+## Allowances
+
+An optional [listmap](#listmap) of [allowances](#allowance).
+
 ## Preferences
 
 An optional [listmap](#listmap) of [preferences](#preference).
+
+## Constructors
+
+An optional list of [constructors](#constructor) that contains all possible constructors of a concept.
+
+Aliases: "One of"
+
+Requirements:
+
+* Must be exhaustive.
 
 ## Properties
 
@@ -88,19 +100,13 @@ An optional [listmap](#listmap) of [notes](#note).
 
 An optional [listmap](#listmap) of [listmaps](#listmap) of [notes](#note).
 
-## Constructor
-
-A string that represents a constructor of a type.
-
-* Constructor corresponds to a constructor in a [dependently-typed language](#dependently-typed-language).
-
 ## Example
 
 A [stringtree](#stringtree) that [represents](#representation) an instance of a parent object.
 
 Notes:
 
-* Example corresponds to a specific instance of a type in a [dependently-typed language](#dependently-typed-language).
+* Corresponds to a specific instance of a type in a [dependently-typed language](#dependently-typed-language).
 
 ## Requirement
 
@@ -108,8 +114,16 @@ A [stringtree](#stringtree) that [represents](#representation) a boolean test of
 
 Notes:
 
-* Requirement corresponds to a predicate in a [dependently-typed language](#dependently-typed-language).
+* Corresponds to a predicate in a [dependently-typed language](#dependently-typed-language).
 * If an input doesn't pass the requirement test, then it is not an instance of a parent object.
+
+## Allowance
+
+A [stringtree](#stringtree) that [represents](#representation) a non-requirement (a lack of constraint).
+
+Examples:
+
+* "May access external APIs"
 
 ## Preference
 
@@ -120,13 +134,23 @@ Notes:
 * Preferences must be sorted by importance (most important first).
 * Preferences should be used to make a choice between two inputs that pass the [requirements](#requirement).
 
+## Constructor
+
+A string that represents a constructor of a type.
+
+* Corresponds to a constructor in a [dependently-typed language](#dependently-typed-language).
+
 ## Property
 
 A [stringtree](#stringtree) that [represents](#representation) a property of an instance of a parent object.
 
 Notes:
 
-* Property corresponds to a theorem in a [dependently-typed language](#dependently-typed-language).
+* Corresponds to a theorem in a [dependently-typed language](#dependently-typed-language).
+
+## Note
+
+A [stringtree](#stringtree) that [represents](#representation) additional information about a parent object.
 
 ## Method specification
 
@@ -142,10 +166,6 @@ A structure with the following fields:
   * `to_markdown`:
     * Requirements:
       * Must output a list where the top-level items correspond to the structure fields.
-
-## Note
-
-A [stringtree](#stringtree) that [represents](#representation) additional information about a parent object.
 
 ## Concepts document
 
@@ -165,14 +185,6 @@ Requirements:
 * The order of other fields in the document must match the order of other fields in the definition of [concept](#concept).
 * A field may not appear twice.
 * If the field is empty, it must not be rendered.
-
-## Name
-
-An arbitrary string.
-
-Preferences:
-
-* Should uniquely identify the item that it belongs to.
 
 ## Listmap
 
