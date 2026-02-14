@@ -109,6 +109,63 @@ Preferences:
 
 A variable that is passed into the [producing expression of type T](#producing-expression-of-type-t).
 
+## External-facing fn
+
+A Rust fn that calls an [external API](#external-api).
+
+Preferences:
+
+* Should be [reversible](#reversible-fn), unless it is expected by the user to be irreversible
+  * Examples of fns that are expected to be irreversible:
+    * `FileDeleteCommand::run` (the user explicitly types "delete" when invoking this command)
+  * Examples of fns that are expected to be reversible:
+    * `FileShowCommand::run` (the user does not type any destructive words when invoking this command)
+
+## External API
+
+An API that the program uses to read the input or write the output.
+
+Examples:
+
+* Terminal emulator API
+* Shell API
+* Browser API
+* Filesystem API (can be either external or internal)
+
+## Internal API
+
+An API that the program uses to read or write the parts of the state which are not an explicit input or output.
+
+Examples:
+
+* Filesystem API (can be either external or internal)
+* Database API
+
+## Reversible fn
+
+A Rust fn whose effect can be reversed.
+
+Properties:
+
+* Some fns that take arguments only by reference are irreversible
+  * Example:
+    * `remove_file` that takes a `&Path` and removes the file
+* Some reversible fns call irreversible fns
+  * Example:
+    * `remove_file_with_backup` that makes a backup of a file before removing it
+
+Notes:
+
+* Formal definition: Rust fn `f` is reversible if there exists a Rust fn `g` that takes the output of `f` as input so that when `f` and `g` are executed sequentially the [extended state](#extended-state) of the program is not modified.
+
+## Irreversible fn
+
+A Rust fn that is not [reversible](#reversible-fn).
+
+## Extended state
+
+A state that contains all data that the program can read (including memory, disks, databases, remote APIs).
+
 ## Input source
 
 The original location of the data that is held by the input variable (where the program has read it from).
