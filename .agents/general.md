@@ -26,6 +26,20 @@ Notes:
 
 ### Minimize hardcoded data
 
+* Don't hardcode the values (accept arguments instead)
+* Choose carefully between accepting a parameter VS defining a constant:
+  * Definitions:
+    * Parameters are execution details (the user may want to change them)
+    * Constants are implementation details (the user would never want to change them)
+  * Examples:
+    * Parameters:
+      * Cache TTL
+      * Config path
+    * Constants:
+      * Table name
+      * Keyspace name
+  * Recommendations:
+    * When in doubt, prefer accepting a parameter instead of defining a constant
 * Follow the requirements in "Producing expression of type T" (see below)
 
 ## Workflow
@@ -100,23 +114,6 @@ Notes:
   * Error types that implement `Error` must be in the same files as the functions that return them
 * Prefer attaching the types as child modules to src/types.rs
 
-## Data flow
-
-* Don't hardcode the values (accept arguments instead)
-* Choose carefully between accepting a parameter VS defining a constant:
-  * Definitions:
-    * Parameters are execution details (the user may want to change them)
-    * Constants are implementation details (the user would never want to change them)
-  * Examples:
-    * Parameters:
-      * Cache TTL
-      * Config path
-    * Constants:
-      * Table name
-      * Keyspace name
-  * Recommendations:
-    * When in doubt, prefer accepting a parameter instead of defining a constant
-
 ## Memory usage
 
 * Prefer streaming and iterating (avoid large in-memory `Vec`)
@@ -142,14 +139,24 @@ Notes:
 
 ## Visibility
 
-* By default, every type and function should be `pub`
-* Instead of `pub(crate)`, write `pub`
-* If a struct has a `new` method that returns a `Result`, then this is a private struct, so it must not be `pub`
-* Every field of a private struct must be private (not `pub`) to enforce validation
-* A private struct must always implement `TryFrom` instead of `From` (must never implement `From`) to enforce validation
-* A private struct that has `#[derive(Deserialize)]` must always use `#[serde(try_from = ...)]` to enforce validation during deserialization
-* A private struct should not implement `Default` in most cases (very rarely it may implement `Default` only if the default value is a valid value)
+* By default, every type, function and struct field should be `pub`
+* Use `pub` instead of `pub(crate)`
 * The code must always call the `new` method to enforce validation
+
+## Private struct
+
+A struct that has only partial or fallible constructors.
+
+Requirements:
+
+* Must enforce validation:
+  * Must not have `pub` fields
+  * Must implement `TryFrom` instead of `From` (must not implement `From`)
+  * If it has `#[derive(Deserialize)]`: must have `#[serde(try_from = ...)]` to enforce validation during deserialization
+
+Preferences:
+
+* Should not implement `Default` in most cases (very rarely it may implement `Default` if the default value is a valid value)
 
 ## Setters
 

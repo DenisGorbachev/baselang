@@ -104,19 +104,15 @@ Preferences:
 
 ## Constructor of type T
 
-A function whose return type is exactly `T`.
-
-Notes:
-
-* Every constructor is a [producer](#producer-of-type-t)
-
-## Producer of type T
-
 A function whose return type mentions `T`.
 
 Examples:
 
 * `fn foo(a: A, b: B) -> Result<K, M>` is a producer of `Result`, `K`, `M`
+
+## Direct constructor of type T
+
+A [constructor](#constructor-of-type-t) whose return type is exactly `T`.
 
 ## Producing expression of type T
 
@@ -257,6 +253,14 @@ Examples:
 
 * A function that wraps the database operations in a transaction.
 * A function that writes to a temp file and then atomically replaces the old file with the new file (on filesystems that support atomic renames).
+
+## Fallible fn
+
+A Rust fn that returns a `Result`.
+
+## Partial fn
+
+A Rust fn that returns an `Option`.
 
 ## Extended state
 
