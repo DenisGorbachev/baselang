@@ -84,8 +84,14 @@ Notes:
 * Use `cargo add` to add dependencies at their latest versions
 * Set the timeout to 300000ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
 
+## Files
+
+* The file name must match the name of the primary item in this file (for example: a file with `struct User` must be named `user.rs`)
+* The trait implementations must be in the same file as the target type (for example: put `impl TryFrom<...> for User` in the same file as `struct User`, which is `user.rs`)
+
 ## Modules
 
+* Don't use `mod.rs`, use module files with submodules in the folder with the same name (for example: `user.rs` with submodules in `user` folder)
 * When creating a new module, attach it with a `mod` declaration followed by `pub use` glob declaration. The parent module must re-export all items from the child modules. This allows to `use` the items right from the crate root, without intermediate module path. For example:
   ```rust
   fn foo() {}
@@ -197,9 +203,6 @@ Note: the index access operators and traits are banned because they may panic.
 
 * Implement proper error handling instead of `unwrap` or `expect` (in normal code and in tests)
   * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
-* The file names must match the names of the primary item in this file (for example: a file with `struct User` must be in `user.rs`)
-* Don't use `mod.rs`, use module files with submodules in the folder with the same name (for example: `user.rs` with submodules in `user` folder)
-* Put the trait implementations in the same file as the target struct (for example: put `impl TryFrom<...> for User` in the same file as `struct User`, which is `user.rs`)
 * Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
 * Use iterators instead of for loops. For example:
   * Good:
