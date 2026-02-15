@@ -1,28 +1,8 @@
-# General
+# Definitions
 
 ## Project
 
-A list of files that can be used for at least two purposes:
-
-* To produce at least one [product](#product).
-* To produce the next version of the project itself.
-
-Notes:
-
-* The project may contain program files and [auxiliary files](#auxiliary-file).
-
-## Product
-
-A file or directory that helps the [user](#user) achieve his goal.
-
-Examples:
-
-* A CLI program
-* A Rust crate
-
-Notes:
-
-* This definition is intentionally broad.
+A directory with source code or [auxiliary](#auxiliary-file) files.
 
 ## Metric
 
@@ -45,18 +25,18 @@ A [metric](#metric) of a [project](#project).
 
 Examples:
 
-* Count of lines of code.
-* Count of tests.
-* Build time.
+* Test coverage.
+* Test suite wall clock running time (avg across N runs with warmed-up cache).
+* Compilation time.
 
-## Product metric
+## Program metric
 
-A [metric](#metric) of a [product](#product).
+A [metric](#metric) of a program.
 
 Examples:
 
-* Peak RSS memory usage of a program.
-* Size on disk for a crate.
+* Peak RSS memory usage.
+* Wall clock running time (avg across N runs with warmed-up cache).
 
 ## Stat
 
@@ -69,11 +49,7 @@ Notes:
 
 ## Auxiliary file
 
-A file with the following properties:
-
-* Belongs to a [project](#project)
-* Doesn't contain a program
-* Is read by the agent or a program that the agent invokes while working on the project
+A file that doesn't contain a program but is used indirectly when building a program.
 
 Examples:
 
@@ -87,7 +63,7 @@ A string that can be interpreted as a struct with the following fields:
 
 * `frontends` (a list of [frontend APIs](#frontend-api))
 * `backends` (a list of [backend APIs](#backend-api))
-* `audience` (a string that describes a list of [users](#user))
+* `audience` (a string that describes a list of [agents](#agent))
 
 Examples:
 
@@ -308,15 +284,12 @@ An entity that is assumed to be working towards a specific goal.
 Notes:
 
 * This definition is intentionally broad.
+* This definition includes both humans and programs.
 * The distinction between "active" and "passive" programs is a false dichotomy: even the operating system can be seen as a passive program that responds to external input from an internal hardware clock.
-
-## User
-
-An [agent](#agent) that uses an [product](#product) to work towards its goal.
 
 ## User time loss expectation
 
-A mathematical expectation of the amount of time that it takes the user to achieve a fixed desirable outcome by using a [product](#product).
+A mathematical expectation of the amount of time that it takes the user to reach a specific desirable state.
 
 Notes:
 
