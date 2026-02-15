@@ -248,6 +248,31 @@ A Rust fn that returns a `Result`.
 
 A Rust fn that returns an `Option`.
 
+## Private struct
+
+A struct that has only partial or fallible constructors.
+
+Requirements:
+
+* Must enforce validation:
+  * Must not have `pub` fields
+  * Must implement `TryFrom` instead of `From` (must not implement `From`)
+  * If it has `#[derive(Deserialize)]`: must have `#[serde(try_from = ...)]` to enforce validation during deserialization
+
+Preferences:
+
+* Should not implement `Default` in most cases (very rarely it may implement `Default` if the default value is a valid value)
+
+## Input data type
+
+A type that contains fields that hold the input data.
+
+Examples:
+
+* `Author` (contains `name` that is provided as input data)
+* `Book` (contains `name` that is provided as input data)
+* `AuthorBook` (contains `author_id` and `book_id` that are provided as input data)
+
 ## Extended state
 
 A state that contains all data that the program can read (including memory, disks, databases, remote APIs).

@@ -48,6 +48,7 @@ Notes:
   * `mise run agent:on:stop` may modify `README.md`, `AGENTS.md`, `Cargo.toml` (this is normal, don't mention it)
 * Don't edit the files in the following top-level dirs: `specs`, `.agents`
 * Don't write the tests unless I ask you explicitly
+* If a later instruction overrides the former instruction: follow the later instruction (last override wins).
 * If you need to patch a dependency, tell me about it, but don't do it without my explicit permission
 * If you notice unexpected edits, keep them
 * If you notice incorrect code, tell me
@@ -131,7 +132,6 @@ Notes:
 ## Struct derives
 
 * Derive `new` from `derive_new` crate for types that need `fn new`
-* Derive `Serialize` and `Deserialize` from `serde` crate for types that need serialization / deserialization
 * If the struct derives `Getters`, then each field whose type implements `Copy` must have a `#[getter(copy)]` annotation. For example:
   * Good (note that `username` doesn't have `#[getter(copy)]` because its type is `String` which doesn't implement `Copy`, but `age` has `#[getter(copy)]`, because its type is `u64` which implements `Copy`):
     ```rust
@@ -148,21 +148,6 @@ Notes:
 * By default, every type, function and struct field should be `pub`
 * Use `pub` instead of `pub(crate)`
 * The code must always call the `new` method to enforce validation
-
-## Private struct
-
-A struct that has only partial or fallible constructors.
-
-Requirements:
-
-* Must enforce validation:
-  * Must not have `pub` fields
-  * Must implement `TryFrom` instead of `From` (must not implement `From`)
-  * If it has `#[derive(Deserialize)]`: must have `#[serde(try_from = ...)]` to enforce validation during deserialization
-
-Preferences:
-
-* Should not implement `Default` in most cases (very rarely it may implement `Default` if the default value is a valid value)
 
 ## Setters
 
