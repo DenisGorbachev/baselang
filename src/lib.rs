@@ -20,6 +20,8 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 */
 
+#![deny(unused_crate_dependencies)]
+
 mod types;
 
 pub use types::*;
