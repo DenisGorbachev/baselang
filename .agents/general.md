@@ -151,6 +151,25 @@ Notes:
       pub fn bar(inputs: Vec<String>) -> Vec<String> {}
       ```
 * Prefer implementing and use `From` or `TryFrom` for conversions between types (instead of converting in-place)
+* Don't use early-return guards for the empty vecs, iterators, streams
+  * Good:
+    ```rust
+    // Good: concise code
+    pub fn all_empty<'a>(items: impl IntoIterator<Item = &'a str>) -> bool {
+        items.all(|i| i.is_empty())
+    }
+    ```
+  * Bad:
+    ```rust
+    // Bad: too much code for too small difference in performance 
+    pub fn all_empty<'a>(items: impl IntoIterator<Item = &'a str>) -> bool {
+        let mut items = items.into_iter().peekable();
+        if items.peek().is_none() {
+            return true;
+        }
+        items.all(|i| i.is_empty())
+    }
+    ```
 * Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
 * Implement proper error handling instead of `unwrap` or `expect` (in normal code and in tests)
   * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
