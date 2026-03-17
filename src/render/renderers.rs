@@ -64,3 +64,4 @@ pub use plain_renderer::*;
 mod english_renderer;
 
 pub use english_renderer::*;
+mod natural_renderer;
