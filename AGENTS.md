@@ -89,6 +89,13 @@ Notes:
 * Use `cargo add` to add dependencies at their latest versions
 * Set the timeout to 300000 ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
 
+### Recommended crates
+
+* `errgonomic` for error handling
+* `strum` for enum derives
+* `subtype` for defining newtypes
+* `tempfile` for creating temp dirs or files
+
 ### Files
 
 * The file name must match the name of the primary item in this file (for example: a file with `struct User` must be named `user.rs`)
@@ -109,6 +116,36 @@ Notes:
   ```rust
   use crate::foo;
   ```
+* Prefer short item paths over long item paths (use `use` statement), unless it's necessary for disambiguation. For example:
+  * Good:
+    ```rust
+    use clap::ValueEnum;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(ValueEnum, Serialize, Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
+  * Good (`serde` and `rkyv` prefixes are necessary for disambiguation):
+    ```rust
+    use clap::ValueEnum;
+
+    #[derive(ValueEnum, From, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
+  * Bad (`clap` and `serde` prefixes are not necessary for disambiguation because their trait names are unique in this module):
+    ```rust
+    #[derive(clap::ValueEnum, serde::Serialize, serde::Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
 
 ### Items
 
@@ -131,33 +168,48 @@ Notes:
 
 ### Functions
 
+* Implement proper error handling using macros from `errgonomic` crate instead of `unwrap` or `expect` (in normal code and in tests)
+  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * Prefer streams and iterators:
-  * Specifics:
-    * Prefer `impl Stream` or `impl IntoIterator` for collection inputs
-    * Prefer `impl Iterator` for collection outputs (avoid large in-memory `Vec`)
+  * Guidelines for inputs:
+    * If the function uses methods that are available only for a specific collection type:
+      * Then: prefer taking a specific collection type as input.
+      * Else: prefer taking an `impl Stream` or `impl IntoIterator` as input.
+  * Guidelines for outputs:
+    * If the function return type is naturally an iterator (for example, the function returns the output of a `map` or `filter`):
+      * Then: prefer returning an `impl Iterator` as output (there's no need to collect into `Vec`).
+      * Else: prefer returning a specific collection type as output.
   * Examples:
     * Good:
       ```rust
-      pub fn foo<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
-          // do something
+      /// This is good because the function doesn't use any type-specific methods, only generic Iterator trait methods
+      /// This is good because the function naturally returns an Iterator, not a specific collection type
+      pub fn filter_non_empty_strings<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
+          inputs.into_iter().filter(|i| i.is_empty().not())
       }
 
-      pub fn bar(inputs: impl IntoIterator<Item = String>) -> impl Iterator<Item = String> {
-          // do something
+      /// This is good because the function uses Vec-specific method `extend_from_slice`, so it can't take a generic `impl IntoIterator`
+      fn extend_args(mut args: Vec<String>, extra_args: &[String]) -> Vec<String> {
+          args.extend_from_slice(extra_args);
+          args
       }
       ```
     * Bad:
-      ```rust
-      /// This is bad because it is not general enough
-      pub fn foo(inputs: &[str]) -> Vec<&'a str> {}
+    * ```rust
+      /// This is bad because it needlessly converts a Vec into iter and then collects back into Vec
+      pub fn filter_non_empty_strings(inputs: Vec<&str>) -> Vec<&str> {
+          inputs
+              .into_iter()
+              .filter(|i| i.is_empty().not())
+              .collect::<Vec<_>>()
+      }
 
-      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec, which is bad for performance
+      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec for input, which is bad for performance
       pub fn bar(inputs: Vec<String>) -> Vec<String> {}
       ```
 * Prefer implementing and use `From` or `TryFrom` for conversions between types (instead of converting in-place)
+* Don't use early-return fast-path guards for empty vecs, iterators, streams (i.e. don't use `if items.is_empty() { return ...; }`)
 * Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
-* Implement proper error handling instead of `unwrap` or `expect` (in normal code and in tests)
-  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * Use iterators instead of for loops. For example:
   * Good:
     ```rust
@@ -347,14 +399,21 @@ Note: the arithmetic operators and traits are banned because they may panic or s
 
 Note: the index access operators and traits are banned because they may panic.
 
-### Cargo.toml
+### Test fn
 
-* Don't define package features contain only a single optional dependency (such features are already defined by cargo automatically)
+A function marked with `#[test]` or `#[tokio::test]`.
+
+* Must return a `Result`
+* Must implement proper error handling via `errgonomic` crate
 
 ### Macros
 
 * Write `macro_rules!` macros to reduce boilerplate
 * If you see similar code in different places, write a macro and replace the similar code with a macro call
+
+### Cargo.toml
+
+* Don't define package features contain only a single optional dependency (such features are already defined by cargo automatically)
 
 ### Sandbox
 
@@ -364,20 +423,38 @@ You are running in a sandbox with limited network access.
 * If you need to run a network command, just do it without checking permissions (they will be enforced automatically)
 * If you need to read the data from other domains, use the web search tool (this tool is executed outside of sandbox)
 
-## Error handling guidelines
+## Error handling
 
-* Don't use `?` try operator - use the macros that begin with `handle`
-* Use `handle!` to unwrap `Result` types
-* Use `handle_opt!` to unwrap `Option` types
-* Use `handle_bool!` to return an error if some condition is true
+### Princicle
+
+Every fallible function must return an error with enough data for the caller to retry the call.
+
+### Guidelines
+
+* Use `handle!` instead of `?` try operator to unwrap `Result` types
+* Use `handle!` instead of `Result::map_err`
+* Use `handle_opt!` instead of `?` try operator to unwrap `Option` types
+* Use `handle_opt!` instead of `Option::ok_or` and `Option::ok_or_else`
+* Use `handle_bool!` instead of `if condition { return Err(...) }` to return an error if some condition is true
 * Use `handle_iter!` or `handle_iter_of_refs!` to collect and return errors from iterators
-* Note that macros that begin with `handle` already contain a `return` statement
-* Don't call `.clone()` on the variables passed into error handling macros (there is no need to clone the variables because the macros consume them only in the error branch). The macros do not consume the variables that are passed into them in the success branch. If you call a macro, you can always use the variables that are passed into the macro call in the subsequent code as if they haven't been moved (because they actually are not moved in the success branch, only in the error branch).
+* Use `handle_into_iter!` to handle errors in collections that implement `IntoIterator` (including `Vec` and `HashMap`)
+* Calls to macros that begin with `handle` must not contain calls to `clone` (must not contain `.clone()`)
+  * Rationale: there is no need to clone the variables because the macros consume them only in the error branch, and the error branch contains a `return` statement. The variables are not consumed in the success branch, so you can always use them in the subsequent code.
 * Don't convert a `Result` into an `Option`, always propagate the error up the call stack
-* Use `thiserror` to derive `Error`
-* Use `thiserror` version `2.0`
-* Do not annotate any error enum variant fields with a `#[from]` attribute
-* Do annotate every error enum variant with an `#[error]` attribute
+* Don't use `unwrap` or `expect`
+* Don't return strings as errors
+* Every fallible function must return a unique error type, even if it contains only one fallible expression
+* Every call to another fallible function must be wrapped in a unique error enum variant
+* Every fallible function body must begin with `use ThisFunctionError::*;`, where `ThisFunctionError` must be the name of this function's error enum (for example: `use ParseConfigError::*;`)
+* Every fallible function body must use the error enum variant names without the error enum name prefix (for example: `ReadFileFailed` instead of `ParseConfigError::ReadFileFailed`)
+* Every error type must be an enum
+* Every error type must derive `Error` via `thiserror` v2
+* Every error type must be located in the same file as the function that returns it below other non-mod items
+* Every error enum variant must be a struct variant
+* Every error enum variant must contain one field per owned variable that is relevant to the fallible expression that this variant wraps
+  * The relevant variable is a variable whose value determines whether the fallible expression returns an `Ok` or an `Err`
+* Every error enum variant must have fields only for [`data types`](#data-type), not for [`non-data types`](#non-data-type)
+* Every error enum variant must have an `#[error]` attribute
   * The `#[error]` attribute must contain the error message displayed for the user
   * The `#[error]` attribute must not contain the `source` field
   * The `#[error]` attribute should contain only those fields that can be displayed on one line
@@ -398,10 +475,115 @@ You are running in a sandbox with limited network access.
           TaskNotFound { query: String }
       }
       ```
-  * If the `#[error]` attribute contains fields, then those fields must be wrapped in single quotes. This is necessary to correctly display fields that may contain spaces.
-    * Good: `#[error("user '{name}' not found")]`
-    * Bad: `#[error("user {name} not found")]`
+  * If the `#[error]` attribute contains fields whose values may be rendered as [hard-to-see string](#hard-to-see-string), then those fields must be wrapped in single quotes:
+    * `name` can be rendered as hard-to-see string, so it must be wrapped in single quotes:
+      * Good: `#[error("user '{name}' not found")]`
+      * Bad: `#[error("user {name} not found")]`
+    * `len` can't be rendered as hard-to-see string, so it must not be wrapped in single quotes:
+      * Good: `#[error("failed to parse {len} responses", len = responses.len())]`
+      * Bad: `#[error("failed to parse '{len}' responses", len = responses.len())]`
+  * If the error enum variant has a field whose type is `std::process::Command` or `tokio::process::Command`, it must be rendered in the error message in backticks via `render_command` function from `errgonomic` crate (requires `process` feature)
+* If the error enum variant has a `source` field, then this field must be the first field
+* If each field of each variant of the error enum implements `Copy`, then the error enum must implement `Copy` too
+* Every error enum variant field must have an owned type (not a reference)
+* Every error enum variant field must not have a `#[from]` attribute
+* Every variable that contains secret data (the one which must not be displayed or logged, e.g. password, API key, personally identifying information) must have a type that doesn't output the underlying data in the `Debug` and `Display` impls (e.g. `secrecy::SecretBox`)
+* The code that calls a fallible function on each element of a collection should return an `impl Iterator<Item = Result<T, E>>` instead of short-circuiting on the first error
+* If Clippy outputs a `result_large_err` warning, then the large fields of the error enum must be wrapped in a `Box`
+* If an argument of callee implements `Copy`, the callee should not include it in the list of error enum variant fields (the caller must include it because of the rule to include all relevant owned variables)
 * If you see a function that returns a `Result` whose last argument is `()` (e.g. `Result<(), ()>`, `Result<T, ()>`, `Result<u32, ()>`), then you must fix the error handling in this function according to the guidelines and replace `()` with a proper error type
+
+#### Naming
+
+* The name of the error enum must end with `Error` (for example: `ParseConfigError`)
+* The name of the error enum variant should end with `Failed` or `NotFound` or `Invalid` (for example: `ReadFileFailed`, `UserNotFound`, `PasswordInvalid`)
+* If the error variant name is associated with a child function call, the name of the error variant must be equal to the name of the function converted to CamelCase concatenated with `Failed` (for example: if the parent function calls `read_file`, then it should call it like this: `handle!(read_file(&path), ReadFileFailed, path)`
+* The name of the error enum must include the name of the function converted to CamelCase
+  * If the function is a freestanding function, the name of the error type must be exactly equal to the name of the function converted to CamelCase concatenated with `Error`
+  * If the function is an associated function, the name of the error type must be exactly equal to the name of the type without generics concatenated with the name of the function in CamelCase concatenated with `Error`
+  * If the error is specified as an associated type of a foreign trait with multiple functions that return this associated error type, then the name of the error type must be exactly equal to the name of the trait including generics concatenated with the name of the type for which this trait is implemented concatenated with `Error`
+* Every `impl TryFrom<A> for B` must use a special form of error handling that matches on multiple variables at once and returns a single error that contains fields for all available variables. For example:
+  ```rust
+  #[derive(Getters, Clone, Debug)]
+  pub struct Human {
+      name: String,
+      #[getter(copy)]
+      age: u32,
+  }
+
+  #[derive(Getters, Clone, Debug)]
+  pub struct Adult {
+      name: NonEmptyString,
+      #[getter(copy)]
+      age: u32,
+  }
+
+  impl TryFrom<Human> for Adult {
+      type Error = TryFromHumanForAdultError;
+
+      fn try_from(input: Human) -> Result<Self, Self::Error> {
+          use TryFromHumanForAdultError::*;
+          let Human {
+              name,
+              age,
+          } = input;
+          let name_result = NonEmptyString::try_from(name);
+          let is_adult = age > 18;
+          match (name_result, is_adult) {
+              (Ok(name), true) => Ok(Self {
+                  name,
+                  age,
+              }),
+              (name_result, is_adult) => Err(ConversionFailed {
+                  name_result,
+                  age,
+                  is_adult,
+              }),
+          }
+      }
+  }
+
+  #[derive(Error, Debug)]
+  pub enum TryFromHumanForAdultError {
+      #[error("failed to convert human to adult")]
+      ConversionFailed { name_result: Result<NonEmptyString, TryFromStringForNonEmptyStringError>, age: u32, is_adult: bool },
+  }
+  ```
+
+### Definitions
+
+#### Fallible expression
+
+An expression that returns a `Result`.
+
+#### Fallible expression group
+
+A group of [fallible expressions](#fallible-expression) where each output variable does not depend on the output variables of other fallible expressions within the same group.
+
+Aliases: FEG.
+
+#### Data type
+
+A type that holds the actual data.
+
+Examples:
+
+* `bool`
+* `String`
+* `PathBuf`
+
+#### Non-data type
+
+A type that doesn't hold the actual data.
+
+Examples:
+
+* `RestClient` doesn't point to the actual data, it only allows querying it.
+* `DatabaseConnection` doesn't hold the actual data, it only allows querying it.
+
+#### Hard-to-see string
+
+A string that is empty or contains only whitespace characters.
 
 ### Files
 
@@ -496,6 +678,23 @@ pub fn partition_result<T, E>(results: impl IntoIterator<Item = Result<T, E>>) -
     });
 
     if errors.is_empty() { Ok(oks) } else { Err(errors) }
+}
+```
+
+### File: src/functions/render\_command.rs
+
+```rust
+use std::process::Command;
+
+pub fn render_command(command: &Command) -> String {
+    let parts = core::iter::once(command.get_program().to_string_lossy())
+        .chain(command.get_args().map(|arg| arg.to_string_lossy()))
+        .collect::<Vec<_>>();
+    let result = shlex::try_join(parts.iter().map(|x| x.as_ref()));
+    match result {
+        Ok(string) => string,
+        Err(_) => command.get_program().to_string_lossy().into_owned(),
+    }
 }
 ```
 
@@ -954,6 +1153,13 @@ cfg_if::cfg_if! {
         pub use exit_result::*;
     }
 }
+
+cfg_if::cfg_if! {
+    if #[cfg(all(feature = "process"))] {
+        mod render_command;
+        pub use render_command::*;
+    }
+}
 ```
 
 ### File: src/lib.rs
@@ -1043,84 +1249,6 @@ cfg_if::cfg_if! {
 #![doc = include_str!("./functions/writeln_error/fixtures/must_write_error.txt")]
 #![doc = "```"]
 //!
-//! ## Better error handling
-//!
-//! **Goal**: Help the caller diagnose the issue, fix it, and retry the call.
-//!
-//! **Approach**: Every error must be represented by a unique enum variant with relevant fields.
-//!
-//! ### Guidelines
-//!
-//! * Every error type must be an enum
-//! * Every error enum variant must be a struct variant
-//! * Every error enum variant must contain one field per owned variable that is relevant to the fallible expression that this variant wraps
-//!   * The relevant variable is a variable whose value determines whether the fallible expression returns an [`Ok`] or an [`Err`]
-//! * Every error enum variant must have fields only for [`data types`](#data-type), not for [`non-data types`](#non-data-type)
-//! * Every error enum variant field must have an owned type (not a reference)
-//! * Every error enum should be located below the function that returns it (in the same file)
-//! * Every fallible function must return a unique error type
-//! * Every call to another fallible function must be wrapped in a unique error enum variant
-//! * If the function contains only one fallible expression, this expression must still be wrapped in an error enum variant
-//! * Every variable that contains secret data (the one which must not be displayed or logged, e.g. password, API key, personally identifying information) must have a type that doesn't output the underlying data in the Debug and Display impls (e.g. [`secrecy::SecretBox`](https://docs.rs/secrecy/latest/secrecy/struct.SecretBox.html))
-//! * The code that calls a fallible function on each element of a collection should return an `impl Iterator<Item = Result<T, E>>` instead of short-circuiting on the first error
-//! * If Clippy outputs a `result_large_err` warning, then the large fields of the error enum must be wrapped in a `Box`
-//! * If the error enum variant has a `source` field, then this field must be the first field
-//! * The code must not use strings for error messages
-//! * The code must not use `unwrap` or `expect`
-//! * If each field of each variant of the error enum implements `Copy`, then the error enum must implement `Copy` too
-//! * If an argument of callee implements `Copy`, the callee must not include it in the list of error enum variant fields (the caller must include it because of the rule to include all relevant owned variables)
-//!
-//! ### Conveniences
-//!
-//! * Every fallible function body must begin with `use ThisFunctionError::*;`, where `ThisFunctionError` must be the name of this function's error enum (for example: `use ParseConfigError::*;`)
-//! * The error handling code must use the error enum variant names without the error enum name prefix (for example: `ReadFileFailed` instead of `ParseConfigError::ReadFileFailed`)
-//!
-//! ### Naming
-//!
-//! * The name of the error enum must end with `Error` (for example: `ParseConfigError`)
-//! * The name of the error enum variant should end with `Failed` or `NotFound` or `Invalid` (for example: `ReadFileFailed`, `UserNotFound`, `PasswordInvalid`)
-//! * If the error variant name is associated with a child function call, the name of the error variant must be equal to the name of the function converted to CamelCase concatenated with `Failed` (for example: if the parent function calls `read_file`, then it should call it like this: `handle!(read_file(&path), ReadFileFailed, path)`
-//! * The name of the error enum must include the name of the function converted to CamelCase
-//!   * If the function is a freestanding function, the name of the error type must be exactly equal to the name of the function converted to CamelCase concatenated with `Error`
-//!   * If the function is an associated function, the name of the error type must be exactly equal to the name of the type without generics concatenated with the name of the function in CamelCase concatenated with `Error`
-//!   * If the error is specified as an associated type of a foreign trait with multiple functions that return this associated error type, then the name of the error type must be exactly equal to the name of the trait including generics concatenated with the name of the type for which this trait is implemented concatenated with `Error`
-//! * If the error enum is defined for a `TryFrom<A> for B` impl, then its name must be equal to "Convert{A}To{B}Error"
-//!
-//! ## Macros
-//!
-//! Use the following macros for more concise error handling:
-//!
-//! * [`handle!`] instead of [`Result::map_err`]
-//! * [`handle_opt!`] instead of [`Option::ok_or`] and [`Option::ok_or_else`]
-//! * [`handle_bool!`] instead of `if condition { return Err(...) }`
-//! * [`handle_iter!`] instead of code that handles errors in iterators
-//! * [`handle_iter_of_refs!`] instead of code that handles errors in iterators of references (where the values are still being owned by the underlying collection)
-//! * [`handle_into_iter!`] instead of code that handles errors in collections that implement [`IntoIterator`] (including [`Vec`] and [`HashMap`](std::collections::HashMap)
-//!
-//! ## Definitions
-//!
-//! ### Fallible expression
-//!
-//! An expression that returns a [`Result`].
-//!
-//! ### Data type
-//!
-//! A type that holds the actual data.
-//!
-//! For example:
-//!
-//! * `bool`
-//! * `String`
-//! * `PathBuf`
-//!
-//! ### Non-data type
-//!
-//! A type that doesn't hold the actual data.
-//!
-//! For example:
-//!
-//! * `RestClient` doesn't point to the actual data, it only allows querying it.
-//! * `DatabaseConnection` doesn't hold the actual data, it only allows querying it.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -1136,6 +1264,9 @@ pub use types::*;
 mod functions;
 
 pub use functions::*;
+
+#[cfg(all(test, feature = "std"))]
+mod drafts;
 ````
 
 ### File: src/macros.rs
@@ -1639,6 +1770,11 @@ cfg_if::cfg_if! {
 ### Cargo.toml
 
 ```toml
+[workspace]
+members = [".", "spec"]
+default-members = ["."]
+resolver = "3"
+
 [package]
 name = "baselang"
 version = "0.1.0"
