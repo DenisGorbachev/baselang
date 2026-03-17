@@ -1,0 +1,23 @@
+Bool : Type
+True : Bool
+False : Bool
+G : True
+
+Eq : (A : Type) -> (left : A) -> (right : A) -> Type
+Refl : (A : Type) -> (input : A) -> Eq A input input
+
+Or : (A : Type) -> (B : Type) -> Type
+Orleft : (A : Type) -> (B : Type) -> (left : A) -> Or A B
+Orright : (A : Type) -> (B : Type) -> (right : B) -> Or A B
+
+BoolTrueOrFalse : (b : Bool) -> Or (Eq Bool True b) (Eq Bool False b) {
+  arm_true : BoolTrueOrFalse True -> Orleft (Eq True True) (Eq False True) (Refl Bool True)
+  arm_false : BoolTrueOrFalse False -> Orright (Eq True False) (Eq False False) (Refl Bool False)
+}
+#check (BoolTrueOrFalse G : Or (Eq True G) (Eq False G))
+#check (BoolTrueOrFalse G : Or (Eq True G) (Eq False G))
+
+Add : (a : Nat) -> (b : Nat) -> (c : Nat) {
+  arm_zero : Add Zero b -> b
+  arm_succ : Add (Succ a) b -> Succ (Add a b)
+}

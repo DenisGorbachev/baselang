@@ -34,3 +34,9 @@ fn verify_cli() {
     use clap::CommandFactory;
     Cli::command().debug_assert();
 }
+
+// struct War;
+// struct Good;
+// struct Bad;
+//
+// type AConceptCantBeBothGoodAndBad<A> = fn(fn(A) -> Good, fn(A) -> Bad);
