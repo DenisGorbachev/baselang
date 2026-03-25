@@ -1,8 +1,6 @@
-#![deny(clippy::arithmetic_side_effects)]
-#![deny(unused_crate_dependencies)]
-
 use clap::Parser;
 use errgonomic::exit_result;
+use spec::{Command, is_rustc_wrapper_mode, run_rustc_wrapper_from_env};
 use std::process::ExitCode;
 
 #[tokio::main]
@@ -22,15 +20,3 @@ fn verify_cli() {
     use clap::CommandFactory;
     Command::command().debug_assert();
 }
-
-mod command;
-
-pub use command::*;
-
-mod functions;
-
-pub use functions::*;
-
-mod types;
-
-pub use types::*;
