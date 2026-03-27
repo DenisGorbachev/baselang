@@ -3,13 +3,4 @@ name = "spec"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.86.0"
-description = "Lists Rust types in a Cargo package via a rustc wrapper"
-
-[dependencies]
-cargo_metadata = "0.23.1"
-clap = { version = "4.6.0", features = ["derive", "env"] }
-errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic", version = "0.5.1" }
-syn = { version = "2.0.117", features = ["full", "parsing"] }
-tempfile = "3.27.0"
-thiserror = "2.0.18"
-tokio = { version = "1.50.0", features = ["macros", "rt", "rt-multi-thread"] }
+description = "Specification for Baselang"
