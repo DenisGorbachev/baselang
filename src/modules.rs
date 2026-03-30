@@ -3,6 +3,8 @@
 
 Baselang modules are implemented as Rust structs with [`VarRc`](crate::VarRc) fields.
 
+TODO: Modules are isomorphic to functions that expose both the inputs and the outputs (inputs are other modules, vars, names, counts; outputs are vars)
+
 Module passes the following validations:
 
 * Module is a Rust struct
@@ -59,6 +61,7 @@ pub use wat::*;
 mod int;
 
 pub use int::*;
+
 mod rat;
 
 pub use rat::*;
