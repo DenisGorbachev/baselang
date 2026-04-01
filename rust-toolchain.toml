@@ -1,0 +1,3 @@
+[toolchain]
+channel = "nightly-2026-01-22" # clippy_utils depends on this specific version
+components = ["llvm-tools-preview", "rustc-dev"]

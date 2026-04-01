@@ -20,14 +20,6 @@ jobs:
       - uses: jdx/mise-action@v2
         with:
           version: 2025.10.11
-      - name: Remove rust from mise
-        run: |
-          # a different rust version will be installed in the next step
-          mise rm rust
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2.8.0
       - run: lefthook run --force pre-commit
       - run: cargo hack test --feature-powerset
