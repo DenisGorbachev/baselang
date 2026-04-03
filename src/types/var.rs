@@ -45,6 +45,10 @@ impl Var {
         self.nym = nym.into()
     }
 
+    pub fn of_at(&self, _arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
     /// Returns `true` if the current var is a type family that is total in every arg except the last, and also unique in the last arg
     pub fn is_function(&self) -> bool {
         todo!()
@@ -71,17 +75,41 @@ impl Of<VarRc> for VarRc {
     fn of(&self, arg: VarRc) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg)
     }
+
+    fn of_at(&self, _rhs: VarRc, _index: usize) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
+    fn of_smart(&self, _rhs: VarRc) -> Option<Exp> {
+        todo!()
+    }
 }
 
 impl Of<&VarRc> for VarRc {
     fn of(&self, arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg.clone())
     }
+
+    fn of_at(&self, _rhs: &VarRc, _index: usize) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
+    fn of_smart(&self, _rhs: &VarRc) -> Option<Exp> {
+        todo!()
+    }
 }
 
 impl Of<Exp> for VarRc {
     fn of(&self, arg: Exp) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg)
+    }
+
+    fn of_at(&self, _rhs: Exp, _index: usize) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
+    fn of_smart(&self, _rhs: Exp) -> Option<Exp> {
+        todo!()
     }
 }
 

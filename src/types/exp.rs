@@ -96,17 +96,41 @@ impl Of<&VarRc> for Exp {
     fn of(&self, arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg.clone())
     }
+
+    fn of_at(&self, _rhs: &VarRc, _index: usize) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
+    fn of_smart(&self, _rhs: &VarRc) -> Option<Exp> {
+        todo!()
+    }
 }
 
 impl Of<Exp> for Exp {
     fn of(&self, arg: Exp) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg)
     }
+
+    fn of_at(&self, _rhs: Exp, _index: usize) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
+    fn of_smart(&self, _rhs: Exp) -> Option<Exp> {
+        todo!()
+    }
 }
 
 impl Of<&Exp> for Exp {
     fn of(&self, arg: &Exp) -> Result<Exp, InvalidApplicationError> {
         Exp::app(self.clone(), arg.clone())
+    }
+
+    fn of_at(&self, _rhs: &Exp, _index: usize) -> Result<Exp, InvalidApplicationError> {
+        todo!()
+    }
+
+    fn of_smart(&self, _rhs: &Exp) -> Option<Exp> {
+        todo!()
     }
 }
 

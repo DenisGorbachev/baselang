@@ -10,6 +10,8 @@ pub struct Nat {
     pub next: VarRc,
 }
 
+pub type NatTuple = (VarRc, VarRc, VarRc);
+
 impl Nat {
     pub fn new() -> Self {
         // Nat : Top

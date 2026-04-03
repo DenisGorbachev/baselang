@@ -1,4 +1,4 @@
-use crate::{Top, exp, module, typ, var};
+use crate::{Top, VarRc, exp, module, typ, var};
 
 module!(
     pub struct List {
@@ -7,6 +7,8 @@ module!(
         cons,
     }
 );
+
+pub type ListTuple = (VarRc, VarRc, VarRc);
 
 impl List {
     pub fn new() -> Self {

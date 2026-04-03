@@ -9,12 +9,14 @@ use derive_more::Into;
 pub struct Bool {
     pub bool: VarRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
-    /// Note that the printed name of this variable is "true" (in line with expectations of the users)
+    /// Note that the printed name of this variable is "true" (matching the user expectations)
     pub yes: VarRc,
     /// This field is named `no` instead of `false` because `false` is a reserved keyword in Rust
-    /// /// Note that the printed name of this variable is "false" (in line with expectations of the users)
+    /// Note that the printed name of this variable is "false" (matching the user expectations)
     pub no: VarRc,
 }
+
+pub type BoolTuple = (VarRc, VarRc, VarRc);
 
 impl Bool {
     pub fn new() -> Self {
@@ -32,6 +34,10 @@ impl Bool {
             yes,
             no,
         }
+    }
+
+    pub fn into() -> BoolTuple {
+        Self::default().into()
     }
 }
 
