@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.86.0"
 description = "Specification for Baselang"
+
+[dependencies]
+errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic", version = "0.5.1" }
+futures = "0.3.32"
+tempfile = "3.27.0"
+thiserror = "2.0.18"
+tokio = { version = "1.51.0", features = ["fs", "rt"] }
