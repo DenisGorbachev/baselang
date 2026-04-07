@@ -1,10 +1,3 @@
-/// Whether Baselang should support `public`, `private`, `protected`
-///
-/// Rationale:
-pub fn should_support_visibilities() -> bool {
-    false
-}
-
 /// A type is static if it has a fixed set of constructors (it's impossible to add a new constructor)
 pub fn every_type_must_be_static() -> Option<bool> {
     match (every_function_must_be_total(), definitions_are_content_addressable()) {
@@ -16,6 +9,11 @@ pub fn every_type_must_be_static() -> Option<bool> {
         }
         _ => None,
     }
+}
+
+/// Whether Baselang should support `public`, `private`, `protected`
+pub fn should_support_visibilities() -> bool {
+    false
 }
 
 pub fn every_function_must_be_total() -> bool {
