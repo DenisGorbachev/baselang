@@ -8,6 +8,7 @@
   * Must pass through the flags that `cargo` passes in order to correctly build the package
 * Must contain a `struct Visitor`
   * Must implement `Callbacks` from `rustc_driver`
-    * Must list the type names in `TyCtxt` to stdout
 * Must not use `syn`
 * Must not contain unused code
+* Must accept one argument: `error_path`
+  * Must not forward this argument to the compiler

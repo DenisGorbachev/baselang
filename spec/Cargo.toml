@@ -6,8 +6,8 @@ rust-version = "1.86.0"
 description = "Specification for Baselang"
 
 [dependencies]
-errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic", version = "0.5.1" }
+errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 futures = "0.3.32"
 tempfile = "3.27.0"
 thiserror = "2.0.18"
-tokio = { version = "1.51.0", features = ["fs", "rt"] }
+tokio = { version = "1.50.0", features = ["fs", "rt"] }

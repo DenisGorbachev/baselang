@@ -49,7 +49,7 @@ strum = { version = "0.27.2", features = ["derive"] }
 #stub-macro = { version = "0.2.1" }
 #subtype = { git = "https://github.com/DenisGorbachev/subtype" }
 thiserror = "2.0.17"
-tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
+tokio = { version = "1.50.0", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
