@@ -1,0 +1,27 @@
+Package : Type
+
+Crate : Type
+
+Crate.Package : Crate -> Option Package
+
+CrateKind : Type {
+  Lib : CrateKind
+  Bin : CrateKind
+  // non-exhaustive
+}
+
+File : Type
+Path : File -> String
+Content : File -> String
+
+IsEntryPoint : Crate -> File -> Type
+
+IsSpec : Package -> Type {
+  New :
+    (bin : Crate) ->
+    (main : File) ->
+    IsEntryPoint bin main ->
+    (package : Package) ->
+    (bin | Crate.Package) === (Some package) ->
+    IsSpec package
+}

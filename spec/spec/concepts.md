@@ -9,8 +9,20 @@
 
 ## Concepts
 
-### fn main
+### File `src/main.rs`
 
+- Must contain [fn main](#fn-main)
+- Must contain a `struct Visitor`
+  - Must implement `Callbacks` from `rustc_driver`
+- Must not use `syn`
+- Must not contain unused code
+
+### fn `main`
+
+- Must work as a rustc wrapper that is run by `cargo`
+- Must not call `is_rustc_wrapper_mode`
+- Must call `rustc_driver::run_compiler`
+  - Must pass through the flags that `cargo` passes in order to correctly build the package
 - Must write the errors to stdout
   - Should write the errors to stdout as soon as they are discovered
     - Must maintain the context for errors
