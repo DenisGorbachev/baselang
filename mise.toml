@@ -161,3 +161,11 @@ run = "mise run agent:test:code -- --ignore-default-filter --max-fail 1 --test-t
 # see also: "test:code:slow"
 # `--test-threads` is omitted because slow tests may be run in parallel
 run = "mise run agent:test:code -- --ignore-default-filter --max-fail 1 'slow_tests::'"
+
+# This override is required because `mise current rust` returns "nightly-2026-01-22", and there's no "nightly-2026-01-22-trixie" image on DockerHub
+[tasks."yolobox:build"]
+run = "~/workspace/yolobox/scripts/build.sh"
+env.YOLOBOX_RUST_VERSION = "1.93.1"
+raw = true
+quiet = true
+dir = "{{cwd}}"

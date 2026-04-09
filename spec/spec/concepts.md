@@ -13,8 +13,20 @@
 
 - Must write the errors to stdout
   - Should write the errors to stdout as soon as they are discovered
-    - Notes:
-      - This may conflict with the "Code size" metric, which has a higher priority
+    - Must maintain the context for errors
+      - #notes
+        - The standard context preservation technique (returning owned vars while bubbling up the error) will not work for streamed errors
+          - #notes
+            - Context contains the vars from callers
+            - Callee doesn't have access to that context
+          - #options
+            - Print the errors at the top level
+            - Pass an ErrorContext into callees
+              - Require to register vars as Dyn Debug
+                - But that would require holding a ref
+            - Do not require to stream errors, allow reporting them collectively
+    - #notes
+      - This preference may conflict with the "Code size" metric, which has a higher priority
 
 ### TestReport struct
 
