@@ -21,7 +21,9 @@ jobs:
         with:
           version: 2025.10.11
           reshim: true
+      - run: rustc --version
       - uses: Swatinem/rust-cache@v2.8.0
+      - run: rustc --version
       - run: lefthook run --force pre-commit
       - run: cargo hack test --feature-powerset
       - uses: wagoid/commitlint-github-action@v6
