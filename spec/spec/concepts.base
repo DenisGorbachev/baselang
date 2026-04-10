@@ -25,3 +25,27 @@ IsSpec : Package -> Type {
     (bin | Crate.Package) === (Some package) ->
     IsSpec package
 }
+
+PredicateStruct IsSpec Package #[
+  bin : Crate
+  main : File
+  _ : IsEntryPoint bin main
+  package : Package
+  (bin | Crate.Package) === (Some package)
+  IsSpec package
+]
+
+macro PredicateStruct #[
+  (name : Ident)
+  (target : Expr)
+  (args : Args)
+] {
+  args_fun = args | ToFunctionType
+  ```
+  $name : $target -> Type {
+    New : $args_fun
+  }
+  ```
+}
+
+Args = NonEmptyList Arg
