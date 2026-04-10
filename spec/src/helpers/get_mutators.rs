@@ -1,26 +1,120 @@
+use rustc_hir::def::DefKind;
+use rustc_hir::def_id::LocalDefId;
 use rustc_hir::definitions::DefPath;
+use rustc_hir::intravisit::{Visitor, walk_expr};
+use rustc_hir::{Expr, ExprField, ExprKind};
 use rustc_middle::ty::TyCtxt;
-use rustc_span::def_id::DefId;
-use std::iter::empty;
-use stub_macro::stub;
+use rustc_middle::ty::TypeckResults;
+use rustc_span::Symbol;
 
-pub fn get_mutators_by_name(tcx: TyCtxt, _the_struct: &str, _the_field: &str) -> impl Iterator<Item = DefId> {
-    get_mutators(tcx, stub!(), stub!())
+pub fn get_mutators_by_name<'tcx>(tcx: TyCtxt<'tcx>, the_struct: &str, the_field: &str) -> impl Iterator<Item = LocalDefId> + 'tcx {
+    let the_struct = Symbol::intern(the_struct);
+    let the_field = Symbol::intern(the_field);
+    tcx.iter_local_def_id()
+        .filter(move |local_def_id| tcx.def_kind(*local_def_id) == DefKind::Struct && tcx.item_name(*local_def_id) == the_struct)
+        .flat_map(move |struct_def_id| get_field_def_ids(tcx, struct_def_id, the_field).flat_map(move |field_def_id| get_mutators(tcx, struct_def_id, field_def_id)))
 }
 
-pub fn get_mutators(_tcx: TyCtxt, _the_struct: DefId, _the_field: DefId) -> impl Iterator<Item = DefId> {
-    // TODO
-    empty()
+pub fn get_mutators(tcx: TyCtxt<'_>, the_struct: LocalDefId, the_field: LocalDefId) -> impl Iterator<Item = LocalDefId> + '_ {
+    tcx.iter_local_def_id()
+        .filter(move |candidate_def_id| matches!(tcx.def_kind(*candidate_def_id), DefKind::Fn | DefKind::AssocFn) && function_mutates_field(tcx, *candidate_def_id, the_struct, the_field))
 }
 
 #[inline(always)]
-pub fn to_def_path(tcx: TyCtxt) -> impl FnMut(DefId) -> DefPath {
-    move |id: DefId| tcx.def_path(id)
+pub fn to_def_path(tcx: TyCtxt<'_>) -> impl FnMut(LocalDefId) -> DefPath {
+    move |id: LocalDefId| tcx.hir_def_path(id)
 }
 
 #[inline(always)]
-pub fn to_def_paths(tcx: TyCtxt, iter: impl Iterator<Item = DefId>) -> impl Iterator<Item = DefPath> {
+pub fn to_def_paths(tcx: TyCtxt<'_>, iter: impl Iterator<Item = LocalDefId>) -> impl Iterator<Item = DefPath> {
     iter.map(to_def_path(tcx))
+}
+
+fn get_field_def_ids<'tcx>(tcx: TyCtxt<'tcx>, the_struct: LocalDefId, the_field: Symbol) -> impl Iterator<Item = LocalDefId> + 'tcx {
+    tcx.type_of(the_struct)
+        .instantiate_identity()
+        .ty_adt_def()
+        .into_iter()
+        .flat_map(move |adt| {
+            adt.non_enum_variant()
+                .fields
+                .iter()
+                .filter(move |field| field.name == the_field)
+                .filter_map(|field| field.did.as_local())
+        })
+}
+
+fn function_mutates_field(tcx: TyCtxt<'_>, function_def_id: LocalDefId, the_struct: LocalDefId, the_field: LocalDefId) -> bool {
+    let Some(body) = tcx.hir_maybe_body_owned_by(function_def_id) else {
+        return false;
+    };
+    let mut visitor = FieldMutationVisitor::new(tcx.typeck_body(body.id()), the_struct, tcx.item_name(the_field));
+    visitor.visit_expr(body.value);
+    visitor.found
+}
+
+struct FieldMutationVisitor<'tcx> {
+    typeck_results: &'tcx TypeckResults<'tcx>,
+    the_struct: LocalDefId,
+    the_field_name: Symbol,
+    found: bool,
+}
+
+impl<'tcx> FieldMutationVisitor<'tcx> {
+    fn new(typeck_results: &'tcx TypeckResults<'tcx>, the_struct: LocalDefId, the_field_name: Symbol) -> Self {
+        Self {
+            typeck_results,
+            the_struct,
+            the_field_name,
+            found: false,
+        }
+    }
+
+    fn is_target_field_access(&self, expr: &Expr<'tcx>) -> bool {
+        match expr.kind {
+            ExprKind::Field(base, ident) => ident.name == self.the_field_name && self.is_target_struct_expr(base),
+            _ => false,
+        }
+    }
+
+    fn is_target_struct_expr(&self, expr: &Expr<'tcx>) -> bool {
+        self.typeck_results
+            .expr_ty_adjusted(expr)
+            .peel_refs()
+            .ty_adt_def()
+            .and_then(|adt| adt.did().as_local())
+            .map(|adt| adt == self.the_struct)
+            .unwrap_or(false)
+    }
+
+    fn struct_expr_sets_target_field(&self, expr: &Expr<'tcx>, fields: &[ExprField<'tcx>]) -> bool {
+        self.is_target_struct_expr(expr)
+            && fields
+                .iter()
+                .any(|field| field.ident.name == self.the_field_name)
+    }
+}
+
+impl<'tcx> Visitor<'tcx> for FieldMutationVisitor<'tcx> {
+    fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
+        match expr.kind {
+            ExprKind::Assign(lhs, _, _) | ExprKind::AssignOp(_, lhs, _) => {
+                if self.is_target_field_access(lhs) {
+                    self.found = true;
+                }
+            }
+            ExprKind::Struct(_, fields, _) => {
+                if self.struct_expr_sets_target_field(expr, fields) {
+                    self.found = true;
+                }
+            }
+            _ => {}
+        }
+
+        if !self.found {
+            walk_expr(self, expr);
+        }
+    }
 }
 
 #[cfg(test)]
