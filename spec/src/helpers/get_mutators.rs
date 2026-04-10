@@ -26,6 +26,11 @@ pub fn to_def_path(tcx: TyCtxt<'_>) -> impl FnMut(LocalDefId) -> DefPath {
 }
 
 #[inline(always)]
+pub fn to_def_path_str(tcx: TyCtxt<'_>) -> impl FnMut(LocalDefId) -> String {
+    move |id: LocalDefId| tcx.def_path_str(id)
+}
+
+#[inline(always)]
 pub fn to_def_paths(tcx: TyCtxt<'_>, iter: impl Iterator<Item = LocalDefId>) -> impl Iterator<Item = DefPath> {
     iter.map(to_def_path(tcx))
 }
@@ -119,14 +124,43 @@ impl<'tcx> Visitor<'tcx> for FieldMutationVisitor<'tcx> {
 
 #[cfg(test)]
 mod tests {
+    use crate::{get_mutators_by_name, to_def_path_str, with_tcx};
+    use errgonomic::handle_bool;
+    use thiserror::Error;
+
     #[test]
-    fn must_get_mutators() {
-        let _user_rs = include_str!("../../tst/src/user.rs");
-        // TODO: with_tcx doesn't work because user.rs depends on external crates
-        // let mutators = with_tcx(user_rs, |tcx| {
-        //     let mutators = get_mutators_by_name(tcx, "User", "name");
-        //     to_def_paths(tcx, mutators).collect::<Vec<_>>()
-        // });
-        // TODO: `mutators` must include a path to `with_name` (from `Setters`)
+    fn must_get_mutators() -> Result<(), MustGetMutatorsError> {
+        use MustGetMutatorsError::*;
+        let mutators = with_tcx(expanded_user_rs_from_setters(), |tcx| {
+            get_mutators_by_name(tcx, "User", "name")
+                .map(to_def_path_str(tcx))
+                .collect::<Vec<_>>()
+        });
+        handle_bool!(mutators != [String::from("User::with_name")], UnexpectedMutators, mutators);
+        Ok(())
+    }
+
+    fn expanded_user_rs_from_setters() -> &'static str {
+        r#"
+#![crate_type = "lib"]
+
+pub struct User {
+    name: String,
+}
+
+impl User {
+    #[must_use]
+    pub fn with_name(mut self, value: String) -> Self {
+        self.name = value;
+        self
+    }
+}
+"#
+    }
+
+    #[derive(Error, Debug)]
+    enum MustGetMutatorsError {
+        #[error("unexpected mutators: {mutators:?}")]
+        UnexpectedMutators { mutators: Vec<String> },
     }
 }
