@@ -41,7 +41,7 @@ A program that runs the spec binary.
   - Rationale
     - `build`, not `fix`, because fixes should be applied via `cargo clippy --fix` (which also fixes the issues found reported by clippy)
   - Must set env vars:
-    - `RUSTC_WRAPPER=` (empty string)
+    - `RUSTC_WRAPPER=` (empty string) (required to disable any inherited `RUSTC_WRAPPER`, e.g. `sccache`)
     - `RUSTC_WORKSPACE_WRAPPER="$spec_binary_path"`
   - Must set flags:
     - `--manifest-path` to the manifest of the target crate
