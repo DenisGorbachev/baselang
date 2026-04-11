@@ -13,12 +13,13 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      MISE_DATA_DIR: ${{ env.HOME }}/mise
-      RUSTUP_HOME: ${{ env.HOME }}/mise/rustup # RUSTUP_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.rustup)
-      CARGO_HOME: ${{ env.HOME }}/mise/cargo # CARGO_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.cargo)
     steps:
       - uses: actions/checkout@v6
+      - name: Set home dirs
+        run: |
+          echo "MISE_DATA_DIR=$RUNNER_TEMP/mise" >> "$GITHUB_ENV"
+          echo "RUSTUP_HOME=$RUNNER_TEMP/mise/rustup" >> "$GITHUB_ENV" # RUSTUP_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.rustup)
+          echo "CARGO_HOME=$RUNNER_TEMP/mise/cargo" >> "$GITHUB_ENV" # CARGO_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.cargo)
       - uses: rui314/setup-mold@v1 # mold is a workaround for regression in Rust 1.93 beta
       - uses: jdx/mise-action@v4
       - run: rustc --version
