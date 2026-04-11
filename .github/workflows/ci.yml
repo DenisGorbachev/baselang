@@ -13,15 +13,20 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      MISE_DATA_DIR: ${{ runner.temp }}/mise
+      RUSTUP_HOME: ${{ runner.temp }}/mise/rustup # RUSTUP_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.rustup)
+      CARGO_HOME: ${{ runner.temp }}/mise/cargo # CARGO_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.cargo)
     steps:
       - uses: actions/checkout@v6
-      # mold is a workaround for regression in Rust 1.93 beta
-      - uses: rui314/setup-mold@v1
+      - uses: rui314/setup-mold@v1 # mold is a workaround for regression in Rust 1.93 beta
       - uses: jdx/mise-action@v4
       - run: rustc --version
       - run: rustup show
       - run: rustup component list --installed
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false # mise already caches CARGO_HOME
       - run: rustc --version
       - run: rustup show
       - run: rustup component list --installed
