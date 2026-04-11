@@ -1912,7 +1912,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
   or function types [`Fun`].
 * **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
 * **Variables**: Represented by [`Var`], which have names and types.
-* **Modules**: Collections of related variables, like [`Bool`], [`List`], and [`Nat`].
+* **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
 # Features

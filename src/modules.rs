@@ -22,17 +22,17 @@ Module passes the following validations:
 The term "mod" may refer to either a Baselang module or a Rust module. It should always be obvious from the context whether it refers to a Baselang module or Rust module.
 */
 
-mod list;
+mod lists;
 
-pub use list::*;
+pub use lists::*;
 
-mod bool;
+mod bools;
 
-pub use bool::*;
+pub use bools::*;
 
-mod nat;
+mod nats;
 
-pub use nat::*;
+pub use nats::*;
 
 mod prelude;
 
@@ -54,14 +54,14 @@ mod units;
 
 pub use units::*;
 
-mod wat;
+mod wats;
 
-pub use wat::*;
+pub use wats::*;
 
-mod int;
+mod ints;
 
-pub use int::*;
+pub use ints::*;
 
-mod rat;
+mod rats;
 
-pub use rat::*;
+pub use rats::*;

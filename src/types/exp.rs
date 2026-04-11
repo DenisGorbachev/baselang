@@ -211,26 +211,26 @@ macro_rules! exp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Bool, List, Nat, Of};
+    use crate::{Bools, Lists, Nats, Of};
 
     #[test]
     #[allow(unused_variables)]
     fn must_error_for_wrong_types() {
-        let Bool {
+        let Bools {
             bool,
             yes,
             no,
-        } = Bool::new();
-        let List {
+        } = Bools::new();
+        let Lists {
             list,
             nil,
             cons,
-        } = List::new();
-        let Nat {
+        } = Lists::new();
+        let Nats {
             nat,
             zero,
             next,
-        } = Nat::new();
+        } = Nats::new();
         let list_bool = list.of(&bool).unwrap();
         let nil_bool = nil.of(&bool).unwrap();
         let cons_nat = cons.of(&nat).unwrap();

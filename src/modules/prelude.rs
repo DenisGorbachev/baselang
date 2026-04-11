@@ -1,24 +1,24 @@
-use crate::{Bool, Int, List, Nat, Rat, Wat, impl_vars_vec_aggregate};
+use crate::{Bools, Ints, Lists, Nats, Rats, Wats, impl_vars_vec_aggregate};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Prelude {
-    pub bool: Bool,
-    pub nat: Nat,
-    pub list: List,
-    pub wat: Wat,
-    pub int: Int,
-    pub rat: Rat,
+    pub bool: Bools,
+    pub nat: Nats,
+    pub list: Lists,
+    pub wat: Wats,
+    pub int: Ints,
+    pub rat: Rats,
 }
 
 impl Prelude {
     pub fn new() -> Self {
-        let bool = Bool::new();
-        let nat = Nat::new();
-        let list = List::new();
-        let wat = Wat::new(&nat);
-        let int = Int::new(&nat);
-        let rat = Rat::new(&int, &wat);
+        let bool = Bools::new();
+        let nat = Nats::new();
+        let list = Lists::new();
+        let wat = Wats::new(&nat);
+        let int = Ints::new(&nat);
+        let rat = Rats::new(&int, &wat);
         Self {
             bool,
             nat,

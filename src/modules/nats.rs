@@ -3,16 +3,16 @@ use crate::{Typ, Var};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct Nat {
+pub struct Nats {
     pub nat: VarRc,
     pub zero: VarRc,
     /// Let's use `next` instead of `succ` because it's more understandable
     pub next: VarRc,
 }
 
-pub type NatTuple = (VarRc, VarRc, VarRc);
+pub type NatsTuple = (VarRc, VarRc, VarRc);
 
-impl Nat {
+impl Nats {
     pub fn new() -> Self {
         // Nat : Top
         var!(nat: typ!(); Self::nat_nym());
@@ -58,15 +58,15 @@ impl Nat {
     }
 }
 
-impl Default for Nat {
+impl Default for Nats {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl_vars_vec!(Nat, nat, zero, next);
+impl_vars_vec!(Nats, nat, zero, next);
 
-impl Module for Nat {
+impl Module for Nats {
     type RefsTuple<'a> = RefsTuple3<'a>;
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
@@ -79,5 +79,5 @@ mod tests {
     use super::*;
     use crate::{PlainRenderer, must_print};
 
-    must_print!(Nat, PlainRenderer, "nat/prints/plain.base");
+    must_print!(Nats, PlainRenderer, "nats/prints/plain.base");
 }

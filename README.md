@@ -17,7 +17,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
   or function types [`Fun`].
 * **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
 * **Variables**: Represented by [`Var`], which have names and types.
-* **Modules**: Collections of related variables, like [`Bool`], [`List`], and [`Nat`].
+* **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
 ## Features
@@ -27,11 +27,11 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 * Macros for concise expression construction
 
 [`App`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.App
-[`Bool`]: https://docs.rs/baselang/latest/baselang/struct.Bool.html
+[`Bools`]: https://docs.rs/baselang/latest/baselang/struct.Bools.html
 [`Exp`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html
 [`Fun`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Fun
-[`List`]: https://docs.rs/baselang/latest/baselang/struct.List.html
-[`Nat`]: https://docs.rs/baselang/latest/baselang/struct.Nat.html
+[`Lists`]: https://docs.rs/baselang/latest/baselang/struct.Lists.html
+[`Nats`]: https://docs.rs/baselang/latest/baselang/struct.Nats.html
 [`One`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.One
 [`Sol`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.Sol
 [`Top`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Top

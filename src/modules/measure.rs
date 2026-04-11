@@ -1,4 +1,4 @@
-use crate::{Rat, exp, module, top, typ, var};
+use crate::{Rats, exp, module, top, typ, var};
 
 module!(
     /// The correct name for this module is ["quantity value"](https://jcgm.bipm.org/vim/en/1.19.html), but it's too long.
@@ -9,7 +9,7 @@ module!(
 );
 
 impl Measure {
-    pub fn new(rat: &Rat) -> Self {
+    pub fn new(rat: &Rats) -> Self {
         var!(value: typ!(exp!(rat.rat)));
         var!(unit: typ!());
 

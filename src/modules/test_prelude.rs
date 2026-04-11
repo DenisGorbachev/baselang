@@ -1,11 +1,11 @@
-use crate::{Bool, BoolTuple, List, ListTuple, Nat, NatTuple, impl_vars_vec_aggregate};
+use crate::{Bools, BoolsTuple, Lists, ListsTuple, Nats, NatsTuple, impl_vars_vec_aggregate};
 use derive_more::{From, Into};
 
 #[derive(From, Into, Eq, PartialEq, Default, Hash, Clone, Debug)]
 pub struct TestPrelude {
-    pub bool: Bool,
-    pub nat: Nat,
-    pub list: List,
+    pub bool: Bools,
+    pub nat: Nats,
+    pub list: Lists,
 }
 
 impl TestPrelude {
@@ -13,13 +13,13 @@ impl TestPrelude {
         Self::default()
     }
 
-    pub fn into() -> (Bool, Nat, List) {
+    pub fn into() -> (Bools, Nats, Lists) {
         Self::default().into()
     }
 
-    pub fn spread() -> (BoolTuple, NatTuple, ListTuple) {
-        let (bool, nat, list) = Self::into();
-        (bool.into(), nat.into(), list.into())
+    pub fn spread() -> (BoolsTuple, NatsTuple, ListsTuple) {
+        let (bools, nats, lists) = Self::into();
+        (bools.into(), nats.into(), lists.into())
     }
 }
 

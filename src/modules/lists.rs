@@ -1,16 +1,16 @@
 use crate::{Top, VarRc, exp, module, typ, var};
 
 module!(
-    pub struct List {
+    pub struct Lists {
         list,
         nil,
         cons,
     }
 );
 
-pub type ListTuple = (VarRc, VarRc, VarRc);
+pub type ListsTuple = (VarRc, VarRc, VarRc);
 
-impl List {
+impl Lists {
     pub fn new() -> Self {
         // List : (t : Top) -> Top
         // List (t : Top) : Top
@@ -37,7 +37,7 @@ impl List {
     }
 }
 
-impl Default for List {
+impl Default for Lists {
     fn default() -> Self {
         Self::new()
     }
@@ -48,5 +48,5 @@ mod tests {
     use super::*;
     use crate::{PlainRenderer, must_print};
 
-    must_print!(List, PlainRenderer, "list/prints/plain.base");
+    must_print!(Lists, PlainRenderer, "lists/prints/plain.base");
 }

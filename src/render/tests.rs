@@ -1,4 +1,4 @@
-use crate::{Bool, Of, PlainRenderer, Render, TestPrelude, assert_impl_of};
+use crate::{Bools, Of, PlainRenderer, Render, TestPrelude, assert_impl_of};
 use std::sync::LazyLock;
 
 pub static RENDERER: LazyLock<PlainRenderer> = LazyLock::new(PlainRenderer::default);
@@ -15,7 +15,7 @@ fn must_render_app() {
 
 #[test]
 fn must_return_err_for_incorrect_application() {
-    let (bool, yes, no) = Bool::into();
+    let (bool, yes, no) = Bools::into();
     assert!(bool.of(yes).is_err());
     assert!(bool.of(no).is_err());
 }

@@ -1,5 +1,6 @@
-use crate::{Nat, exp, module, top, typ, var};
+use crate::{Nats, exp, module, top, typ, var};
 
+// TODO: Move it to `Nats`
 module!(
     pub struct Sum {
         sum,
@@ -9,8 +10,8 @@ module!(
 );
 
 impl Sum {
-    pub fn new(nat: &Nat) -> Self {
-        let Nat {
+    pub fn new(nat: &Nats) -> Self {
+        let Nats {
             nat,
             zero,
             next,

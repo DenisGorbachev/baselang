@@ -6,7 +6,7 @@ use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc, impl_vars_vec};
 use derive_more::Into;
 
 #[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
-pub struct Bool {
+pub struct Bools {
     pub bool: VarRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
     /// Note that the printed name of this variable is "true" (matching the user expectations)
@@ -16,9 +16,9 @@ pub struct Bool {
     pub no: VarRc,
 }
 
-pub type BoolTuple = (VarRc, VarRc, VarRc);
+pub type BoolsTuple = (VarRc, VarRc, VarRc);
 
-impl Bool {
+impl Bools {
     pub fn new() -> Self {
         // Bool : Top
         let bool = Var::new_rc("bool", Typ::top());
@@ -36,20 +36,20 @@ impl Bool {
         }
     }
 
-    pub fn into() -> BoolTuple {
+    pub fn into() -> BoolsTuple {
         Self::default().into()
     }
 }
 
-impl Default for Bool {
+impl Default for Bools {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl_vars_vec!(Bool, bool, yes, no);
+impl_vars_vec!(Bools, bool, yes, no);
 
-impl Module for Bool {
+impl Module for Bools {
     type RefsTuple<'a> = RefsTuple3<'a>;
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
@@ -62,5 +62,5 @@ mod tests {
     use super::*;
     use crate::{PlainRenderer, must_print};
 
-    must_print!(Bool, PlainRenderer, "bool/prints/plain.base");
+    must_print!(Bools, PlainRenderer, "bools/prints/plain.base");
 }

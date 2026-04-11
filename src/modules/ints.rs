@@ -1,10 +1,10 @@
-use crate::{Nat, module, typ, var};
+use crate::{Nats, module, typ, var};
 
 module!(
     /// * `int.zero` is `0`
     /// * `int.pos nat.zero` is `+1`
     /// * `int.neg nat.zero` is `-1`
-    pub struct Int {
+    pub struct Ints {
         int,
         zero,
         pos,
@@ -12,9 +12,9 @@ module!(
     }
 );
 
-impl Int {
-    pub fn new(nat: &Nat) -> Self {
-        var!(n: typ!(&nat.nat));
+impl Ints {
+    pub fn new(nats: &Nats) -> Self {
+        var!(n: typ!(&nats.nat));
 
         var!(int: typ!());
         var!(zero: typ!(&int));
