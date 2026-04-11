@@ -22,15 +22,9 @@ jobs:
           echo "CARGO_HOME=$RUNNER_TEMP/mise/cargo" >> "$GITHUB_ENV" # CARGO_HOME must live under MISE_DATA_DIR, so that mise caches it automatically (it doesn't cache ~/.cargo)
       - uses: rui314/setup-mold@v1 # mold is a workaround for regression in Rust 1.93 beta
       - uses: jdx/mise-action@v4
-      - run: rustc --version
-      - run: rustup show
-      - run: rustup component list --installed
       - uses: Swatinem/rust-cache@v2
         with:
           cache-bin: false # mise already caches CARGO_HOME
-      - run: rustc --version
-      - run: rustup show
-      - run: rustup component list --installed
       - run: lefthook run --force pre-commit
       - run: cargo hack test --feature-powerset
       - uses: wagoid/commitlint-github-action@v6
