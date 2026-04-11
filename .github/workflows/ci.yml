@@ -21,7 +21,7 @@ jobs:
       - run: rustc --version
       - run: rustup show
       - run: rustup component list --installed
-      - uses: Swatinem/rust-cache@v2.9
+      - uses: Swatinem/rust-cache@v2
       - run: rustc --version
       - run: rustup show
       - run: rustup component list --installed
