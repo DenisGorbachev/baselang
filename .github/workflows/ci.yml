@@ -24,6 +24,8 @@ jobs:
       - run: rustc --version
       - uses: Swatinem/rust-cache@v2.8.0
       - run: rustc --version
+      - run: rustup show
+      - run: rustup component list --installed
       - run: lefthook run --force pre-commit
       - run: cargo hack test --feature-powerset
       - uses: wagoid/commitlint-github-action@v6
