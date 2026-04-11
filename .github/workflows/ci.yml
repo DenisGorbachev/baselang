@@ -22,7 +22,9 @@ jobs:
           version: 2025.10.11
           reshim: true
       - run: rustc --version
-      - uses: Swatinem/rust-cache@v2.8.0
+      - run: rustup show
+      - run: rustup component list --installed
+      - uses: Swatinem/rust-cache@v2.9.1
       - run: rustc --version
       - run: rustup show
       - run: rustup component list --installed
