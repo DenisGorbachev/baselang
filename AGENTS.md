@@ -1920,7 +1920,6 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 * Static type checking at compile time and runtime
 * Composable modules that model foundational concepts
 * Macros for concise expression construction
-
 */
 
 #![deny(unused_crate_dependencies)]
