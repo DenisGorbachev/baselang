@@ -12,3 +12,5 @@ tempfile = "3.27.0"
 thiserror = "2.0.18"
 tokio = { version = "1.50.0", features = ["fs", "rt"] }
 stub-macro = "0.2.1"
+facet = { version = "0.44.3", features = ["reflect"] }
+facet-pretty = "0.44.4"

@@ -10,6 +10,8 @@ extern crate rustc_span;
 
 use Outcome::*;
 use errgonomic::{exit_result, handle, handle_opt};
+use facet::Facet;
+use facet_pretty::{FacetPretty, PrettyPrinter};
 use rustc_driver::{Callbacks, Compilation};
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::LocalDefId;
@@ -44,7 +46,9 @@ pub fn run() -> Result<ExitCode, RunError> {
     }
     if let Some(report_result) = visitor.0 {
         let report = handle!(report_result, ReportGenerateFailed);
-        println!("{report:#?}");
+        let printer = PrettyPrinter::default().with_doc_comments(true);
+        let display = report.pretty_with(printer);
+        println!("{display}");
     }
     Ok(ExitCode::SUCCESS)
 }
@@ -60,8 +64,9 @@ impl Callbacks for Visitor {
     }
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
 pub struct SyntacticTestReport {
+    /// `struct Var`
     pub struct_var: StructVar,
 }
 
@@ -80,7 +85,7 @@ impl SyntacticTestReport {
     }
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
 pub struct StructVar {
     pub is_present: Outcome,
     pub is_unique: Outcome,
@@ -145,14 +150,15 @@ impl StructVar {
     }
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
+#[repr(u8)]
 pub enum StructVarReportedError {
     NotFound,
     MultipleFound,
     TypeInvalid,
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
 pub struct StructVarFields {
     pub actual_fields: Vec<String>,
     pub constructors: StructVarFieldsConstructors,
@@ -186,7 +192,7 @@ impl StructVarFields {
     }
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
 pub struct StructVarFieldsConstructors {
     pub must_be_option_vec_var: Option<bool>,
     pub is_present: bool,
@@ -235,7 +241,8 @@ impl StructVarFieldsConstructors {
     }
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
+#[repr(u8)]
 pub enum StructVarFieldsConstructorsReportedError {
     NotFound,
     TypeInvalid,
