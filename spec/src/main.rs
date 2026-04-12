@@ -46,7 +46,9 @@ pub fn run() -> Result<ExitCode, RunError> {
     }
     if let Some(report_result) = visitor.0 {
         let report = handle!(report_result, ReportGenerateFailed);
-        let printer = PrettyPrinter::default().with_doc_comments(true);
+        let printer = PrettyPrinter::default()
+            .with_doc_comments(true)
+            .with_minimal_option_names(true);
         let display = report.pretty_with(printer);
         println!("{display}");
     }
