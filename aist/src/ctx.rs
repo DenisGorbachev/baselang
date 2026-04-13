@@ -1,9 +1,9 @@
-use crate::IntoSymbol;
+use crate::{Adt, IntoSymbol};
 use derive_getters::Getters;
 use derive_more::Deref;
 use errgonomic::{handle, handle_bool};
 use rustc_hash::FxHashMap;
-use rustc_middle::ty::{AdtDef, TyCtxt};
+use rustc_middle::ty::TyCtxt;
 use rustc_span::Symbol;
 use rustc_span::def_id::LocalDefId;
 use smallvec::SmallVec;
@@ -13,13 +13,13 @@ use thiserror::Error;
 ///
 /// This wrapper should contain only those methods that are reusable across multiple specs
 #[derive(Getters, Deref, Clone)]
-pub struct Ctx<'a> {
+pub struct Ctx<'c> {
     #[deref]
-    tcx: TyCtxt<'a>,
+    tcx: TyCtxt<'c>,
     map: LocalSymbolMap,
 }
 
-impl<'a> Ctx<'a> {
+impl<'c> Ctx<'c> {
     pub fn unique_local_def_id(&self, name: impl IntoSymbol) -> Result<LocalDefId, GetLocalDefIdError> {
         use GetLocalDefIdError::*;
         let symbol = name.into_symbol();
@@ -34,18 +34,17 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    pub fn adt_def(&self, name: impl IntoSymbol) -> Result<AdtDef<'a>, GetLocalDefIdError> {
+    pub fn adt(&self, name: impl IntoSymbol) -> Result<Adt<'c>, GetLocalDefIdError> {
         self.unique_local_def_id(name)
-            .map(|local_def_id| self.tcx.adt_def(local_def_id))
+            .map(|local_def_id| Adt::new(self.tcx.adt_def(local_def_id), self.tcx))
     }
 
-    pub fn struct_def(&self, name: impl IntoSymbol) -> Result<AdtDef<'a>, StructDefError> {
+    pub fn struct_def(&self, name: impl IntoSymbol) -> Result<Adt<'c>, StructDefError> {
         use StructDefError::*;
         let symbol = name.into_symbol();
-        let local_def_id = handle!(self.unique_local_def_id(symbol), GetLocalDefIdFailed);
-        let adt_def = self.tcx.adt_def(local_def_id);
-        handle_bool!(!adt_def.is_struct(), NotStruct, local_def_id, symbol);
-        Ok(adt_def)
+        let adt = handle!(self.adt(symbol), GetLocalDefIdFailed);
+        handle_bool!(!adt.is_struct(), NotStruct, symbol);
+        Ok(adt)
     }
 }
 
@@ -58,8 +57,11 @@ impl<'a> From<TyCtxt<'a>> for Ctx<'a> {
     fn from(tcx: TyCtxt<'a>) -> Self {
         let map = tcx
             .iter_local_def_id()
-            .fold(LocalSymbolMap::default(), |mut map, local_def_id| {
-                let symbol = tcx.item_name(local_def_id);
+            .filter_map(|local_def_id| {
+                tcx.opt_item_name(local_def_id)
+                    .map(|symbol| (symbol, local_def_id))
+            })
+            .fold(LocalSymbolMap::default(), |mut map, (symbol, local_def_id)| {
                 map.entry(symbol).or_default().push(local_def_id);
                 map
             });
@@ -83,5 +85,5 @@ pub enum StructDefError {
     #[error("failed to get a unique LocalDefId")]
     GetLocalDefIdFailed { source: GetLocalDefIdError },
     #[error("item '{symbol}' is not a struct")]
-    NotStruct { symbol: Symbol, local_def_id: LocalDefId },
+    NotStruct { symbol: Symbol },
 }

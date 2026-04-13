@@ -17,7 +17,7 @@ use rustc_driver::{Callbacks, Compilation};
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::{self, AdtDef, FieldDef, TyCtxt};
 use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
-use rustc_span::{Symbol, sym};
+use rustc_span::sym;
 use spec::var_struct_must_have_field_constructors_of_option_vec;
 use std::io;
 use std::process::ExitCode;
@@ -97,54 +97,44 @@ pub struct StructVar {
 }
 
 impl StructVar {
-    pub fn gather(_ctx: &Ctx<'_>) -> Self {
-        // use StructVarReportedError::*;
-        todo!()
-        // match matches.as_slice() {
-        //     [] => Self {
-        //         is_present: Fail,
-        //         is_unique: Fail,
-        //         type_paths: Vec::new(),
-        //         reported_error: must_report_error.then_some(NotFound),
-        //         fields: StructVarFields::empty(),
-        //     },
-        //     [(var_struct_def_id, type_path)] => Self::gather_unique(ctx, *var_struct_def_id, type_path),
-        //     _ => Self {
-        //         is_present: Pass,
-        //         is_unique: Fail,
-        //         type_paths: matches
-        //             .into_iter()
-        //             .map(|(_local_def_id, type_path)| type_path)
-        //             .collect(),
-        //         reported_error: must_report_error.then_some(MultipleFound),
-        //         fields: StructVarFields::empty(),
-        //     },
-        // }
+    pub fn gather(ctx: &Ctx<'_>) -> Self {
+        use GetLocalDefIdError::*;
+        match ctx.unique_local_def_id("Var") {
+            Ok(var_struct_def_id) => Self::gather_unique(ctx, var_struct_def_id),
+            Err(NotFound {
+                ..
+            }) => Self {
+                is_present: Fail,
+                is_unique: Fail,
+                fields: StructVarFields::StructVarFieldsWithoutConstructors {},
+            },
+            Err(NotUnique {
+                ..
+            }) => Self {
+                is_present: Pass,
+                is_unique: Fail,
+                fields: StructVarFields::StructVarFieldsWithoutConstructors {},
+            },
+        }
     }
 
-    // pub fn gather_unique(ctx: &Ctx<'_>, var_struct_def_id: LocalDefId, type_path: &str) -> Self {
-    //     use StructVarReportedError::*;
-    //     let must_report_error = must_report_var_struct_constructors_field();
-    //     let var_type = ctx
-    //         .type_of(var_struct_def_id.to_def_id())
-    //         .instantiate_identity();
-    //     match var_type.ty_adt_def() {
-    //         Some(var_adt) => Self {
-    //             is_present: Pass,
-    //             is_unique: Pass,
-    //             type_paths: vec![type_path.to_owned()],
-    //             reported_error: None,
-    //             fields: StructVarFields::gather(ctx, var_adt),
-    //         },
-    //         None => Self {
-    //             is_present: Pass,
-    //             is_unique: Pass,
-    //             type_paths: vec![type_path.to_owned()],
-    //             reported_error: must_report_error.then_some(TypeInvalid),
-    //             fields: StructVarFields::empty(),
-    //         },
-    //     }
-    // }
+    pub fn gather_unique(ctx: &Ctx<'_>, var_struct_def_id: LocalDefId) -> Self {
+        let var_type = ctx
+            .type_of(var_struct_def_id.to_def_id())
+            .instantiate_identity();
+        match var_type.ty_adt_def().filter(|var_adt| var_adt.is_struct()) {
+            Some(var_adt) => Self {
+                is_present: Pass,
+                is_unique: Pass,
+                fields: StructVarFields::gather(ctx, var_adt),
+            },
+            None => Self {
+                is_present: Fail,
+                is_unique: Pass,
+                fields: StructVarFields::StructVarFieldsWithoutConstructors {},
+            },
+        }
+    }
 }
 
 #[derive(Facet, Debug)]
@@ -164,7 +154,7 @@ pub enum StructVarFields {
 
 impl StructVarFields {
     /// `var` must be a struct
-    pub fn gather<'tcx>(ctx: &Ctx<'tcx>, var: AdtDef<'tcx>) -> Self {
+    pub fn gather<'c>(ctx: &Ctx<'c>, var: AdtDef<'c>) -> Self {
         if var_struct_must_have_field_constructors_of_option_vec() == Some(true) {
             let constructors = StructVarFieldsConstructorsOptionVec::gather(ctx, var);
             Self::StructVarFieldsWithConstructors {
@@ -184,11 +174,10 @@ pub struct StructVarFieldsConstructorsOptionVec {
 
 impl StructVarFieldsConstructorsOptionVec {
     fn gather<'tcx>(ctx: &Ctx<'tcx>, var: AdtDef<'tcx>) -> Self {
-        let constructors_field_name = Symbol::intern("constructors");
-        let constructors_field = var.all_fields().find(|x| x.name == constructors_field_name);
-        if let Some(constructors_field_def) = constructors_field {
+        let var = Adt::new(var, *ctx.tcx());
+        if let Some(constructors_field) = var.field("constructors") {
             let is_present = Pass;
-            let has_type_option_vec_var = Self::has_type_option_vec_var(ctx, var, constructors_field_def);
+            let has_type_option_vec_var = Self::has_type_option_vec_var(ctx, var.def, constructors_field.def);
             Self {
                 is_present,
                 has_type_option_vec_var,
@@ -202,7 +191,7 @@ impl StructVarFieldsConstructorsOptionVec {
         let Some(var_struct_def_id) = var.did().as_local() else {
             return Fail;
         };
-        let field = Field::new(*ctx.tcx(), constructors_field);
+        let field = Field::new(constructors_field, *ctx.tcx());
         let field_type = field.ty();
         if is_option_vec_of_local_adt(field.tcx, field_type, var_struct_def_id) { Pass } else { Fail }
     }
