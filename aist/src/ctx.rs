@@ -15,6 +15,7 @@ use thiserror::Error;
 #[derive(Getters, Deref, Clone)]
 pub struct Ctx<'c> {
     #[deref]
+    #[getter(copy)]
     tcx: TyCtxt<'c>,
     map: LocalSymbolMap,
 }

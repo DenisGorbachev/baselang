@@ -1,3 +1,4 @@
+use crate::IntoSymbol;
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::LocalDefId;
 use rustc_hir::definitions::DefPath;
@@ -7,12 +8,12 @@ use rustc_middle::ty::TyCtxt;
 use rustc_middle::ty::TypeckResults;
 use rustc_span::Symbol;
 
-pub fn get_mutators_by_name<'tcx>(tcx: TyCtxt<'tcx>, the_struct: &str, the_field: &str) -> impl Iterator<Item = LocalDefId> + 'tcx {
-    let the_struct = Symbol::intern(the_struct);
-    let the_field = Symbol::intern(the_field);
+pub fn get_mutators_by_name<'tcx>(tcx: TyCtxt<'tcx>, item_name: impl IntoSymbol, field_name: impl IntoSymbol) -> impl Iterator<Item = LocalDefId> + 'tcx {
+    let item_name = item_name.into_symbol();
+    let field_name = field_name.into_symbol();
     tcx.iter_local_def_id()
-        .filter(move |local_def_id| tcx.def_kind(*local_def_id) == DefKind::Struct && tcx.item_name(*local_def_id) == the_struct)
-        .flat_map(move |struct_def_id| get_field_def_ids(tcx, struct_def_id, the_field).flat_map(move |field_def_id| get_mutators(tcx, struct_def_id, field_def_id)))
+        .filter(move |local_def_id| [DefKind::Struct, DefKind::Enum, DefKind::Union].contains(&tcx.def_kind(*local_def_id)) && tcx.item_name(*local_def_id) == item_name)
+        .flat_map(move |struct_def_id| get_field_local_def_ids(tcx, struct_def_id, field_name).flat_map(move |field_def_id| get_mutators(tcx, struct_def_id, field_def_id)))
 }
 
 pub fn get_mutators(tcx: TyCtxt<'_>, the_struct: LocalDefId, the_field: LocalDefId) -> impl Iterator<Item = LocalDefId> + '_ {
@@ -35,18 +36,11 @@ pub fn to_def_paths(tcx: TyCtxt<'_>, iter: impl Iterator<Item = LocalDefId>) -> 
     iter.map(to_def_path(tcx))
 }
 
-fn get_field_def_ids<'tcx>(tcx: TyCtxt<'tcx>, the_struct: LocalDefId, the_field: Symbol) -> impl Iterator<Item = LocalDefId> + 'tcx {
-    tcx.type_of(the_struct)
-        .instantiate_identity()
-        .ty_adt_def()
-        .into_iter()
-        .flat_map(move |adt| {
-            adt.non_enum_variant()
-                .fields
-                .iter()
-                .filter(move |field| field.name == the_field)
-                .filter_map(|field| field.did.as_local())
-        })
+fn get_field_local_def_ids<'tcx>(tcx: TyCtxt<'tcx>, ty_local_id: LocalDefId, the_field: Symbol) -> impl Iterator<Item = LocalDefId> + 'tcx {
+    tcx.adt_def(ty_local_id)
+        .all_fields()
+        .filter(move |field| field.name == the_field)
+        .filter_map(|field| field.did.as_local())
 }
 
 fn function_mutates_field(tcx: TyCtxt<'_>, function_def_id: LocalDefId, the_struct: LocalDefId, the_field: LocalDefId) -> bool {

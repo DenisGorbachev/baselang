@@ -95,6 +95,11 @@ A struct whose every field is either a `Result` or another [Result-based report]
     - Some errors don't implement `Clone`
       - Examples:
         - `std::io::Error`
+- May use `Result<(), E>` instead of `Outcome`
+  - Rationales:
+    - Some errors contain useful information
+      - Examples:
+        - `MutatorsFound` contains a list of DefPathStr
 
 ### Outcome-based report
 

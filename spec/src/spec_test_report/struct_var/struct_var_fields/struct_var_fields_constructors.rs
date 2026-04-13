@@ -1,3 +1,4 @@
+use super::StructVarFieldsFieldIsNotMutatedByMethodsError;
 use aist::{Adt, Field};
 use errgonomic::{handle_bool, handle_opt};
 use facet::Facet;
@@ -7,22 +8,25 @@ use rustc_span::sym;
 use thiserror::Error;
 
 #[derive(Facet, Debug)]
-pub struct StructVarFieldsConstructorsOptionVec {
-    pub has_type_option_vec_var: Result<(), StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError>,
+pub struct StructVarFieldsConstructors {
+    pub has_type_option_vec_var: Result<(), StructVarFieldsConstructorsHasTypeOptionVecVarError>,
+    pub mutators: Result<(), StructVarFieldsFieldIsNotMutatedByMethodsError>,
 }
 
-impl StructVarFieldsConstructorsOptionVec {
-    pub fn new(var: Adt) -> Result<Self, StructVarFieldsConstructorsOptionVecNewError> {
-        use StructVarFieldsConstructorsOptionVecNewError::*;
+impl StructVarFieldsConstructors {
+    pub fn new(var: Adt) -> Result<Self, StructVarFieldsConstructorsNewError> {
+        use StructVarFieldsConstructorsNewError::*;
         let constructors_field = handle_opt!(var.field("constructors"), NotFound);
         let has_type_option_vec_var = Self::has_type_option_vec_var(var, constructors_field);
+        let mutators = super::field_is_not_mutated_by_methods(var, "constructors");
         Ok(Self {
             has_type_option_vec_var,
+            mutators,
         })
     }
 
-    fn has_type_option_vec_var(var: Adt, constructors: Field) -> Result<(), StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError> {
-        use StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError::*;
+    fn has_type_option_vec_var(var: Adt, constructors: Field) -> Result<(), StructVarFieldsConstructorsHasTypeOptionVecVarError> {
+        use StructVarFieldsConstructorsHasTypeOptionVecVarError::*;
         handle_bool!(!is_option_vec_of_def_id(constructors, var.did()), TypeInvalid);
         Ok(())
     }
@@ -30,14 +34,14 @@ impl StructVarFieldsConstructorsOptionVec {
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarFieldsConstructorsOptionVecNewError {
+pub enum StructVarFieldsConstructorsNewError {
     #[error("field `constructors` not found")]
     NotFound {},
 }
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError {
+pub enum StructVarFieldsConstructorsHasTypeOptionVecVarError {
     #[error("field `constructors` does not have type `Option<Vec<Var>>`")]
     TypeInvalid {},
 }
