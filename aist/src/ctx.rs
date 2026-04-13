@@ -87,3 +87,7 @@ pub enum StructDefError {
     #[error("item '{symbol}' is not a struct")]
     NotStruct { symbol: Symbol },
 }
+
+mod is_constructor;
+
+mod inherent_fn_def_ids_by_symbol;

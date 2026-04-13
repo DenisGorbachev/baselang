@@ -14,7 +14,7 @@ impl StructVar {
         use StructVarNewError::*;
         let var = handle!(ctx.adt_struct("Var"), AdtStructFailed);
         let fields = StructVarFields::new(var);
-        let methods = StructVarMethods::new(var);
+        let methods = StructVarMethods::new(ctx, var);
         Ok(Self {
             fields,
             methods,

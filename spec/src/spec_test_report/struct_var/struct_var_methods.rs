@@ -1,14 +1,17 @@
-use aist::Adt;
+use aist::{Adt, Ctx};
 use facet::Facet;
 
 #[derive(Facet, Debug)]
 pub struct StructVarMethods {
-    // new: StructVarMethodsNew
+    pub new: Result<StructVarMethodsNew, StructVarMethodsNewError>,
 }
 
 impl StructVarMethods {
-    pub fn new(_var: Adt) -> Self {
-        todo!()
+    pub fn new(ctx: &Ctx<'_>, var: Adt) -> Self {
+        let new = StructVarMethodsNew::new(ctx, var);
+        Self {
+            new,
+        }
     }
 }
 
