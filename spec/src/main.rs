@@ -69,6 +69,6 @@ pub enum RunError {
     ReportGenerateFailed { source: ReportGenerateError },
 }
 
-mod syntactic_test_report;
+mod spec_test_report;
 
-pub use syntactic_test_report::*;
+pub use spec_test_report::*;
