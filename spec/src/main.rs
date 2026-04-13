@@ -50,12 +50,12 @@ pub fn run() -> Result<ExitCode, RunError> {
 }
 
 #[derive(Debug, Default)]
-pub struct Visitor(pub Option<Result<SyntacticTestReport, ReportGenerateError>>);
+pub struct Visitor(pub Option<Result<SpecTestReport, ReportGenerateError>>);
 
 impl Callbacks for Visitor {
     fn after_analysis<'tcx>(&mut self, _: &rustc_interface::interface::Compiler, tcx: TyCtxt<'tcx>) -> Compilation {
         let ctx = Ctx::from(tcx);
-        self.0 = Some(SyntacticTestReport::new(ctx));
+        self.0 = Some(SpecTestReport::new(ctx));
         // Stop compilation before code generation
         Compilation::Stop
     }

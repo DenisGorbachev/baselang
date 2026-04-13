@@ -6,12 +6,12 @@ use thiserror::Error;
 use tokio::runtime::Builder as RuntimeBuilder;
 
 #[derive(Facet, Debug)]
-pub struct SyntacticTestReport {
+pub struct SpecTestReport {
     /// `struct Var`
     pub struct_var: Result<StructVar, StructVarGatherError>,
 }
 
-impl SyntacticTestReport {
+impl SpecTestReport {
     pub fn new(ctx: Ctx<'_>) -> Result<Self, ReportGenerateError> {
         use ReportGenerateError::*;
         let runtime = handle!(RuntimeBuilder::new_current_thread().enable_all().build(), BuildFailed);
