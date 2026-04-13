@@ -6,22 +6,25 @@ use thiserror::Error;
 #[derive(Facet, Debug)]
 pub struct StructVar {
     pub fields: StructVarFields,
+    pub methods: StructVarMethods,
 }
 
 impl StructVar {
-    pub fn new(ctx: &Ctx<'_>) -> Result<Self, StructVarGatherError> {
-        use StructVarGatherError::*;
+    pub fn new(ctx: &Ctx<'_>) -> Result<Self, StructVarNewError> {
+        use StructVarNewError::*;
         let var = handle!(ctx.adt_struct("Var"), AdtStructFailed);
-        let fields = StructVarFields::gather(var);
+        let fields = StructVarFields::new(var);
+        let methods = StructVarMethods::new(var);
         Ok(Self {
             fields,
+            methods,
         })
     }
 }
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarGatherError {
+pub enum StructVarNewError {
     #[error("failed to get `struct Var`")]
     AdtStructFailed { source: StructVarAdtStructError },
 }
@@ -83,3 +86,7 @@ impl From<GetLocalDefIdError> for StructVarGetLocalDefIdError {
 mod struct_var_fields;
 
 pub use struct_var_fields::*;
+
+mod struct_var_methods;
+
+pub use struct_var_methods::*;

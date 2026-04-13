@@ -14,6 +14,7 @@ use errgonomic::{exit_result, handle, handle_opt};
 use rustc_driver::{Callbacks, Compilation};
 use rustc_middle::ty::TyCtxt;
 use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
+use spec::{ReportGenerateError, SpecTestReport};
 use std::process::ExitCode;
 use thiserror::Error;
 
@@ -68,7 +69,3 @@ pub enum RunError {
     #[error("failed to generate the report")]
     ReportGenerateFailed { source: ReportGenerateError },
 }
-
-mod spec_test_report;
-
-pub use spec_test_report::*;

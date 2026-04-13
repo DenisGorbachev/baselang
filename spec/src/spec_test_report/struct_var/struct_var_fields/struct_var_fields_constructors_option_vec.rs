@@ -12,8 +12,8 @@ pub struct StructVarFieldsConstructorsOptionVec {
 }
 
 impl StructVarFieldsConstructorsOptionVec {
-    pub fn new(var: Adt) -> Result<Self, StructVarFieldsConstructorsOptionVecGatherError> {
-        use StructVarFieldsConstructorsOptionVecGatherError::*;
+    pub fn new(var: Adt) -> Result<Self, StructVarFieldsConstructorsOptionVecNewError> {
+        use StructVarFieldsConstructorsOptionVecNewError::*;
         let constructors_field = handle_opt!(var.field("constructors"), NotFound);
         let has_type_option_vec_var = Self::has_type_option_vec_var(var, constructors_field);
         Ok(Self {
@@ -30,7 +30,7 @@ impl StructVarFieldsConstructorsOptionVec {
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarFieldsConstructorsOptionVecGatherError {
+pub enum StructVarFieldsConstructorsOptionVecNewError {
     #[error("field `constructors` not found")]
     NotFound {},
 }

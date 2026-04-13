@@ -1,17 +1,17 @@
+use crate::var_struct_must_have_field_constructors_of_option_vec;
 use aist::Adt;
 use facet::Facet;
-use spec::var_struct_must_have_field_constructors_of_option_vec;
 
 #[derive(Facet, Debug)]
 #[repr(u8)]
 pub enum StructVarFields {
-    StructVarFieldsWithConstructors { constructors: Result<StructVarFieldsConstructorsOptionVec, StructVarFieldsConstructorsOptionVecGatherError> },
+    StructVarFieldsWithConstructors { constructors: Result<StructVarFieldsConstructorsOptionVec, StructVarFieldsConstructorsOptionVecNewError> },
     StructVarFieldsWithoutConstructors {},
 }
 
 impl StructVarFields {
     /// `var` must be a struct
-    pub fn gather<'c>(var: Adt<'c>) -> Self {
+    pub fn new(var: Adt) -> Self {
         if var_struct_must_have_field_constructors_of_option_vec() == Some(true) {
             let constructors = StructVarFieldsConstructorsOptionVec::new(var);
             Self::StructVarFieldsWithConstructors {

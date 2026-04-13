@@ -12,3 +12,7 @@ extern crate rustc_span;
 mod facts;
 
 pub use facts::*;
+
+mod spec_test_report;
+
+pub use spec_test_report::*;

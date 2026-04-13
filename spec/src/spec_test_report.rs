@@ -8,7 +8,7 @@ use tokio::runtime::Builder as RuntimeBuilder;
 #[derive(Facet, Debug)]
 pub struct SpecTestReport {
     /// `struct Var`
-    pub struct_var: Result<StructVar, StructVarGatherError>,
+    pub struct_var: Result<StructVar, StructVarNewError>,
 }
 
 impl SpecTestReport {

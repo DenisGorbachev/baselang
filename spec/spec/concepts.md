@@ -86,17 +86,20 @@ A program that runs the spec binary.
     - #notes
       - This preference may conflict with the "Code size" metric, which has a higher priority
 
-### TestReport struct
+## Result-based report
 
-A struct whose every field is either [Outcome](#outcome-enum) or another TestReport struct.
+A struct whose every field is either a `Result` or another [Result-based report](#result-based-report).
+
+- Should not implement `Clone`
+  - Rationales:
+    - Some errors don't implement `Clone`
+      - Examples:
+        - `std::io::Error`
+
+### Outcome-based report
+
+A struct whose every field is either [Outcome](#outcome-enum) or another [Outcome-based report](#outcome-based-report).
 
 ### Outcome enum
 
-```rust
-#[derive(Default, Eq, PartialEq, Hash, Clone, Copy, Debug)]
-pub enum Outcome {
-    Pass,
-    #[default]
-    Fail,
-}
-```
+`Outcome` enum from `aist` crate.
