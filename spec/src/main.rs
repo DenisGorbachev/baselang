@@ -13,10 +13,9 @@ use errgonomic::{exit_result, handle, handle_opt};
 use facet::Facet;
 use facet_pretty::{FacetPretty, PrettyPrinter};
 use rustc_driver::{Callbacks, Compilation};
-use rustc_hir::def_id::LocalDefId;
-use rustc_middle::ty::{self, AdtDef, FieldDef, TyCtxt};
+use rustc_middle::ty::{AdtDef, FieldDef, TyCtxt};
 use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
-use rustc_span::{Symbol, sym};
+use rustc_span::Symbol;
 use spec::{Ctx, Outcome, var_struct_must_have_field_constructors_of_option_vec};
 use std::io;
 use std::process::ExitCode;
@@ -59,8 +58,8 @@ pub struct Visitor(pub Option<Result<SyntacticTestReport, ReportGenerateError>>)
 
 impl Callbacks for Visitor {
     fn after_analysis<'tcx>(&mut self, _: &rustc_interface::interface::Compiler, tcx: TyCtxt<'tcx>) -> Compilation {
-        let _ctx = Ctx::from(tcx);
-        self.0 = Some(SyntacticTestReport::generate(tcx));
+        let ctx = Ctx::from(tcx);
+        self.0 = Some(SyntacticTestReport::generate(ctx));
         // Stop compilation before code generation
         Compilation::Stop
     }
@@ -73,14 +72,15 @@ pub struct SyntacticTestReport {
 }
 
 impl SyntacticTestReport {
-    pub fn generate(tcx: TyCtxt<'_>) -> Result<Self, ReportGenerateError> {
+    pub fn generate(ctx: Ctx<'_>) -> Result<Self, ReportGenerateError> {
         use ReportGenerateError::*;
         let runtime = handle!(RuntimeBuilder::new_current_thread().enable_all().build(), BuildFailed);
-        Ok(runtime.block_on(Self::gather(tcx)))
+        Ok(runtime.block_on(Self::gather(&ctx)))
     }
 
-    pub async fn gather(tcx: TyCtxt<'_>) -> Self {
-        let struct_var = StructVar::gather(tcx).await;
+    pub async fn gather(ctx: &Ctx<'_>) -> Self {
+        tokio::task::yield_now().await;
+        let struct_var = StructVar::gather(ctx);
         Self {
             struct_var,
         }
@@ -95,9 +95,8 @@ pub struct StructVar {
 }
 
 impl StructVar {
-    pub async fn gather(_tcx: TyCtxt<'_>) -> Self {
+    pub fn gather(_ctx: &Ctx<'_>) -> Self {
         // use StructVarReportedError::*;
-        tokio::task::yield_now().await;
         todo!()
         // match matches.as_slice() {
         //     [] => Self {
@@ -107,7 +106,7 @@ impl StructVar {
         //         reported_error: must_report_error.then_some(NotFound),
         //         fields: StructVarFields::empty(),
         //     },
-        //     [(var_struct_def_id, type_path)] => Self::gather_unique(tcx, *var_struct_def_id, type_path),
+        //     [(var_struct_def_id, type_path)] => Self::gather_unique(ctx, *var_struct_def_id, type_path),
         //     _ => Self {
         //         is_present: Pass,
         //         is_unique: Fail,
@@ -121,10 +120,10 @@ impl StructVar {
         // }
     }
 
-    // pub fn gather_unique(tcx: TyCtxt<'_>, var_struct_def_id: LocalDefId, type_path: &str) -> Self {
+    // pub fn gather_unique(ctx: &Ctx<'_>, var_struct_def_id: LocalDefId, type_path: &str) -> Self {
     //     use StructVarReportedError::*;
     //     let must_report_error = must_report_var_struct_constructors_field();
-    //     let var_type = tcx
+    //     let var_type = ctx
     //         .type_of(var_struct_def_id.to_def_id())
     //         .instantiate_identity();
     //     match var_type.ty_adt_def() {
@@ -133,7 +132,7 @@ impl StructVar {
     //             is_unique: Pass,
     //             type_paths: vec![type_path.to_owned()],
     //             reported_error: None,
-    //             fields: StructVarFields::gather(tcx, var_struct_def_id, var_adt.non_enum_variant().fields.iter()),
+    //             fields: StructVarFields::gather(ctx, var_adt),
     //         },
     //         None => Self {
     //             is_present: Pass,
@@ -163,9 +162,9 @@ pub enum StructVarFields {
 
 impl StructVarFields {
     /// `var` must be a struct
-    pub fn gather(var: AdtDef) -> Self {
+    pub fn gather(ctx: &Ctx<'_>, var: AdtDef<'_>) -> Self {
         if var_struct_must_have_field_constructors_of_option_vec() == Some(true) {
-            let constructors = StructVarFieldsConstructorsOptionVec::gather(var);
+            let constructors = StructVarFieldsConstructorsOptionVec::gather(ctx, var);
             Self::StructVarFieldsWithConstructors {
                 constructors,
             }
@@ -182,12 +181,12 @@ pub struct StructVarFieldsConstructorsOptionVec {
 }
 
 impl StructVarFieldsConstructorsOptionVec {
-    fn gather(var: AdtDef) -> Self {
+    fn gather(ctx: &Ctx<'_>, var: AdtDef<'_>) -> Self {
         let constructors_field_name = Symbol::intern("constructors");
         let constructors_field = var.all_fields().find(|x| x.name == constructors_field_name);
-        if let Some(_constructors_field_def) = constructors_field {
+        if let Some(constructors_field_def) = constructors_field {
             let is_present = Pass;
-            let has_type_option_vec_var = Self::has_type_option_vec_var(_constructors_field_def);
+            let has_type_option_vec_var = Self::has_type_option_vec_var(ctx, var, constructors_field_def);
             Self {
                 is_present,
                 has_type_option_vec_var,
@@ -197,8 +196,12 @@ impl StructVarFieldsConstructorsOptionVec {
         }
     }
 
-    fn has_type_option_vec_var(_var: &FieldDef) -> Outcome {
-        todo!()
+    fn has_type_option_vec_var(ctx: &Ctx<'_>, var: AdtDef<'_>, constructors_field: &FieldDef) -> Outcome {
+        let Some(var_struct_def_id) = var.did().as_local() else {
+            return Fail;
+        };
+        let field_type = ctx.field_type(constructors_field);
+        if ctx.is_option_vec_of_local_adt(field_type, var_struct_def_id) { Pass } else { Fail }
     }
 }
 
@@ -213,15 +216,15 @@ impl StructVarFieldsConstructorsOptionVec {
 //         }
 //     }
 //
-//     pub fn gather(tcx: TyCtxt<'_>, var_struct_def_id: LocalDefId, constructors_field: Option<&FieldDef>) -> Self {
+//     pub fn gather(ctx: &Ctx<'_>, var_struct_def_id: LocalDefId, constructors_field: Option<&FieldDef>) -> Self {
 //         use StructVarFieldsConstructorsReportedError::*;
 //         let must_be_option_vec_var = var_struct_must_have_field_constructors_of_option_vec();
 //         let must_report_error = must_be_option_vec_var == Some(true);
 //         match constructors_field {
 //             Some(constructors_field) => {
-//                 let field_type = tcx.type_of(constructors_field.did).instantiate_identity();
+//                 let field_type = ctx.field_type(constructors_field);
 //                 let actual_type = field_type.to_string();
-//                 let has_type_option_vec_var = is_option_vec_of_var(tcx, field_type, var_struct_def_id);
+//                 let has_type_option_vec_var = ctx.is_option_vec_of_local_adt(field_type, var_struct_def_id);
 //                 let reported_error = if has_type_option_vec_var || !must_report_error { None } else { Some(TypeInvalid) };
 //                 Self {
 //                     must_be_option_vec_var,
@@ -248,37 +251,10 @@ impl StructVarFieldsConstructorsOptionVec {
 // }
 //
 // impl StructVarFieldsConstructorsAbsent {
-//     pub fn gather(tcx: TyCtxt) -> Self {
+//     pub fn gather(_ctx: &Ctx<'_>) -> Self {
 //         todo!()
 //     }
 // }
-
-#[derive(Facet, Debug)]
-#[repr(u8)]
-pub enum StructVarFieldsConstructorsReportedError {
-    NotFound,
-    TypeInvalid,
-}
-
-pub fn is_option_vec_of_var(tcx: TyCtxt<'_>, field_type: ty::Ty<'_>, var_struct_def_id: LocalDefId) -> bool {
-    let ty::Adt(option_def, option_args) = field_type.kind() else {
-        return false;
-    };
-    if !tcx.is_diagnostic_item(sym::Option, option_def.did()) {
-        return false;
-    }
-
-    let vec_type = option_args.type_at(0);
-    let ty::Adt(vec_def, vec_args) = vec_type.kind() else {
-        return false;
-    };
-    if !tcx.is_diagnostic_item(sym::Vec, vec_def.did()) {
-        return false;
-    }
-
-    let inner_type = vec_args.type_at(0);
-    matches!(inner_type.kind(), ty::Adt(var_def, _) if var_def.did() == var_struct_def_id.to_def_id())
-}
 
 #[derive(Error, Debug)]
 pub enum RunError {
