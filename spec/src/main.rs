@@ -13,10 +13,11 @@ use errgonomic::{exit_result, handle, handle_opt};
 use facet::Facet;
 use facet_pretty::{FacetPretty, PrettyPrinter};
 use rustc_driver::{Callbacks, Compilation};
-use rustc_middle::ty::{AdtDef, FieldDef, TyCtxt};
+use rustc_hir::def_id::LocalDefId;
+use rustc_middle::ty::{self, AdtDef, FieldDef, TyCtxt};
 use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
-use rustc_span::Symbol;
-use spec::{Ctx, Outcome, var_struct_must_have_field_constructors_of_option_vec};
+use rustc_span::{Symbol, sym};
+use spec::{Ctx, Field, Outcome, var_struct_must_have_field_constructors_of_option_vec};
 use std::io;
 use std::process::ExitCode;
 use thiserror::Error;
@@ -162,7 +163,7 @@ pub enum StructVarFields {
 
 impl StructVarFields {
     /// `var` must be a struct
-    pub fn gather(ctx: &Ctx<'_>, var: AdtDef<'_>) -> Self {
+    pub fn gather<'tcx>(ctx: &Ctx<'tcx>, var: AdtDef<'tcx>) -> Self {
         if var_struct_must_have_field_constructors_of_option_vec() == Some(true) {
             let constructors = StructVarFieldsConstructorsOptionVec::gather(ctx, var);
             Self::StructVarFieldsWithConstructors {
@@ -181,7 +182,7 @@ pub struct StructVarFieldsConstructorsOptionVec {
 }
 
 impl StructVarFieldsConstructorsOptionVec {
-    fn gather(ctx: &Ctx<'_>, var: AdtDef<'_>) -> Self {
+    fn gather<'tcx>(ctx: &Ctx<'tcx>, var: AdtDef<'tcx>) -> Self {
         let constructors_field_name = Symbol::intern("constructors");
         let constructors_field = var.all_fields().find(|x| x.name == constructors_field_name);
         if let Some(constructors_field_def) = constructors_field {
@@ -196,12 +197,13 @@ impl StructVarFieldsConstructorsOptionVec {
         }
     }
 
-    fn has_type_option_vec_var(ctx: &Ctx<'_>, var: AdtDef<'_>, constructors_field: &FieldDef) -> Outcome {
+    fn has_type_option_vec_var<'tcx>(ctx: &Ctx<'tcx>, var: AdtDef<'tcx>, constructors_field: &'tcx FieldDef) -> Outcome {
         let Some(var_struct_def_id) = var.did().as_local() else {
             return Fail;
         };
-        let field_type = ctx.field_type(constructors_field);
-        if ctx.is_option_vec_of_local_adt(field_type, var_struct_def_id) { Pass } else { Fail }
+        let field = Field::new(*ctx.tcx(), constructors_field);
+        let field_type = field.ty();
+        if is_option_vec_of_local_adt(field.tcx, field_type, var_struct_def_id) { Pass } else { Fail }
     }
 }
 
@@ -222,9 +224,10 @@ impl StructVarFieldsConstructorsOptionVec {
 //         let must_report_error = must_be_option_vec_var == Some(true);
 //         match constructors_field {
 //             Some(constructors_field) => {
-//                 let field_type = ctx.field_type(constructors_field);
+//                 let field = Field::new(*ctx.tcx(), constructors_field);
+//                 let field_type = field.ty();
 //                 let actual_type = field_type.to_string();
-//                 let has_type_option_vec_var = ctx.is_option_vec_of_local_adt(field_type, var_struct_def_id);
+//                 let has_type_option_vec_var = is_option_vec_of_local_adt(field.tcx, field_type, var_struct_def_id);
 //                 let reported_error = if has_type_option_vec_var || !must_report_error { None } else { Some(TypeInvalid) };
 //                 Self {
 //                     must_be_option_vec_var,
@@ -255,6 +258,26 @@ impl StructVarFieldsConstructorsOptionVec {
 //         todo!()
 //     }
 // }
+
+pub fn is_option_vec_of_local_adt(tcx: TyCtxt<'_>, field_type: ty::Ty<'_>, local_adt_def_id: LocalDefId) -> bool {
+    let ty::Adt(option_def, option_args) = field_type.kind() else {
+        return false;
+    };
+    if !tcx.is_diagnostic_item(sym::Option, option_def.did()) {
+        return false;
+    }
+
+    let vec_type = option_args.type_at(0);
+    let ty::Adt(vec_def, vec_args) = vec_type.kind() else {
+        return false;
+    };
+    if !tcx.is_diagnostic_item(sym::Vec, vec_def.did()) {
+        return false;
+    }
+
+    let inner_type = vec_args.type_at(0);
+    matches!(inner_type.kind(), ty::Adt(var_def, _) if var_def.did() == local_adt_def_id.to_def_id())
+}
 
 #[derive(Error, Debug)]
 pub enum RunError {

@@ -3,13 +3,15 @@ use derive_getters::Getters;
 use derive_more::Deref;
 use errgonomic::{handle, handle_bool};
 use rustc_hash::FxHashMap;
-use rustc_middle::ty::{self, AdtDef, FieldDef, TyCtxt};
+use rustc_middle::ty::{AdtDef, TyCtxt};
+use rustc_span::Symbol;
 use rustc_span::def_id::LocalDefId;
-use rustc_span::{Symbol, sym};
 use smallvec::SmallVec;
 use thiserror::Error;
 
-/// A wrapper around [`TyCtxt`] with a nicer API and caching
+/// A wrapper around [`TyCtxt`] with a nicer API and caching.
+///
+/// This wrapper should contain only those methods that are reusable across multiple specs
 #[derive(Getters, Deref, Clone)]
 pub struct Ctx<'a> {
     #[deref]
@@ -44,30 +46,6 @@ impl<'a> Ctx<'a> {
         let adt_def = self.tcx.adt_def(local_def_id);
         handle_bool!(!adt_def.is_struct(), NotStruct, local_def_id, symbol);
         Ok(adt_def)
-    }
-
-    pub fn field_type(&self, field: &FieldDef) -> ty::Ty<'a> {
-        self.type_of(field.did).instantiate_identity()
-    }
-
-    pub fn is_option_vec_of_local_adt(&self, field_type: ty::Ty<'a>, local_adt_def_id: LocalDefId) -> bool {
-        let ty::Adt(option_def, option_args) = field_type.kind() else {
-            return false;
-        };
-        if !self.is_diagnostic_item(sym::Option, option_def.did()) {
-            return false;
-        }
-
-        let vec_type = option_args.type_at(0);
-        let ty::Adt(vec_def, vec_args) = vec_type.kind() else {
-            return false;
-        };
-        if !self.is_diagnostic_item(sym::Vec, vec_def.did()) {
-            return false;
-        }
-
-        let inner_type = vec_args.type_at(0);
-        matches!(inner_type.kind(), ty::Adt(var_def, _) if var_def.did() == local_adt_def_id.to_def_id())
     }
 }
 
