@@ -18,7 +18,7 @@ impl Nats {
         var!(nat: typ!(); Self::nat_nym());
 
         // `var!(nat: typ!());` expands to the following declaration:
-        debug_assert_eq!(nat, Var::new_rc(Self::nat_nym(), Typ::top()));
+        debug_assert_eq!(nat, Var::new_rc(Self::nat_nym(), Typ::top(), None));
         // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
 
         // Zero : Nat

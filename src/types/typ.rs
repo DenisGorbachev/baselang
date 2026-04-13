@@ -63,7 +63,7 @@ impl Typ {
                             // TODO: the whole branch for Fun might be incorrect
                             let nym = fun_var.nym().clone();
                             let new_typ = One(arg.clone());
-                            Var::new_rc(nym, new_typ)
+                            Var::new_rc(nym, new_typ, None)
                         }
                         // For other cases, keep the original variable
                         _ => fun_var.clone(),

@@ -27,11 +27,7 @@ pub struct Var {
 pub type VarRc = Rc<Var>;
 
 impl Var {
-    pub fn new(nym: impl Into<Nym>, typ: impl Into<Typ>) -> Self {
-        Self::new_with_constructors(nym, typ, None)
-    }
-
-    pub fn new_with_constructors(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Self {
+    pub fn new(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Self {
         Self {
             nym: nym.into(),
             typ: typ.into(),
@@ -39,11 +35,7 @@ impl Var {
         }
     }
 
-    pub fn new_top(nym: impl Into<Nym>) -> Self {
-        Self::new_top_with_constructors(nym, None)
-    }
-
-    pub fn new_top_with_constructors(nym: impl Into<Nym>, constructors: impl Into<Option<Vec<Self>>>) -> Self {
+    pub fn new_top(nym: impl Into<Nym>, constructors: impl Into<Constructors>) -> Self {
         Self {
             nym: nym.into(),
             typ: Typ::Top,
@@ -51,20 +43,12 @@ impl Var {
         }
     }
 
-    pub fn new_rc(nym: impl Into<Nym>, typ: impl Into<Typ>) -> Rc<Self> {
-        Rc::new(Self::new(nym, typ))
+    pub fn new_rc(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Rc<Self> {
+        Rc::new(Self::new(nym, typ, constructors))
     }
 
-    pub fn new_rc_with_constructors(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Option<Vec<Self>>>) -> Rc<Self> {
-        Rc::new(Self::new_with_constructors(nym, typ, constructors))
-    }
-
-    pub fn new_top_rc(nym: impl Into<Nym>) -> Rc<Self> {
-        Rc::new(Self::new_top(nym))
-    }
-
-    pub fn new_top_rc_with_constructors(nym: impl Into<Nym>, constructors: impl Into<Option<Vec<Self>>>) -> Rc<Self> {
-        Rc::new(Self::new_top_with_constructors(nym, constructors))
+    pub fn new_top_rc(nym: impl Into<Nym>, constructors: impl Into<Constructors>) -> Rc<Self> {
+        Rc::new(Self::new_top(nym, constructors))
     }
 
     pub fn set_nym(&mut self, nym: impl Into<Nym>) {
@@ -87,7 +71,7 @@ impl Var {
 
 impl From<(Nym, Typ)> for Var {
     fn from((nym, typ): (Nym, Typ)) -> Self {
-        Self::new(nym, typ)
+        Self::new(nym, typ, None)
     }
 }
 
@@ -163,23 +147,12 @@ impl Of<Exp> for VarRc {
 #[macro_export]
 macro_rules! var {
     ($name:ident) => {
-        let $name = $crate::Var::new_top_rc(stringify!($name));
+        let $name = $crate::Var::new_top_rc(stringify!($name), None);
     };
     ($name: ident: $typ: expr) => {
-        let $name = $crate::Var::new_rc(stringify!($name), $typ);
+        let $name = $crate::Var::new_rc(stringify!($name), $typ, None);
     };
     ($name: ident: $typ: expr; $nym: expr) => {
-        let $name = $crate::Var::new_rc($nym, $typ);
-    };
-}
-
-#[macro_export]
-#[deprecated(note = "Use var! with $nym instead")]
-macro_rules! vrc {
-    ($name: expr) => {
-        $crate::Var::new_top_rc($name)
-    };
-    ($name: expr, $typ: expr) => {
-        $crate::Var::new_rc($name, $typ)
+        let $name = $crate::Var::new_rc($nym, $typ, None);
     };
 }
