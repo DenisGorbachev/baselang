@@ -1,5 +1,5 @@
 use aist::{Adt, Field};
-use errgonomic::handle_opt;
+use errgonomic::{handle_bool, handle_opt};
 use facet::Facet;
 use rustc_middle::ty;
 use rustc_span::def_id::DefId;
@@ -23,7 +23,8 @@ impl StructVarFieldsConstructorsOptionVec {
 
     fn has_type_option_vec_var(var: Adt, constructors: Field) -> Result<(), StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError> {
         use StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError::*;
-        if is_option_vec_of_def_id(constructors, var.did()) { Ok(()) } else { Err(TypeInvalid {}) }
+        handle_bool!(!is_option_vec_of_def_id(constructors, var.did()), TypeInvalid);
+        Ok(())
     }
 }
 

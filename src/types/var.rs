@@ -7,29 +7,48 @@ use std::rc::Rc;
 /// This type should be wrapped in [`Rc`] because earlier variables need to be referenced by later variables
 #[derive(Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Var {
-    /// This field is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] while printing the current var)
+    /// Names of this var.
+    ///
+    /// `Nym` is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] while printing the current var)
     nym: Nym,
+
     /// Do we need to wrap the `typ` in [`Rc`]?
     /// * Yes: because multiple variables can have the same type (e.g. `n : Nat`, `Zero : Nat`)
     /// * No: because we can wrap the variables themselves in Rc and pass them into Exp
     ///   We can't make `typ` `pub` because that would allow mutating it after the [`Var`] was used to construct an [`Exp::App`], which would break caching of [`Typ`] of the resulting expression
     typ: Typ,
+
+    /// Constructors of this var.
+    ///
+    /// `None` means that var doesn't need constructors (we assume that it has a proof)
+    /// `Some(vec![])` means that var has no constructors (we know that it doesn't have a proof) (example: `Void` aka `False` type)
+    constructors: Option<Vec<Var>>,
 }
 
 pub type VarRc = Rc<Var>;
 
 impl Var {
     pub fn new(nym: impl Into<Nym>, typ: impl Into<Typ>) -> Self {
+        Self::new_with_constructors(nym, typ, None)
+    }
+
+    pub fn new_with_constructors(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Option<Vec<Self>>>) -> Self {
         Self {
             nym: nym.into(),
             typ: typ.into(),
+            constructors: constructors.into(),
         }
     }
 
     pub fn new_top(nym: impl Into<Nym>) -> Self {
+        Self::new_top_with_constructors(nym, None)
+    }
+
+    pub fn new_top_with_constructors(nym: impl Into<Nym>, constructors: impl Into<Option<Vec<Self>>>) -> Self {
         Self {
             nym: nym.into(),
             typ: Typ::Top,
+            constructors: constructors.into(),
         }
     }
 
@@ -37,12 +56,24 @@ impl Var {
         Rc::new(Self::new(nym, typ))
     }
 
+    pub fn new_rc_with_constructors(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Option<Vec<Self>>>) -> Rc<Self> {
+        Rc::new(Self::new_with_constructors(nym, typ, constructors))
+    }
+
     pub fn new_top_rc(nym: impl Into<Nym>) -> Rc<Self> {
         Rc::new(Self::new_top(nym))
     }
 
+    pub fn new_top_rc_with_constructors(nym: impl Into<Nym>, constructors: impl Into<Option<Vec<Self>>>) -> Rc<Self> {
+        Rc::new(Self::new_top_with_constructors(nym, constructors))
+    }
+
     pub fn set_nym(&mut self, nym: impl Into<Nym>) {
         self.nym = nym.into()
+    }
+
+    pub fn set_constructors(&mut self, constructors: impl Into<Option<Vec<Self>>>) {
+        self.constructors = constructors.into();
     }
 
     pub fn of_at(&self, _arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
@@ -52,6 +83,23 @@ impl Var {
     /// Returns `true` if the current var is a type family that is total in every arg except the last, and also unique in the last arg
     pub fn is_function(&self) -> bool {
         todo!()
+    }
+}
+
+impl From<(Nym, Typ)> for Var {
+    fn from((nym, typ): (Nym, Typ)) -> Self {
+        Self::new(nym, typ)
+    }
+}
+
+impl From<Var> for (Nym, Typ) {
+    fn from(value: Var) -> Self {
+        let Var {
+            nym,
+            typ,
+            constructors: _,
+        } = value;
+        (nym, typ)
     }
 }
 
