@@ -1,0 +1,31 @@
+thread 'rustc' panicked at /Users/starfall/.rustup/toolchains/nightly-2026-01-22-aarch64-apple-darwin/lib/rustlib/rustc-src/rust/compiler/rustc_middle/src/ty/mod.rs:1643:13:
+Box<dyn Any>
+stack backtrace:
+   0:        0x1114ee630 - <std[a722c631c53839b6]::backtrace::Backtrace>::create
+   1:        0x10f3b5a30 - std[a722c631c53839b6]::panicking::update_hook::<alloc[c7bc490237f6d777]::boxed::Box<rustc_driver_impl[3ae4cca43c58ecee]::install_ice_hook::{closure#1}>>::{closure#0}
+   2:        0x1114ff9ec - std[a722c631c53839b6]::panicking::panic_with_hook
+   3:        0x10f42f9d8 - std[a722c631c53839b6]::panicking::begin_panic::<rustc_errors[c9a1e67d002dc695]::ExplicitBug>::{closure#0}
+   4:        0x10f4229e4 - std[a722c631c53839b6]::sys::backtrace::__rust_end_short_backtrace::<std[a722c631c53839b6]::panicking::begin_panic<rustc_errors[c9a1e67d002dc695]::ExplicitBug>::{closure#0}, !>
+   5:        0x1142c4964 - std[a722c631c53839b6]::panicking::begin_panic::<rustc_errors[c9a1e67d002dc695]::ExplicitBug>
+   6:        0x1142c5464 - <rustc_errors[c9a1e67d002dc695]::diagnostic::BugAbort as rustc_errors[c9a1e67d002dc695]::diagnostic::EmissionGuarantee>::emit_producing_guarantee
+   7:        0x114330f58 - rustc_middle[cc04e17bd1e1fd05]::util::bug::opt_span_bug_fmt::<rustc_span[e8cf2920eb005623]::span_encoding::Span>::{closure#0}
+   8:        0x11007e3c0 - rustc_middle[cc04e17bd1e1fd05]::ty::context::tls::with_opt::<rustc_middle[cc04e17bd1e1fd05]::util::bug::opt_span_bug_fmt<rustc_span[e8cf2920eb005623]::span_encoding::Span>::{closure#0}, !>::{closure#0}
+   9:        0x110057cac - rustc_middle[cc04e17bd1e1fd05]::ty::context::tls::with_context_opt::<rustc_middle[cc04e17bd1e1fd05]::ty::context::tls::with_opt<rustc_middle[cc04e17bd1e1fd05]::util::bug::opt_span_bug_fmt<rustc_span[e8cf2920eb005623]::span_encoding::Span>::{closure#0}, !>::{closure#0}, !>
+  10:        0x114335188 - rustc_middle[cc04e17bd1e1fd05]::util::bug::bug_fmt
+  11:        0x102a20164 - <rustc_middle[cc04e17bd1e1fd05]::ty::context::TyCtxt>::item_name::<rustc_span[e8cf2920eb005623]::def_id::LocalDefId>::{closure#0}
+  12:        0x102a0c380 - <rustc_middle[cc04e17bd1e1fd05]::ty::context::TyCtxt>::item_name::<rustc_span[e8cf2920eb005623]::def_id::LocalDefId>
+  13:        0x102a0b760 - <aist[ee39c24318906d3]::ctx::Ctx as core[92217a8aecc672b5]::convert::From<rustc_middle[cc04e17bd1e1fd05]::ty::context::TyCtxt>>::from
+  14:        0x1029ff778 - <spec[a492cd75e08cb673]::Visitor as rustc_driver_impl[3ae4cca43c58ecee]::Callbacks>::after_analysis
+  15:        0x10f367ee4 - rustc_interface[663adc5af16fa10f]::passes::create_and_enter_global_ctxt::<core[92217a8aecc672b5]::option::Option<rustc_interface[663adc5af16fa10f]::queries::Linker>, rustc_driver_impl[3ae4cca43c58ecee]::run_compiler::{closure#0}::{closure#2}>
+  16:        0x10f3b49b0 - rustc_interface[663adc5af16fa10f]::interface::run_compiler::<(), rustc_driver_impl[3ae4cca43c58ecee]::run_compiler::{closure#0}>::{closure#1}
+  17:        0x10f3a8fa8 - std[a722c631c53839b6]::sys::backtrace::__rust_begin_short_backtrace::<rustc_interface[663adc5af16fa10f]::util::run_in_thread_with_globals<rustc_interface[663adc5af16fa10f]::util::run_in_thread_pool_with_globals<rustc_interface[663adc5af16fa10f]::interface::run_compiler<(), rustc_driver_impl[3ae4cca43c58ecee]::run_compiler::{closure#0}>::{closure#1}, ()>::{closure#0}, ()>::{closure#0}::{closure#0}, ()>
+  18:        0x10f3ba9c8 - <std[a722c631c53839b6]::thread::lifecycle::spawn_unchecked<rustc_interface[663adc5af16fa10f]::util::run_in_thread_with_globals<rustc_interface[663adc5af16fa10f]::util::run_in_thread_pool_with_globals<rustc_interface[663adc5af16fa10f]::interface::run_compiler<(), rustc_driver_impl[3ae4cca43c58ecee]::run_compiler::{closure#0}>::{closure#1}, ()>::{closure#0}, ()>::{closure#0}::{closure#0}, ()>::{closure#1} as core[92217a8aecc672b5]::ops::function::FnOnce<()>>::call_once::{shim:vtable#0}
+  19:        0x11150a5d0 - <std[a722c631c53839b6]::sys::thread::unix::Thread>::new::thread_start
+  20:        0x19ce23bc8 - __pthread_cond_wait
+
+
+rustc version: 1.95.0-nightly (eda76d9d1 2026-01-21)
+platform: aarch64-apple-darwin
+
+query stack during panic:
+end of query stack

@@ -9,6 +9,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use Outcome::*;
+use aist::*;
 use errgonomic::{exit_result, handle, handle_opt};
 use facet::Facet;
 use facet_pretty::{FacetPretty, PrettyPrinter};
@@ -17,7 +18,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::{self, AdtDef, FieldDef, TyCtxt};
 use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
 use rustc_span::{Symbol, sym};
-use spec::{Ctx, Field, Outcome, var_struct_must_have_field_constructors_of_option_vec};
+use spec::var_struct_must_have_field_constructors_of_option_vec;
 use std::io;
 use std::process::ExitCode;
 use thiserror::Error;

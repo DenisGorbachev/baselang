@@ -12,6 +12,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "aist"
+version = "0.1.0"
+dependencies = [
+ "derive-getters",
+ "derive_more",
+ "errgonomic",
+ "facet",
+ "rustc-hash",
+ "smallvec 1.15.1",
+ "thiserror",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -725,14 +738,11 @@ dependencies = [
 name = "spec"
 version = "0.1.0"
 dependencies = [
- "derive-getters",
- "derive_more",
+ "aist",
  "errgonomic",
  "facet",
  "facet-pretty",
  "futures",
- "rustc-hash",
- "smallvec 1.15.1",
  "stub-macro",
  "tempfile",
  "thiserror",

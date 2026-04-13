@@ -1826,7 +1826,7 @@ cfg_if::cfg_if! {
 
 ```toml
 [workspace]
-members = ["spec"]
+members = ["aist", "spec"]
 resolver = "3"
 
 [package]
