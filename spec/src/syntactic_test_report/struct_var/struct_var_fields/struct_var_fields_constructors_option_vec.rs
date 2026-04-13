@@ -1,0 +1,64 @@
+use aist::{Adt, Field};
+use errgonomic::handle_opt;
+use facet::Facet;
+use rustc_middle::ty;
+use rustc_span::def_id::DefId;
+use rustc_span::sym;
+use thiserror::Error;
+
+#[derive(Facet, Debug)]
+pub struct StructVarFieldsConstructorsOptionVec {
+    pub has_type_option_vec_var: Result<(), StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError>,
+}
+
+impl StructVarFieldsConstructorsOptionVec {
+    pub fn new(var: Adt) -> Result<Self, StructVarFieldsConstructorsOptionVecGatherError> {
+        use StructVarFieldsConstructorsOptionVecGatherError::*;
+        let constructors_field = handle_opt!(var.field("constructors"), NotFound);
+        let has_type_option_vec_var = Self::has_type_option_vec_var(var, constructors_field);
+        Ok(Self {
+            has_type_option_vec_var,
+        })
+    }
+
+    fn has_type_option_vec_var(var: Adt, constructors: Field) -> Result<(), StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError> {
+        use StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError::*;
+        if is_option_vec_of_def_id(constructors, var.did()) { Ok(()) } else { Err(TypeInvalid {}) }
+    }
+}
+
+#[derive(Error, Facet, Debug)]
+#[repr(u8)]
+pub enum StructVarFieldsConstructorsOptionVecGatherError {
+    #[error("field `constructors` not found")]
+    NotFound {},
+}
+
+#[derive(Error, Facet, Debug)]
+#[repr(u8)]
+pub enum StructVarFieldsConstructorsOptionVecHasTypeOptionVecVarError {
+    #[error("field `constructors` does not have type `Option<Vec<Var>>`")]
+    TypeInvalid {},
+}
+
+fn is_option_vec_of_def_id(field: Field, def_id: DefId) -> bool {
+    let tcx = field.tcx;
+
+    let ty::Adt(option_def, option_args) = field.ty().kind() else {
+        return false;
+    };
+    if !tcx.is_diagnostic_item(sym::Option, option_def.did()) {
+        return false;
+    }
+
+    let vec_type = option_args.type_at(0);
+    let ty::Adt(vec_def, vec_args) = vec_type.kind() else {
+        return false;
+    };
+    if !tcx.is_diagnostic_item(sym::Vec, vec_def.did()) {
+        return false;
+    }
+
+    let inner_type = vec_args.type_at(0);
+    matches!(inner_type.kind(), ty::Adt(var_def, _) if var_def.did() == def_id)
+}

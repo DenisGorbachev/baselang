@@ -39,7 +39,7 @@ impl<'c> Ctx<'c> {
             .map(|local_def_id| Adt::new(self.tcx.adt_def(local_def_id), self.tcx))
     }
 
-    pub fn struct_def(&self, name: impl IntoSymbol) -> Result<Adt<'c>, StructDefError> {
+    pub fn adt_struct(&self, name: impl IntoSymbol) -> Result<Adt<'c>, StructDefError> {
         use StructDefError::*;
         let symbol = name.into_symbol();
         let adt = handle!(self.adt(symbol), GetLocalDefIdFailed);
