@@ -91,46 +91,38 @@ impl SyntacticTestReport {
 
 #[derive(Facet, Debug)]
 pub struct StructVar {
-    pub is_present: Outcome,
-    pub is_unique: Outcome,
+    pub exists_unique: Outcome,
     pub fields: StructVarFields,
 }
 
 impl StructVar {
     pub fn gather(ctx: &Ctx<'_>) -> Self {
         use GetLocalDefIdError::*;
-        match ctx.unique_local_def_id("Var") {
-            Ok(var_struct_def_id) => Self::gather_unique(ctx, var_struct_def_id),
+        match ctx.adt("Var") {
+            Ok(var) => Self::gather_unique(ctx, var),
             Err(NotFound {
                 ..
             }) => Self {
-                is_present: Fail,
-                is_unique: Fail,
+                exists_unique: Fail,
                 fields: StructVarFields::StructVarFieldsWithoutConstructors {},
             },
             Err(NotUnique {
                 ..
             }) => Self {
-                is_present: Pass,
-                is_unique: Fail,
+                exists_unique: Fail,
                 fields: StructVarFields::StructVarFieldsWithoutConstructors {},
             },
         }
     }
 
-    pub fn gather_unique(ctx: &Ctx<'_>, var_struct_def_id: LocalDefId) -> Self {
-        let var_type = ctx
-            .type_of(var_struct_def_id.to_def_id())
-            .instantiate_identity();
-        match var_type.ty_adt_def().filter(|var_adt| var_adt.is_struct()) {
-            Some(var_adt) => Self {
-                is_present: Pass,
-                is_unique: Pass,
-                fields: StructVarFields::gather(ctx, var_adt),
+    pub fn gather_unique<'tcx>(ctx: &Ctx<'tcx>, var: Adt<'tcx>) -> Self {
+        match var.def.is_struct() {
+            true => Self {
+                exists_unique: Pass,
+                fields: StructVarFields::gather(ctx, var.def),
             },
-            None => Self {
-                is_present: Fail,
-                is_unique: Pass,
+            false => Self {
+                exists_unique: Pass,
                 fields: StructVarFields::StructVarFieldsWithoutConstructors {},
             },
         }
@@ -196,58 +188,6 @@ impl StructVarFieldsConstructorsOptionVec {
         if is_option_vec_of_local_adt(field.tcx, field_type, var_struct_def_id) { Pass } else { Fail }
     }
 }
-
-// impl StructVarFieldsConstructorsOptionVec {
-//     pub fn empty() -> Self {
-//         Self {
-//             must_be_option_vec_var: var_struct_must_have_field_constructors_of_option_vec(),
-//             is_present: false,
-//             actual_type: None,
-//             has_type_option_vec_var: false,
-//             reported_error: None,
-//         }
-//     }
-//
-//     pub fn gather(ctx: &Ctx<'_>, var_struct_def_id: LocalDefId, constructors_field: Option<&FieldDef>) -> Self {
-//         use StructVarFieldsConstructorsReportedError::*;
-//         let must_be_option_vec_var = var_struct_must_have_field_constructors_of_option_vec();
-//         let must_report_error = must_be_option_vec_var == Some(true);
-//         match constructors_field {
-//             Some(constructors_field) => {
-//                 let field = Field::new(*ctx.tcx(), constructors_field);
-//                 let field_type = field.ty();
-//                 let actual_type = field_type.to_string();
-//                 let has_type_option_vec_var = is_option_vec_of_local_adt(field.tcx, field_type, var_struct_def_id);
-//                 let reported_error = if has_type_option_vec_var || !must_report_error { None } else { Some(TypeInvalid) };
-//                 Self {
-//                     must_be_option_vec_var,
-//                     is_present: true,
-//                     actual_type: Some(actual_type),
-//                     has_type_option_vec_var,
-//                     reported_error,
-//                 }
-//             }
-//             None => Self {
-//                 must_be_option_vec_var,
-//                 is_present: false,
-//                 actual_type: None,
-//                 has_type_option_vec_var: false,
-//                 reported_error: must_report_error.then_some(NotFound),
-//             },
-//         }
-//     }
-// }
-
-// #[derive(Facet, Default, Debug)]
-// struct StructVarFieldsConstructorsAbsent {
-//     is_absent: Outcome,
-// }
-//
-// impl StructVarFieldsConstructorsAbsent {
-//     pub fn gather(_ctx: &Ctx<'_>) -> Self {
-//         todo!()
-//     }
-// }
 
 pub fn is_option_vec_of_local_adt(tcx: TyCtxt<'_>, field_type: ty::Ty<'_>, local_adt_def_id: LocalDefId) -> bool {
     let ty::Adt(option_def, option_args) = field_type.kind() else {
