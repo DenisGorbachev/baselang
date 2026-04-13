@@ -3,7 +3,7 @@ use derive_more::From;
 use derive_new::new;
 use thiserror::Error;
 
-#[derive(new, Error, From, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(new, Error, From, Eq, PartialEq, Hash, Clone, Debug)]
 #[error("invalid application: {fun:?} on {arg:?}")]
 pub struct InvalidApplicationError {
     fun: Typ,

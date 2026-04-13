@@ -1,11 +1,10 @@
 use crate::types::typ::Typ;
-use crate::{Exp, InvalidApplicationError, Nym, Of};
+use crate::{Constructors, Exp, InvalidApplicationError, Nym, Of};
 use derive_getters::Getters;
-use derive_more::{From, Into};
 use std::rc::Rc;
 
 /// This type should be wrapped in [`Rc`] because earlier variables need to be referenced by later variables
-#[derive(Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Getters, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Var {
     /// Names of this var.
     ///
@@ -22,7 +21,7 @@ pub struct Var {
     ///
     /// `None` means that var doesn't need constructors (we assume that it has a proof)
     /// `Some(vec![])` means that var has no constructors (we know that it doesn't have a proof) (example: `Void` aka `False` type)
-    constructors: Option<Vec<Var>>,
+    constructors: Constructors,
 }
 
 pub type VarRc = Rc<Var>;
@@ -32,7 +31,7 @@ impl Var {
         Self::new_with_constructors(nym, typ, None)
     }
 
-    pub fn new_with_constructors(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Option<Vec<Self>>>) -> Self {
+    pub fn new_with_constructors(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Self {
         Self {
             nym: nym.into(),
             typ: typ.into(),
@@ -92,14 +91,14 @@ impl From<(Nym, Typ)> for Var {
     }
 }
 
-impl From<Var> for (Nym, Typ) {
+impl From<Var> for (Nym, Typ, Constructors) {
     fn from(value: Var) -> Self {
         let Var {
             nym,
             typ,
-            constructors: _,
+            constructors,
         } = value;
-        (nym, typ)
+        (nym, typ, constructors)
     }
 }
 

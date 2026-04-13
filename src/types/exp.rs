@@ -2,7 +2,7 @@ use crate::{Fun, InvalidApplicationError, Of, One, Top, TypBox, Var};
 use crate::{Typ, VarRc};
 use std::rc::Rc;
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Exp {
     /// [`Sol`] means `solo` (a single variable)
     /// Must wrap [`Var`] in [`Rc`] because a single var can be used in multiple exps (e.g. `Nat` can be used in multiple exps)

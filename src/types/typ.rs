@@ -3,7 +3,7 @@ use crate::types::var::{Var, VarRc};
 use Exp::*;
 use std::rc::Rc;
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub enum Typ {
     /// Needed because some vars have fun types that end in a top (e.g. `List : (t : Top) -> Top`)
     Top,
