@@ -3,7 +3,7 @@ use rustc_hir::def::DefKind;
 use rustc_hir::def_id::LocalDefId;
 use rustc_hir::definitions::DefPath;
 use rustc_hir::intravisit::{Visitor, walk_expr};
-use rustc_hir::{Expr, ExprField, ExprKind};
+use rustc_hir::{Expr, ExprKind};
 use rustc_middle::ty::TyCtxt;
 use rustc_middle::ty::TypeckResults;
 use rustc_span::Symbol;
@@ -85,13 +85,6 @@ impl<'tcx> FieldMutationVisitor<'tcx> {
             .map(|adt| adt == self.the_struct)
             .unwrap_or(false)
     }
-
-    fn struct_expr_sets_target_field(&self, expr: &Expr<'tcx>, fields: &[ExprField<'tcx>]) -> bool {
-        self.is_target_struct_expr(expr)
-            && fields
-                .iter()
-                .any(|field| field.ident.name == self.the_field_name)
-    }
 }
 
 impl<'tcx> Visitor<'tcx> for FieldMutationVisitor<'tcx> {
@@ -99,11 +92,6 @@ impl<'tcx> Visitor<'tcx> for FieldMutationVisitor<'tcx> {
         match expr.kind {
             ExprKind::Assign(lhs, _, _) | ExprKind::AssignOp(_, lhs, _) => {
                 if self.is_target_field_access(lhs) {
-                    self.found = true;
-                }
-            }
-            ExprKind::Struct(_, fields, _) => {
-                if self.struct_expr_sets_target_field(expr, fields) {
                     self.found = true;
                 }
             }
@@ -130,6 +118,7 @@ mod tests {
                 .map(to_def_path_str(tcx))
                 .collect::<Vec<_>>()
         });
+        // must not include User::new and User::clone
         handle_bool!(mutators != [String::from("User::with_name")], UnexpectedMutators, mutators);
         Ok(())
     }
@@ -138,12 +127,18 @@ mod tests {
         r#"
 #![crate_type = "lib"]
 
+#[derive(Clone)]
 pub struct User {
     name: String,
 }
 
 impl User {
-    #[must_use]
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+        }
+    }
+
     pub fn with_name(mut self, value: String) -> Self {
         self.name = value;
         self
