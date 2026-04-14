@@ -1,7 +1,6 @@
 use crate::IntoSymbol;
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::LocalDefId;
-use rustc_hir::definitions::DefPath;
 use rustc_hir::intravisit::{Visitor, walk_expr};
 use rustc_hir::{Expr, ExprKind};
 use rustc_middle::ty::TyCtxt;
@@ -19,21 +18,6 @@ pub fn get_mutators_by_name<'tcx>(tcx: TyCtxt<'tcx>, item_name: impl IntoSymbol,
 pub fn get_mutators(tcx: TyCtxt<'_>, the_struct: LocalDefId, the_field: LocalDefId) -> impl Iterator<Item = LocalDefId> + '_ {
     tcx.iter_local_def_id()
         .filter(move |candidate_def_id| matches!(tcx.def_kind(*candidate_def_id), DefKind::Fn | DefKind::AssocFn) && function_mutates_field(tcx, *candidate_def_id, the_struct, the_field))
-}
-
-#[inline(always)]
-pub fn to_def_path(tcx: TyCtxt<'_>) -> impl FnMut(LocalDefId) -> DefPath {
-    move |id: LocalDefId| tcx.hir_def_path(id)
-}
-
-#[inline(always)]
-pub fn to_def_path_str(tcx: TyCtxt<'_>) -> impl FnMut(LocalDefId) -> String {
-    move |id: LocalDefId| tcx.def_path_str(id)
-}
-
-#[inline(always)]
-pub fn to_def_paths(tcx: TyCtxt<'_>, iter: impl Iterator<Item = LocalDefId>) -> impl Iterator<Item = DefPath> {
-    iter.map(to_def_path(tcx))
 }
 
 fn get_field_local_def_ids<'tcx>(tcx: TyCtxt<'tcx>, ty_local_id: LocalDefId, the_field: Symbol) -> impl Iterator<Item = LocalDefId> + 'tcx {
