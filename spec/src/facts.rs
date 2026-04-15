@@ -60,7 +60,7 @@ pub fn every_function_must_be_total() -> bool {
 /// - But `Vec Bool (Add 2 3)` must be type-checked at compile time, so `Add` must be evaluated at compile time
 ///   - But such instances are rare
 ///   - But we can treat it as "use" and freeze only the definition of `Add` without freezing other definitions
-///   - But the actual usage is more abstract (see `src/samples/vector.plain.base`)
+///   - But the actual usage is more abstract (see `samples/vector.plain.base`)
 pub fn totality_check_can_be_deferred_to_use_time() -> bool {
     true
 }
