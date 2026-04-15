@@ -1,14 +1,13 @@
 use crate::{Exp, Render, Typ, Var};
-use derive_getters::Getters;
 use derive_more::{From, Into};
 use derive_new::new;
 use std::borrow::Cow;
 
-#[derive(new, Getters, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct PlainRenderer {
     /// The name of the [`Typ::Top`]
     #[new(into)]
-    top: Cow<'static, str>,
+    pub top: Cow<'static, str>,
 }
 
 impl PlainRenderer {

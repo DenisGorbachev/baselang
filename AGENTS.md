@@ -1873,7 +1873,7 @@ errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 itertools = "0.14.0"
 #standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.27.2", features = ["derive"] }
-#stub-macro = { version = "0.2.1" }
+stub-macro = { version = "0.2.1" }
 #subtype = { git = "https://github.com/DenisGorbachev/subtype" }
 thiserror = "2.0.17"
 tokio = { version = "1.50.0", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
@@ -1922,8 +1922,6 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 * Macros for concise expression construction
 */
 
-#![deny(unused_crate_dependencies)]
-
 mod types;
 
 pub use types::*;
@@ -1939,6 +1937,10 @@ pub use errors::*;
 mod traits;
 
 pub use traits::*;
+
+mod parse;
+
+pub use parse::*;
 
 mod render;
 

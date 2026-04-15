@@ -98,6 +98,7 @@ dependencies = [
  "itertools",
  "pretty_assertions",
  "strum",
+ "stub-macro",
  "thiserror",
  "tokio",
 ]

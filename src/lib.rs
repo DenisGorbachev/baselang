@@ -19,8 +19,6 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 * Macros for concise expression construction
 */
 
-#![deny(unused_crate_dependencies)]
-
 mod types;
 
 pub use types::*;
@@ -36,6 +34,10 @@ pub use errors::*;
 mod traits;
 
 pub use traits::*;
+
+mod parse;
+
+pub use parse::*;
 
 mod render;
 
