@@ -1,5 +1,8 @@
+use crate::{Parse, VarRc};
 use derive_new::new;
 use std::borrow::Cow;
+use stub_macro::stub_iter;
+use thiserror::Error;
 
 #[derive(new, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct PlainParser {
@@ -8,25 +11,27 @@ pub struct PlainParser {
     pub top: Cow<'static, str>,
 }
 
-// macro_rules! stub_iter {
-//     () => {
-//         // stub_macro::stub!(impl dyn Iterator<Item = $item>)
-//         //         todo!();
-//         panic!("ast");
-//         std::iter::empty()
-//     };
-// }
-//
-// impl Parse for PlainParser {
-//     type Error = ();
-//
-//     fn parse(&mut self, input: &str) -> impl Iterator<Item = Result<VarRc, Self::Error>> {
-//         stub_iter!()
-//     }
-// }
+impl Parse for PlainParser {
+    type Error = PlainParserParseError;
+
+    fn parse(&mut self, _input: &str) -> impl Iterator<Item = Result<VarRc, Self::Error>> {
+        stub_iter!()
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum PlainParserParseError {}
 
 #[cfg(test)]
 mod tests {
+    use crate::{Parse, PlainParser};
+    use itertools::Itertools;
+
+    #[ignore]
     #[test]
-    fn must_parse() {}
+    fn must_parse() {
+        let mut parser = PlainParser::new("^_^");
+        let iter = parser.parse(include_str!("../../../samples/vector.plain.base"));
+        let _: Vec<_> = iter.try_collect().unwrap();
+    }
 }

@@ -98,7 +98,7 @@ dependencies = [
  "itertools",
  "pretty_assertions",
  "strum",
- "stub-macro",
+ "stub-macro 0.3.0",
  "thiserror",
  "tokio",
 ]
@@ -744,7 +744,7 @@ dependencies = [
  "facet",
  "facet-pretty",
  "futures",
- "stub-macro",
+ "stub-macro 0.2.1",
  "tempfile",
  "thiserror",
  "tokio",
@@ -782,6 +782,12 @@ name = "stub-macro"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b898e484f55f310f9513dd80f0b65c4e1030abc101fecffed6003baea6a4a853"
+
+[[package]]
+name = "stub-macro"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc43ad4b6c2e7d28cf01f67e2ff008652f02844a0288265392b7e64cbd6821d6"
 
 [[package]]
 name = "supports-color"
