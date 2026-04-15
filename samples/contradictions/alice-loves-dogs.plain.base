@@ -1,0 +1,22 @@
+Human : ^_^
+Dog : ^_^
+
+Alice : Human
+Rex : Dog
+
+Likes :
+  (A : ^_^) ->
+  (a : A) ->
+  (B : ^_^) ->
+  (b : B) ->
+  (_ : ^_^)
+
+AliceLikesDogs :
+  (d : Dog) ->
+  (_ : Likes Human Alice Dog d)
+
+AliceDoesNotLikeRex :
+  (_ : Likes Human Alice Dog Rex) ->
+  (_ : False)
+
+// `AliceDoesNotLikeRex` contradicts `AliceLikesDogs`
