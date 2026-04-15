@@ -11,12 +11,12 @@
   `b` as `B`
   to type
 
-`AliceLikesDogs` is a proof that there is a path from
+`AliceLikesDogs` is a proof that
   any `d` as `Dog`
-  to a proof that `Alice` <~ `Likes` ~> `d`
+  leads to a proof that `Alice` <~ `Likes` ~> `d`
 
-`AliceDoesNotLikeRex` is a proof that there is a path from
+`AliceDoesNotLikeRex` is a proof that
   any proof that `Alice` <~ `Likes` ~> `Rex`
-  to `False`
+  leads to `False`
 
 // `AliceDoesNotLikeRex` contradicts `AliceLikesDogs`
