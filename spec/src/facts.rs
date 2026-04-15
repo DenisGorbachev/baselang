@@ -11,12 +11,57 @@ pub fn every_type_must_be_static() -> Option<bool> {
     }
 }
 
+/// Whether vars that have the same type and the same set of constructors must be equal
+///
+/// ## Examples
+///
+/// ### Ex 1
+///
+/// ```baselang
+/// A : Type
+/// B : Type
+/// ```
+///
+/// Are `A` and `B` equal?
+///
+/// ### Ex 2
+///
+/// ```baselang
+/// A : Type
+/// X : A
+///
+/// B : Type
+/// Y : B
+/// ```
+///
+/// Are `A` and `B` equal?
+///
+/// ## Notes
+///
+/// - Structural equality breaks "semantic typing" (`Meters : Type; Meters.Mk : Nat -> Type; Seconds : Type; Seconds.Mk : Nat -> Type`)
+pub fn structurally_equal_vars_must_be_equal() -> bool {
+    false
+}
+
 /// Whether Baselang should support `public`, `private`, `protected`
 pub fn should_support_visibilities() -> bool {
     false
 }
 
+/// This is true by the definition of the function, but see [`totality_check_can_be_deferred_to_use_time`]
 pub fn every_function_must_be_total() -> bool {
+    true
+}
+
+/// Whether it's possible to check the totality right before use
+///
+/// ## Pros/Cons
+///
+/// - But `Vec Bool (Add 2 3)` must be type-checked at compile time, so `Add` must be evaluated at compile time
+///   - But such instances are rare
+///   - But we can treat it as "use" and freeze only the definition of `Add` without freezing other definitions
+///   - But the actual usage is more abstract (see `src/samples/vector.plain.base`)
+pub fn totality_check_can_be_deferred_to_use_time() -> bool {
     true
 }
 
@@ -43,4 +88,22 @@ pub fn must_support_types_with_empty_set_of_constructors() -> bool {
 /// - `Zero : Nat` must not require a `ProofOfZero : Zero`
 pub fn must_not_require_constructors_of_constructors() -> bool {
     true
+}
+
+/// It's better to avoid `Var::set_constructors`
+pub fn should_not_have_mutators_for_constructors_on_var_struct() -> bool {
+    true
+}
+
+/// Whether users should be able to add constructors to existing types
+///
+/// - And it's better to allow it, because:
+///   - It would allow users to add variants to non-exhaustive enums
+///   - It would allow users to hot-patch the existing types / functions
+///     - This requires a `@delete` compiler built-in for completeness
+/// - But it would break the totality of the functions
+///   - But the users would be able to add constructors / rewriters to restore totality
+///     - This requires that the totality checker is run after the definitions are processed
+pub fn constructors_should_be_forward_mutable() -> bool {
+    todo!()
 }

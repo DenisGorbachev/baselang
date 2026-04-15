@@ -1,0 +1,11 @@
+Nat : ^_^
+Zero : Nat
+Succ : Nat -> Nat
+
+Vector : (T : ^_^) -> (len : Nat) -> ^_^
+Vector.Nil : (T : ^_^) -> Vector T Zero
+Vector.Cons : (T : ^_^) -> (len : Nat) -> (head : T) -> (tail : Vector T len) -> Vector T (Succ len)
+
+Vector.Append : (T : ^_^) -> (len_a : Nat) -> (len_b : Nat) -> (a : Vector A len_a) -> (b : Vector A len_b) -> Vector A (Add len_a len_b)
+// TODO: Vector.Append.Nil
+// TODO: Vector.Append.Cons
