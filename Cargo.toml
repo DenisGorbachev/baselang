@@ -6,7 +6,7 @@ resolver = "3"
 name = "baselang"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85.0"
+rust-version = "1.93.0"
 description = "Baselang is a language for describing how things work."
 homepage = "https://github.com/DenisGorbachev/baselang"
 repository = "https://github.com/DenisGorbachev/baselang"
@@ -44,6 +44,7 @@ derive-new = "0.7.0"
 derive_more = { version = "2.1.1", features = ["full"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 itertools = "0.14.0"
+non-empty-str = "0.11.3"
 #standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.27.2", features = ["derive"] }
 stub-macro = { version = "0.3.0" }

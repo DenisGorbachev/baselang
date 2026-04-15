@@ -1,15 +1,20 @@
+// Natural numbers
 Nat : ^_^
 Zero : Nat
 Succ : Nat -> Nat
 
+/* Addition rules */
 Add : (a : Nat) -> (b : Nat) -> Nat
 Add.Zero : (b : Nat) -> (Add Zero b -> b)
 Add.Succ : (a : Nat) -> (b : Nat) -> (Add (Succ a) b -> Succ (Add a b))
 
-Vector : (T : ^_^) -> (len : Nat) -> ^_^
+/*
+Vectors indexed by length.
+*/
+Vector : (T : ^_^) -> /* element type */ (len : Nat) -> ^_^
 Vector.Nil : (T : ^_^) -> Vector T Zero
 Vector.Cons : (T : ^_^) -> (len : Nat) -> (head : T) -> (tail : Vector T len) -> Vector T (Succ len)
 
-Vector.Append : (T : ^_^) -> (len_a : Nat) -> (len_b : Nat) -> (a : Vector T len_a) -> (b : Vector T len_b) -> Vector T (Add len_a len_b)
+Vector.Append : (T : ^_^) -> (len_a : Nat) -> (len_b : Nat) -> (a : Vector T len_a) -> (b : Vector T len_b) -> Vector T (Add len_a len_b) // append preserves lengths
 Vector.Append.Nil : (T : ^_^) -> (len_b : Nat) -> (b : Vector T len_b) -> (Vector.Append T Zero len_b (Vector.Nil T) b -> b)
 Vector.Append.Cons : (T : ^_^) -> (len_a : Nat) -> (len_b : Nat) -> (head : T) -> (tail : Vector T len_a) -> (b : Vector T len_b) -> (Vector.Append T (Succ len_a) len_b (Vector.Cons T len_a head tail) b -> Vector.Cons T (Add len_a len_b) head (Vector.Append T len_a len_b tail b))
