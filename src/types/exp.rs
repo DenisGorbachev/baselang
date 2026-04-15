@@ -230,6 +230,7 @@ mod tests {
             nat,
             zero,
             next,
+            ..
         } = Nats::new();
         let list_bool = list.of(&bool).unwrap();
         let nil_bool = nil.of(&bool).unwrap();

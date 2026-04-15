@@ -1,4 +1,4 @@
-use crate::{Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple3, VarRc, exp, impl_vars_vec, typ, var};
+use crate::{Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple6, VarRc, exp, impl_vars_vec, typ, var};
 use crate::{Typ, Var};
 use derive_more::Into;
 
@@ -8,9 +8,12 @@ pub struct Nats {
     pub zero: VarRc,
     /// Let's use `next` instead of `succ` because it's more understandable
     pub next: VarRc,
+    pub add: VarRc,
+    pub add_zero: VarRc,
+    pub add_next: VarRc,
 }
 
-pub type NatsTuple = (VarRc, VarRc, VarRc);
+pub type NatsTuple = (VarRc, VarRc, VarRc, VarRc, VarRc, VarRc);
 
 impl Nats {
     pub fn new() -> Self {
@@ -28,10 +31,31 @@ impl Nats {
         var!(n: typ!(exp!(nat)));
         var!(next: typ!(n => typ!(exp!(nat))));
 
+        // Add : (a : Nat) -> (b : Nat) -> Nat
+        var!(a: typ!(exp!(nat)));
+        var!(b: typ!(exp!(nat)));
+        var!(add: typ!(a => typ!(b => typ!(exp!(nat)))));
+
+        // Add.Zero : (b : Nat) -> (Add Zero b -> b)
+        let add_zero_b_exp = exp!(&add, &zero, &b);
+        var!(add_zero_b: typ!(add_zero_b_exp));
+        var!(add_zero: typ!(b => typ!(add_zero_b => typ!(&b))));
+
+        // Add.Next : (a : Nat) -> (b : Nat) -> (Add (Next a) b -> Next (Add a b))
+        let next_a = exp!(&next, &a);
+        let add_next_a_b_exp = exp!(&add, next_a, &b);
+        var!(add_next_a_b: typ!(add_next_a_b_exp));
+        let add_a_b_exp = exp!(&add, &a, &b);
+        let next_add_a_b_exp = exp!(&next, add_a_b_exp);
+        var!(add_next: typ!(a => typ!(b => typ!(add_next_a_b => typ!(next_add_a_b_exp)))));
+
         Self {
             nat,
             zero,
             next,
+            add,
+            add_zero,
+            add_next,
         }
     }
 
@@ -64,13 +88,13 @@ impl Default for Nats {
     }
 }
 
-impl_vars_vec!(Nats, nat, zero, next);
+impl_vars_vec!(Nats, nat, zero, next, add, add_zero, add_next);
 
 impl Module for Nats {
-    type RefsTuple<'a> = RefsTuple3<'a>;
+    type RefsTuple<'a> = RefsTuple6<'a>;
 
     fn refs_tuple(&self) -> Self::RefsTuple<'_> {
-        (&self.nat, &self.zero, &self.next)
+        (&self.nat, &self.zero, &self.next, &self.add, &self.add_zero, &self.add_next)
     }
 }
 

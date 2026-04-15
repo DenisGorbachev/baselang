@@ -15,6 +15,7 @@ impl Sum {
             nat,
             zero,
             next,
+            ..
         } = nat;
 
         var!(a: typ!(exp!(nat)));

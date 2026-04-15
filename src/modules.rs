@@ -34,6 +34,10 @@ mod nats;
 
 pub use nats::*;
 
+mod vectors;
+
+pub use vectors::*;
+
 mod prelude;
 
 pub use prelude::*;
