@@ -13,10 +13,10 @@ Likes :
 
 AliceLikesDogs :
   (d : Dog) ->
-  (_ : Likes Human Alice Dog d)
+  (_ : Likes Alice d)
 
 AliceDoesNotLikeRex :
-  (_ : Likes Human Alice Dog Rex) ->
+  (_ : Likes Alice Rex) ->
   (_ : False)
 
 // `AliceDoesNotLikeRex` contradicts `AliceLikesDogs`

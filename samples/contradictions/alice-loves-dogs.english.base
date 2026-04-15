@@ -1,0 +1,22 @@
+`Human` is a type
+`Dog` is a type
+
+`Alice` is a `Human`
+`Rex` is a `Dog`
+
+`Likes` is a path from
+  `A` as type
+  `a` as `A`
+  `B` as type
+  `b` as `B`
+  to type
+
+`AliceLikesDogs` is a proof that there is a path from
+  any `d` as `Dog`
+  to a proof that `Alice` <~ `Likes` ~> `d`
+
+`AliceDoesNotLikeRex` is a proof that there is a path from
+  any proof that `Alice` <~ `Likes` ~> `Rex`
+  to `False`
+
+// `AliceDoesNotLikeRex` contradicts `AliceLikesDogs`
