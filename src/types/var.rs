@@ -71,7 +71,7 @@ impl Var {
     }
 
     pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
-        let typ = self.typ.replace_var(from, to);
+        let typ = self.typ.replace(from, to);
         let constructors = self.constructors.as_ref().map(|constructors| {
             constructors
                 .iter()
@@ -79,6 +79,16 @@ impl Var {
                 .collect::<Vec<_>>()
         });
         Self::new(self.nym.clone(), typ, constructors)
+    }
+
+    /// Returns `true` if this variable's type or constructors mention `target` by identity.
+    pub fn contains_var(&self, target: &VarRc) -> bool {
+        self.typ.contains_var(target)
+            || self.constructors.as_ref().is_some_and(|constructors| {
+                constructors
+                    .iter()
+                    .any(|constructor| constructor.contains_var(target))
+            })
     }
 
     pub fn of_at(&self, _arg: &VarRc) -> Result<Exp, InvalidApplicationError> {

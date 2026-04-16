@@ -35,6 +35,7 @@ impl Exp {
             (Top, arg_typ) => Err(InvalidApplicationError::new(Top, arg_typ)),
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
             (Fun(var, typ_old), arg_typ) => {
+                // Structural equality is correct here because application checks type compatibility, not whether the types come from the same `Rc`
                 if *var.typ() == arg_typ {
                     let typ_new = Box::new(typ_old.substitute(&var, &arg));
                     Ok(App(Box::new(fun), Box::new(arg), typ_new))
@@ -52,7 +53,9 @@ impl Exp {
         }
     }
 
-    /// Substitute variable `var` with expression `arg` in this expression
+    /// In `self` expression, substitute variable `var` with expression `arg`
+    ///
+    /// The caller must ensure that `var` and `arg` have the same type.
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         debug_assert_eq!(var.typ(), arg.typ());
         match self {
@@ -72,7 +75,14 @@ impl Exp {
         }
     }
 
-    pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
+    pub fn contains_var(&self, target: &VarRc) -> bool {
+        match self {
+            Sol(var) => Rc::ptr_eq(var, target),
+            App(fun, arg, typ) => fun.contains_var(target) || arg.contains_var(target) || typ.contains_var(target),
+        }
+    }
+
+    pub fn replace(&self, from: &VarRc, to: &VarRc) -> Self {
         match self {
             Sol(var_inner) => {
                 if Rc::ptr_eq(var_inner, from) {
@@ -82,9 +92,9 @@ impl Exp {
                 }
             }
             App(fun_inner, arg_inner, typ_inner) => {
-                let new_fun_inner = fun_inner.replace_var(from, to);
-                let new_arg_inner = arg_inner.replace_var(from, to);
-                let new_typ_inner = typ_inner.replace_var(from, to);
+                let new_fun_inner = fun_inner.replace(from, to);
+                let new_arg_inner = arg_inner.replace(from, to);
+                let new_typ_inner = typ_inner.replace(from, to);
                 App(Box::new(new_fun_inner), Box::new(new_arg_inner), Box::new(new_typ_inner))
             }
         }
@@ -97,6 +107,7 @@ impl From<Var> for Exp {
     }
 }
 
+/// This impl should not clone the `var` because it is passed by value (the caller loses ownership anyway).
 impl From<VarRc> for Exp {
     fn from(var: VarRc) -> Self {
         Sol(var)

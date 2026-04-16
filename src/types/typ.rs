@@ -52,7 +52,7 @@ impl Typ {
                     let substituted_typ = if Rc::ptr_eq(&substituted_fun_var, fun_var) {
                         substituted_typ
                     } else {
-                        substituted_typ.replace_var(fun_var, &substituted_fun_var)
+                        substituted_typ.replace(fun_var, &substituted_fun_var)
                     };
                     Fun(substituted_fun_var, Box::new(substituted_typ))
                 }
@@ -60,30 +60,38 @@ impl Typ {
         }
     }
 
-    pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
+    pub fn contains_var(&self, target: &VarRc) -> bool {
+        match self {
+            Top => false,
+            One(exp) => exp.contains_var(target),
+            Fun(fun, typ) => fun.contains_var(target) || typ.contains_var(target),
+        }
+    }
+
+    pub fn replace(&self, from: &VarRc, to: &VarRc) -> Self {
         match self {
             Top => Top,
-            One(exp) => One(exp.replace_var(from, to)),
-            Fun(fun_var, typ_box) => {
-                let replaced_fun_var = replace_var_rc(fun_var, from, to);
-                let replaced_typ = typ_box.replace_var(from, to);
-                Fun(replaced_fun_var, Box::new(replaced_typ))
+            One(exp) => One(exp.replace(from, to)),
+            Fun(fun, typ) => {
+                let replaced_fun = replace_var_rc(fun, from, to);
+                let replaced_typ = typ.replace(from, to);
+                Fun(replaced_fun, Box::new(replaced_typ))
             }
         }
     }
 }
 
-fn substitute_var_rc(fun_var: &VarRc, var: &VarRc, arg: &Exp) -> VarRc {
-    let substituted_var = fun_var.as_ref().substitute(var, arg);
-    if substituted_var == **fun_var { fun_var.clone() } else { Rc::new(substituted_var) }
+fn substitute_var_rc(fun: &VarRc, var: &VarRc, arg: &Exp) -> VarRc {
+    if fun.contains_var(var) { Rc::new(fun.substitute(var, arg)) } else { fun.clone() }
 }
 
-fn replace_var_rc(fun_var: &VarRc, from: &VarRc, to: &VarRc) -> VarRc {
-    if Rc::ptr_eq(fun_var, from) {
+fn replace_var_rc(fun: &VarRc, from: &VarRc, to: &VarRc) -> VarRc {
+    if Rc::ptr_eq(fun, from) {
         to.clone()
+    } else if fun.contains_var(from) {
+        Rc::new(fun.replace_var(from, to))
     } else {
-        let replaced_var = fun_var.as_ref().replace_var(from, to);
-        if replaced_var == **fun_var { fun_var.clone() } else { Rc::new(replaced_var) }
+        fun.clone()
     }
 }
 
@@ -164,4 +172,44 @@ macro_rules! top {
     () => {
         $crate::Typ::top()
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::var;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    #[ignore = "known bug: substitution captures free occurrences of later binders"]
+    fn must_not_capture_free_var_in_substituted_argument() {
+        var!(x);
+        var!(y);
+
+        let f_typ = typ!(x => &y);
+        let actual = f_typ.substitute(&y, &Exp::sol(&x));
+
+        var!(x_fresh);
+        let expected = typ!(x_fresh => &x);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    #[ignore = "known bug: binder freshness is decided by structural equality instead of pointer identity"]
+    fn must_refresh_binder_identity_when_substitution_changes_it_to_equal_var() {
+        var!(x1: top!(); "x");
+        var!(x2: top!(); "x");
+        var!(z);
+
+        var!(value: typ!(&x1));
+        let input = typ!(value => &x1);
+        let after_first = input.substitute(&x1, &Exp::sol(&x2));
+        let actual = after_first.substitute(&x1, &Exp::sol(&z));
+
+        var!(expected_value: typ!(&x2));
+        let expected = typ!(expected_value => &x2);
+
+        assert_eq!(actual, expected);
+    }
 }

@@ -1,4 +1,4 @@
-use crate::{Rats, exp, module, top, typ, var};
+use crate::{Rats, exp, module, typ, var};
 
 module!(
     /// The correct name for this module is ["quantity value"](https://jcgm.bipm.org/vim/en/1.19.html), but it's too long.
@@ -13,7 +13,7 @@ impl Measure {
         var!(value: typ!(exp!(rat.rat)));
         var!(unit: typ!());
 
-        var!(measure: typ!(unit => top!()));
+        var!(measure: typ!(unit => typ!()));
 
         let measure_of_unit = exp!(&measure, &unit);
         var!(new: typ!(value => typ!(unit => typ!(measure_of_unit))));
