@@ -1,4 +1,4 @@
-use crate::{Exp, InvalidApplicationError};
+use crate::{AlphaEq, Exp, InvalidApplicationError};
 
 /// This trait makes it easier to construct [`Exp`](crate::Exp) from [`VarRc`](crate::VarRc) or [`ExpRc`](crate::ExpRc).
 ///
@@ -36,5 +36,9 @@ where
     let of_at_arg = arg;
     let of_result = fun.of(of_arg);
     let of_at_result = fun.of_at(of_at_arg, 0);
-    assert_eq!(of_result, of_at_result)
+    match (of_result, of_at_result) {
+        (Ok(of_exp), Ok(of_at_exp)) => assert!(of_exp.alpha_eq(&of_at_exp)),
+        (Err(of_error), Err(of_at_error)) => assert!(of_error.alpha_eq(&of_at_error)),
+        (of_result, of_at_result) => panic!("expected `of` and `of_at(..., 0)` to produce matching results, got {of_result:?} and {of_at_result:?}"),
+    }
 }

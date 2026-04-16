@@ -1,8 +1,8 @@
-use crate::{Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple6, VarRc, exp, impl_vars_vec, typ, var};
-use crate::{Typ, Var};
+use crate::Typ;
+use crate::{AlphaEq, Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple6, VarRc, exp, impl_vars_vec, typ, var};
 use derive_more::Into;
 
-#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Clone, Debug)]
 pub struct Nats {
     pub nat: VarRc,
     pub zero: VarRc,
@@ -21,7 +21,9 @@ impl Nats {
         var!(nat: typ!(); Self::nat_nym());
 
         // `var!(nat: typ!());` expands to the following declaration:
-        debug_assert_eq!(nat, Var::new_rc(Self::nat_nym(), Typ::top(), None));
+        debug_assert!(nat.nym() == &Self::nat_nym());
+        debug_assert!(nat.typ().alpha_eq(&Typ::top()));
+        debug_assert!(nat.constructors().is_none());
         // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
 
         // Zero : Nat

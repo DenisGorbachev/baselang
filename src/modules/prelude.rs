@@ -1,7 +1,7 @@
 use crate::{Bools, Ints, Lists, Nats, Rats, Wats, impl_vars_vec_aggregate};
 use derive_more::Into;
 
-#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Clone, Debug)]
 pub struct Prelude {
     pub bool: Bools,
     pub nat: Nats,

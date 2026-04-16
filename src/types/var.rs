@@ -4,7 +4,9 @@ use derive_getters::Getters;
 use std::rc::Rc;
 
 /// This type should be wrapped in [`Rc`] because earlier variables need to be referenced by later variables
-#[derive(Getters, Eq, PartialEq, Hash, Clone, Debug)]
+///
+/// [`Var`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because every variable is unique: it is equal only to itself. Compare variables through [`VarRc`] identity with [`Rc::ptr_eq`].
+#[derive(Getters, Clone, Debug)]
 pub struct Var {
     /// Names of this var.
     ///

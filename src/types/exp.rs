@@ -1,8 +1,10 @@
-use crate::{Fun, InvalidApplicationError, Of, One, Top, TypBox, Var};
+use crate::{AlphaEq, Fun, InvalidApplicationError, Of, One, Top, TypBox, Var, alpha_eq_exp};
 use crate::{Typ, VarRc};
 use std::rc::Rc;
 
-#[derive(Eq, PartialEq, Hash, Clone, Debug)]
+/// [`Exp`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Var`] must not derive them.
+/// [`Exp`] may be compared semantically via [`AlphaEq`].
+#[derive(Clone, Debug)]
 pub enum Exp {
     /// [`Sol`] means `solo` (a single variable)
     /// Must wrap [`Var`] in [`Rc`] because a single var can be used in multiple exps (e.g. `Nat` can be used in multiple exps)
@@ -35,8 +37,7 @@ impl Exp {
             (Top, arg_typ) => Err(InvalidApplicationError::new(Top, arg_typ)),
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
             (Fun(var, typ_old), arg_typ) => {
-                // Structural equality is correct here because application checks type compatibility, not whether the types come from the same `Rc`
-                if *var.typ() == arg_typ {
+                if var.typ().alpha_eq(&arg_typ) {
                     let typ_new = Box::new(typ_old.substitute(&var, &arg));
                     Ok(App(Box::new(fun), Box::new(arg), typ_new))
                 } else {
@@ -57,7 +58,7 @@ impl Exp {
     ///
     /// The caller must ensure that `var` and `arg` have the same type.
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
-        debug_assert_eq!(var.typ(), arg.typ());
+        debug_assert!(var.typ().alpha_eq(arg.typ()));
         match self {
             Sol(var_inner) => {
                 if Rc::ptr_eq(var_inner, var) {
@@ -98,6 +99,12 @@ impl Exp {
                 App(Box::new(new_fun_inner), Box::new(new_arg_inner), Box::new(new_typ_inner))
             }
         }
+    }
+}
+
+impl AlphaEq for Exp {
+    fn alpha_eq(&self, other: &Self) -> bool {
+        alpha_eq_exp(self, other)
     }
 }
 
@@ -239,8 +246,7 @@ macro_rules! exp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Bools, Lists, Nats, Of, Vectors, typ, var};
-    use pretty_assertions::assert_eq;
+    use crate::{AlphaEq, Bools, Lists, Nats, Of, Vectors, typ, var};
 
     #[test]
     #[allow(unused_variables)]
@@ -292,7 +298,7 @@ mod tests {
         let next_add_two_b_exp = exp!(&next, add_two_b_exp);
         var!(expected: typ!(b => typ!(add_next_a_b => typ!(next_add_two_b_exp))));
 
-        assert_eq!(actual.typ(), expected.typ());
+        assert!(actual.typ().alpha_eq(expected.typ()));
     }
 
     #[test]
@@ -344,6 +350,6 @@ mod tests {
         let cons_bool_add_one_two_yes_append = exp!(&cons, &bool, add_one_two, &yes, append_bool_one_two_tail_b);
         var!(expected: typ!(tail => typ!(b => typ!(append_t_next_len_a_len_b_cons_b => typ!(cons_bool_add_one_two_yes_append)))));
 
-        assert_eq!(actual.typ(), expected.typ());
+        assert!(actual.typ().alpha_eq(expected.typ()));
     }
 }

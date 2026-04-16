@@ -1,9 +1,12 @@
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
+use crate::{AlphaEq, alpha_eq_typ};
 use Exp::Sol;
 use std::rc::Rc;
 
-#[derive(Eq, PartialEq, Hash, Clone, Debug)]
+/// [`Typ`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Var`] must not derive them.
+/// [`Typ`] may be compared semantically via [`AlphaEq`].
+#[derive(Clone, Debug)]
 pub enum Typ {
     /// Needed because some vars have fun types that end in a top (e.g. `List : (t : Top) -> Top`)
     Top,
@@ -39,7 +42,7 @@ impl Typ {
     }
 
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
-        debug_assert_eq!(var.typ(), arg.typ());
+        debug_assert!(var.typ().alpha_eq(arg.typ()));
         match self {
             Top => Top,
             One(exp) => One(exp.substitute(var, arg)),
@@ -151,6 +154,12 @@ impl From<(&VarRc, Exp)> for Typ {
     }
 }
 
+impl AlphaEq for Typ {
+    fn alpha_eq(&self, other: &Self) -> bool {
+        alpha_eq_typ(self, other)
+    }
+}
+
 /// This macro uses `$var.clone()` to avoid the "&" before variables.
 /// `$var` should have a [`VarRc`] type.
 /// `$var.clone()` is also used in [`exp`](crate::exp) macro.
@@ -178,7 +187,20 @@ macro_rules! top {
 mod tests {
     use super::*;
     use crate::var;
-    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn must_compare_types_up_to_alpha_equivalence() {
+        var!(x);
+        var!(y);
+        var!(z);
+
+        let left = typ!(x => &x);
+        let right = typ!(y => &y);
+        let different = typ!(y => &z);
+
+        assert!(left.alpha_eq(&right));
+        assert!(!left.alpha_eq(&different));
+    }
 
     #[test]
     #[ignore = "known bug: substitution captures free occurrences of later binders"]
@@ -192,24 +214,31 @@ mod tests {
         var!(x_fresh);
         let expected = typ!(x_fresh => &x);
 
-        assert_eq!(actual, expected);
+        assert!(!f_typ.alpha_eq(&expected));
+        assert!(actual.alpha_eq(&expected));
     }
 
     #[test]
-    #[ignore = "known bug: binder freshness is decided by structural equality instead of pointer identity"]
     fn must_refresh_binder_identity_when_substitution_changes_it_to_equal_var() {
-        var!(x1: top!(); "x");
-        var!(x2: top!(); "x");
+        // vars are still different even if they have the same name
+        var!(y1: top!(); "y");
+        var!(y2: top!(); "y");
         var!(z);
 
-        var!(value: typ!(&x1));
-        let input = typ!(value => &x1);
-        let after_first = input.substitute(&x1, &Exp::sol(&x2));
-        let actual = after_first.substitute(&x1, &Exp::sol(&z));
+        var!(x1: typ!(&y1));
+        let f_typ = typ!(x1 => &y1);
 
-        var!(expected_value: typ!(&x2));
-        let expected = typ!(expected_value => &x2);
+        // this substitution must change the type
+        let actual_1 = f_typ.substitute(&y1, &Exp::sol(&y2));
 
-        assert_eq!(actual, expected);
+        // this substitution must not change the type (because y1 has already been substituted)
+        let actual_2 = actual_1.substitute(&y1, &Exp::sol(&z));
+
+        var!(v2: typ!(&y2));
+        let expected = typ!(v2 => &y2);
+
+        assert!(!f_typ.alpha_eq(&expected));
+        assert!(actual_1.alpha_eq(&expected));
+        assert!(actual_2.alpha_eq(&expected));
     }
 }

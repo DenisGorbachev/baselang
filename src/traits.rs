@@ -1,3 +1,7 @@
+mod alpha_eq;
+
+pub use alpha_eq::*;
+
 mod of;
 
 pub use of::*;

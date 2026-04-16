@@ -26,7 +26,7 @@ macro_rules! module {
         }
     ) => {
         $(#[$meta])*
-        #[derive(derive_more::Into, Eq, PartialEq, Hash, Clone, Debug)]
+        #[derive(derive_more::Into, Clone, Debug)]
         $vis struct $name {
             $(pub $var: $crate::VarRc),+
         }

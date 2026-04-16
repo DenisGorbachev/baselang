@@ -5,7 +5,7 @@
 use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc, impl_vars_vec};
 use derive_more::Into;
 
-#[derive(Into, Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Into, Clone, Debug)]
 pub struct Bools {
     pub bool: VarRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
