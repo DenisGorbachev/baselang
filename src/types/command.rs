@@ -6,24 +6,24 @@ use thiserror::Error;
 
 #[derive(Parser, Clone, Debug)]
 pub enum Command {
-    Print(PrintCommand),
+    RenderPrelude(RenderPreludeCommand),
 }
 
 impl Command {
     pub async fn run(self) -> Result<ExitCode, CommandRunError> {
         use CommandRunError::*;
         match self {
-            Print(command) => map_err!(command.run().await, PrintCommandRunFailed),
+            RenderPrelude(command) => map_err!(command.run().await, RenderPreludeCommandRunFailed),
         }
     }
 }
 
 #[derive(Error, Debug)]
 pub enum CommandRunError {
-    #[error("failed to run print command")]
-    PrintCommandRunFailed { source: PrintCommandRunError },
+    #[error("failed to run render-prelude command")]
+    RenderPreludeCommandRunFailed { source: RenderPreludeCommandRunError },
 }
 
-mod print_command;
+mod render_prelude_command;
 
-pub use print_command::*;
+pub use render_prelude_command::*;

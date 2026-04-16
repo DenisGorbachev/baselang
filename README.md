@@ -62,17 +62,13 @@ Baselang is a language for describing how things work.
 Usage: baselang <COMMAND>
 
 Commands:
-  print  
-  help   Print this message or the help of the given subcommand(s)
+  render-prelude  
+  help            Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
   -V, --version  Print version
 ```
-
-## Additional binaries
-
-* `render_prelude`
 
 ## Gratitude
 
