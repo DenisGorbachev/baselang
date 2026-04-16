@@ -66,9 +66,26 @@ impl Exp {
             App(fun_inner, arg_inner, typ_inner) => {
                 let new_fun_inner = fun_inner.substitute(var, arg);
                 let new_arg_inner = arg_inner.substitute(var, arg);
-                debug_assert_eq!(new_fun_inner.typ(), fun_inner.typ());
-                debug_assert_eq!(new_arg_inner.typ(), arg_inner.typ());
-                App(Box::new(new_fun_inner), Box::new(new_arg_inner), typ_inner.clone())
+                let new_typ_inner = typ_inner.substitute(var, arg);
+                App(Box::new(new_fun_inner), Box::new(new_arg_inner), Box::new(new_typ_inner))
+            }
+        }
+    }
+
+    pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
+        match self {
+            Sol(var_inner) => {
+                if Rc::ptr_eq(var_inner, from) {
+                    Exp::sol(to)
+                } else {
+                    self.clone()
+                }
+            }
+            App(fun_inner, arg_inner, typ_inner) => {
+                let new_fun_inner = fun_inner.replace_var(from, to);
+                let new_arg_inner = arg_inner.replace_var(from, to);
+                let new_typ_inner = typ_inner.replace_var(from, to);
+                App(Box::new(new_fun_inner), Box::new(new_arg_inner), Box::new(new_typ_inner))
             }
         }
     }
@@ -211,7 +228,8 @@ macro_rules! exp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Bools, Lists, Nats, Of};
+    use crate::{Bools, Lists, Nats, Of, Vectors, typ, var};
+    use pretty_assertions::assert_eq;
 
     #[test]
     #[allow(unused_variables)]
@@ -237,5 +255,84 @@ mod tests {
         let cons_nat = cons.of(&nat).unwrap();
         // let cons_nat_zero = cons_nat.of(&zero).unwrap();
         // assert!(cons_nat_zero.of(&nil_bool).is_err())
+    }
+
+    #[test]
+    fn must_partially_apply_add_next_to_two() {
+        let Nats {
+            nat,
+            zero,
+            next,
+            add,
+            add_next,
+            ..
+        } = Nats::new();
+
+        let one = exp!(&next, &zero);
+        let two = exp!(&next, one.clone());
+
+        let actual = add_next.of(two.clone()).unwrap();
+
+        var!(b: typ!(exp!(nat)));
+        let next_two = exp!(&next, two.clone());
+        let add_next_two_b_exp = exp!(&add, next_two, &b);
+        var!(add_next_a_b: typ!(add_next_two_b_exp));
+        let add_two_b_exp = exp!(&add, two.clone(), &b);
+        let next_add_two_b_exp = exp!(&next, add_two_b_exp);
+        var!(expected: typ!(b => typ!(add_next_a_b => typ!(next_add_two_b_exp))));
+
+        assert_eq!(actual.typ(), expected.typ());
+    }
+
+    #[test]
+    fn must_partially_apply_append_cons_to_bool_one_two_yes() {
+        let Bools {
+            bool,
+            yes,
+            ..
+        } = Bools::new();
+        let nats = Nats::new();
+        let Nats {
+            zero,
+            next,
+            add,
+            ..
+        } = nats.clone();
+        let Vectors {
+            vector,
+            cons,
+            append,
+            append_cons,
+            ..
+        } = Vectors::new(&nats);
+
+        let one = exp!(&next, &zero);
+        let two = exp!(&next, one.clone());
+
+        let actual = append_cons
+            .of(&bool)
+            .unwrap()
+            .of(one.clone())
+            .unwrap()
+            .of(two.clone())
+            .unwrap()
+            .of(&yes)
+            .unwrap();
+
+        let vector_bool = exp!(&vector, &bool);
+        let vector_bool_one = exp!(vector_bool.clone(), one.clone());
+        let vector_bool_two = exp!(vector_bool.clone(), two.clone());
+        var!(tail: typ!(vector_bool_one));
+        var!(b: typ!(vector_bool_two));
+        let next_one = exp!(&next, one.clone());
+        let cons_bool_one_yes_tail = exp!(&cons, &bool, one.clone(), &yes, &tail);
+        let append_bool_next_one_two_cons_b_exp = exp!(&append, &bool, next_one, two.clone(), cons_bool_one_yes_tail, &b);
+        var!(append_t_next_len_a_len_b_cons_b: typ!(append_bool_next_one_two_cons_b_exp));
+        let add_one_two = exp!(&add, one.clone(), two.clone());
+        let append_bool_one_two_tail_b = exp!(&append, &bool, one, two, &tail, &b);
+        let cons_bool_add_one_two_yes_append = exp!(&cons, &bool, add_one_two, &yes, append_bool_one_two_tail_b);
+        var!(expected: typ!(tail => typ!(b => typ!(append_t_next_len_a_len_b_cons_b => typ!(cons_bool_add_one_two_yes_append)))));
+
+        assert_eq!(actual.typ(), expected.typ());
     }
 }

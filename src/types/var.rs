@@ -59,6 +59,28 @@ impl Var {
         self.constructors = constructors.into();
     }
 
+    pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
+        let typ = self.typ.substitute(var, arg);
+        let constructors = self.constructors.as_ref().map(|constructors| {
+            constructors
+                .iter()
+                .map(|constructor| constructor.substitute(var, arg))
+                .collect::<Vec<_>>()
+        });
+        Self::new(self.nym.clone(), typ, constructors)
+    }
+
+    pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
+        let typ = self.typ.replace_var(from, to);
+        let constructors = self.constructors.as_ref().map(|constructors| {
+            constructors
+                .iter()
+                .map(|constructor| constructor.replace_var(from, to))
+                .collect::<Vec<_>>()
+        });
+        Self::new(self.nym.clone(), typ, constructors)
+    }
+
     pub fn of_at(&self, _arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
         todo!()
     }

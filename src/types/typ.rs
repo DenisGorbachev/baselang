@@ -1,6 +1,6 @@
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
-use Exp::*;
+use Exp::Sol;
 use std::rc::Rc;
 
 #[derive(Eq, PartialEq, Hash, Clone, Debug)]
@@ -44,34 +44,46 @@ impl Typ {
             Top => Top,
             One(exp) => One(exp.substitute(var, arg)),
             Fun(fun_var, typ_box) => {
-                // If this is a different variable, substitute in the resulting type
-                // TODO: I think this case should not be possible (in the introduction position, a single var must be referenced at most once)
-                // TODO: We can enforce it by changing the `Typ::fun` constructor to take a (nym, typ) instead of (var) and create the var within the constructor itself
-                // TODO: It might be necessary to also change the arg `typ` to a closure `impl FnOnce(&VarRc) -> Typ`, so that we could use the newly created var to construct a typ
-                // TODO: This is related to a TODO in Self::one
                 if Rc::ptr_eq(fun_var, var) {
-                    // If it's the same variable, it shadows the outer one, no substitution needed
-                    Fun(fun_var.clone(), typ_box.clone())
+                    self.clone()
                 } else {
-                    // Create a new variable with potentially updated type
-                    let fun_var_typ = fun_var.typ();
-                    let substituted_var = match fun_var_typ {
-                        // If fun_var's type is directly the var we're substituting
-                        One(Sol(v)) if Rc::ptr_eq(v, var) => {
-                            // Create a new variable with the type of arg
-                            // TODO: is it correct to clone the nym?
-                            // TODO: the whole branch for Fun might be incorrect
-                            let nym = fun_var.nym().clone();
-                            let new_typ = One(arg.clone());
-                            Var::new_rc(nym, new_typ, None)
-                        }
-                        // For other cases, keep the original variable
-                        _ => fun_var.clone(),
+                    let substituted_fun_var = substitute_var_rc(fun_var, var, arg);
+                    let substituted_typ = typ_box.substitute(var, arg);
+                    let substituted_typ = if Rc::ptr_eq(&substituted_fun_var, fun_var) {
+                        substituted_typ
+                    } else {
+                        substituted_typ.replace_var(fun_var, &substituted_fun_var)
                     };
-                    Fun(substituted_var, Box::new(typ_box.substitute(var, arg)))
+                    Fun(substituted_fun_var, Box::new(substituted_typ))
                 }
             }
         }
+    }
+
+    pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
+        match self {
+            Top => Top,
+            One(exp) => One(exp.replace_var(from, to)),
+            Fun(fun_var, typ_box) => {
+                let replaced_fun_var = replace_var_rc(fun_var, from, to);
+                let replaced_typ = typ_box.replace_var(from, to);
+                Fun(replaced_fun_var, Box::new(replaced_typ))
+            }
+        }
+    }
+}
+
+fn substitute_var_rc(fun_var: &VarRc, var: &VarRc, arg: &Exp) -> VarRc {
+    let substituted_var = fun_var.as_ref().substitute(var, arg);
+    if substituted_var == **fun_var { fun_var.clone() } else { Rc::new(substituted_var) }
+}
+
+fn replace_var_rc(fun_var: &VarRc, from: &VarRc, to: &VarRc) -> VarRc {
+    if Rc::ptr_eq(fun_var, from) {
+        to.clone()
+    } else {
+        let replaced_var = fun_var.as_ref().replace_var(from, to);
+        if replaced_var == **fun_var { fun_var.clone() } else { Rc::new(replaced_var) }
     }
 }
 
