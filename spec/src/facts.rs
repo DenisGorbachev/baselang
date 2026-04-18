@@ -107,3 +107,19 @@ pub fn should_not_have_mutators_for_constructors_on_var_struct() -> bool {
 pub fn constructors_should_be_forward_mutable() -> bool {
     todo!()
 }
+
+/// Whether users should be able to write `One = Succ Zero` and use `One` in the subsequent declarations
+///
+/// Implementation options:
+/// - Extend `Var` struct with `value: Value` field (`enum Value { Known { exp: Exp }, Unknown { typ: Typ } }`)
+///   - Maybe switch from tuple-like `Typ::Fun` to vector-like `Typ::Fun`
+///     - Think about how to refactor `Exp::App` to a vector-like variant
+/// - Introduce `Exp::Let { var: VarRc, val: Exp, exp: Exp}` variant
+/// - Introduce `Typ::Let { var: VarRc, val: Exp, typ: Typ }` variant
+///
+/// Implementation imperatives:
+/// - Must support let bindings at all levels (including the top level)
+///   - This requirement invalidates the `Exp::Let` implementation because expressions are not allowed at the top level
+pub fn should_support_let_bindings() -> bool {
+    true
+}
