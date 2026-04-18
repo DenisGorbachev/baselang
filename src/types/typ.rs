@@ -46,18 +46,18 @@ impl Typ {
         match self {
             Top => Top,
             One(exp) => One(exp.substitute(var, arg)),
-            Fun(fun_var, typ_box) => {
-                if Rc::ptr_eq(fun_var, var) {
+            Fun(fun, typ) => {
+                if Rc::ptr_eq(fun, var) {
                     self.clone()
                 } else {
-                    let substituted_fun_var = substitute_var_rc(fun_var, var, arg);
-                    let substituted_typ = typ_box.substitute(var, arg);
-                    let substituted_typ = if Rc::ptr_eq(&substituted_fun_var, fun_var) {
+                    let substituted_fun = substitute_var_rc(fun, var, arg);
+                    let substituted_typ = typ.substitute(var, arg);
+                    let substituted_typ = if Rc::ptr_eq(&substituted_fun, fun) {
                         substituted_typ
                     } else {
-                        substituted_typ.replace(fun_var, &substituted_fun_var)
+                        substituted_typ.replace(fun, &substituted_fun)
                     };
-                    Fun(substituted_fun_var, Box::new(substituted_typ))
+                    Fun(substituted_fun, Box::new(substituted_typ))
                 }
             }
         }
