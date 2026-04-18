@@ -211,6 +211,14 @@ impl TryFrom<(Exp, &VarRc)> for Exp {
     }
 }
 
+impl TryFrom<(&Exp, &VarRc)> for Exp {
+    type Error = InvalidApplicationError;
+
+    fn try_from((fun, arg): (&Exp, &VarRc)) -> Result<Self, Self::Error> {
+        Self::app(fun.clone(), arg.clone())
+    }
+}
+
 impl TryFrom<(&VarRc, Exp)> for Exp {
     type Error = InvalidApplicationError;
 

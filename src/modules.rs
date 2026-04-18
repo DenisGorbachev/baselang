@@ -26,6 +26,10 @@ mod lists;
 
 pub use lists::*;
 
+mod equality;
+
+pub use equality::*;
+
 mod bools;
 
 pub use bools::*;

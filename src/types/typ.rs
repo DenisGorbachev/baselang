@@ -186,7 +186,8 @@ macro_rules! top {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::var;
+    use crate::{Equality, InvalidApplicationError, Of, exp, var};
+    use pretty_assertions::assert_matches;
 
     #[test]
     fn must_compare_types_up_to_alpha_equivalence() {
@@ -200,6 +201,30 @@ mod tests {
 
         assert!(left.alpha_eq(&right));
         assert!(!left.alpha_eq(&different));
+    }
+
+    #[test]
+    fn must_substitute_all_instances() {
+        var!(t);
+        var!(u);
+        var!(a: typ!(&t));
+        var!(b: typ!(&t));
+
+        let (eq, refl) = Equality::default().into();
+
+        // NOTE: `eq t t` and `refl t` are not even expressible in Rust, because `Typ::Top` is not a `Var`, so it can't be passed as a first argument to `eq` or `refl`
+
+        let eq_t_a_a = exp!(&eq, &t, &a, &a);
+        let eq_t_b_b = exp!(&eq, &t, &b, &b); // can be expressed but can't be constructed
+        let refl_t = exp!(&refl, &t);
+        let refl_t_a = exp!(&refl_t, &a);
+        let refl_t_b = exp!(&refl_t, &b);
+
+        assert_matches!(refl_t.of(&t), Err(InvalidApplicationError { .. }), "`refl t t` is a type error because it's not the case that `t : t`");
+        assert_matches!(refl_t.of(&u), Err(InvalidApplicationError { .. }), "`refl t u` is a type error because it's not the case that `u : t`");
+
+        assert!(refl_t_a.typ().alpha_eq(&Typ::from(eq_t_a_a)), "`refl t a : eq t a a`");
+        assert!(refl_t_b.typ().alpha_eq(&Typ::from(eq_t_b_b)), "`refl t b : eq t b b`");
     }
 
     #[test]
