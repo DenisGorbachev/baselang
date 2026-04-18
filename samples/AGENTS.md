@@ -17,7 +17,7 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
   - Given `A : ^_^` and `B : ^_^`, it is not valid to conclude that `A` and `B` are constructors of the same type (because `^_^` means "unknown").
   - Given `A : T` and `B : T`, it is valid to conclude that `A` and `B` are constructors of the same type (because `T` is known).
 - Every term is both a value and a type:
-  - `T : ^_^; A : T; B : A;` is valid code (notice that `A` is both a value and a type).
+  - `T : ^_^; A : T; B : A;` is valid (notice that `A` is both a value and a type).
 - No term can be mentioned in a type of itself or its ancestors in the type hierarchy:
   - `T : T` cycle is not allowed.
   - `A : B; B : A` cycle is not allowed.
@@ -33,10 +33,22 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
     Add.Zero : (b : Nat) -> (Add Zero b -> b)
     Add.Succ : (a : Nat) -> (b : Nat) -> (Add (Succ a) b -> Succ (Add a b))
     ```
+  - Overlapping rewrites are not allowed:
+    ```baselang
+    Neg : Bool -> Bool
+    Neg.True : Neg True -> False
+    Neg.False : Neg False -> True
+    // Neg.False.Overlapping : Neg False -> False // this is not allowed
+    ```
+  - Type-changing rewrites are not allowed (so type preservation holds):
+    ```baselang
+    Neg : Bool -> Bool
+    Neg.True : Neg True -> False
+    // Neg.Nat : Neg False -> Zero // this is not allowed
+    ```
 - Totality, positivity, termination, productivity checks are performed only after the compiler finishes reading the terms
   - It's possible to add / remove constructors for existing types
   - It's possible to add / remove match arms to existing functions
-- Evaluation of expressions doesn't change their type (so preservation holds).
 - Data are values of type `^_^` (e.g. `Nat : ^_^`, `List : (T : ^_^) -> ^_^`)
 - Propositions are values of type `^_^` (e.g. `Eq : (T : ^_^) -> (a : T) -> (b : T) -> ^_^`)
   - There is no distinction between `Type` and `Prop`.

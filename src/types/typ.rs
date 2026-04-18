@@ -266,4 +266,10 @@ mod tests {
         assert!(actual_1.alpha_eq(&expected));
         assert!(actual_2.alpha_eq(&expected));
     }
+
+    #[ignore]
+    #[test]
+    fn must_admit_proof_of_add_2_2_eq_4() {
+        todo!()
+    }
 }
