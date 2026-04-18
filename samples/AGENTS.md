@@ -18,8 +18,12 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
   - Given `A : T` and `B : T`, it is valid to conclude that `A` and `B` are constructors of the same type (because `T` is known).
 - Every term is both a value and a type:
   - `T : ^_^; A : T; B : A;` is valid code (notice that `A` is both a value and a type).
-- No term can be a type of itself (i.e. `T : T` is not allowed).
-- There is no universe hierarchy (it is replaced by a term hierarchy, because every term is both a value and a type)
+- No term can be mentioned in a type of itself or its ancestors in the type hierarchy:
+  - `T : T` cycle is not allowed.
+  - `A : B; B : A` cycle is not allowed.
+  - `T : T -> ^_^` mention is not allowed.
+  - `A : B; B : A -> ^_^` mention is not allowed.
+- There is no universe hierarchy (it is replaced by a type hierarchy, because every term is both a value and a type)
 - Some terms have function types (e.g. `A -> B` is a type of functions from `A` to `B`).
   - Function types don't have types (they are not terms).
 - Some terms have rewrites (that's how functions are defined):
@@ -29,7 +33,9 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
     Add.Zero : (b : Nat) -> (Add Zero b -> b)
     Add.Succ : (a : Nat) -> (b : Nat) -> (Add (Succ a) b -> Succ (Add a b))
     ```
-  - Totality and termination checks are deferred until call-time, so it's possible to add / remove match arms to existing functions (in general: it's possible to add / remove constructors for existing types).
+- Totality, positivity, termination, productivity checks are performed only after the compiler finishes reading the terms
+  - It's possible to add / remove constructors for existing types
+  - It's possible to add / remove match arms to existing functions
 - Evaluation of expressions doesn't change their type (so preservation holds).
 - Data are values of type `^_^` (e.g. `Nat : ^_^`, `List : (T : ^_^) -> ^_^`)
 - Propositions are values of type `^_^` (e.g. `Eq : (T : ^_^) -> (a : T) -> (b : T) -> ^_^`)

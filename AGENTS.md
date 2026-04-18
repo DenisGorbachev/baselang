@@ -1880,7 +1880,7 @@ thiserror = "2.0.17"
 tokio = { version = "1.50.0", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [dev-dependencies]
-pretty_assertions = "1.4.1"
+pretty_assertions = { version = "1.4.1", features = ["unstable"] }
 ```
 
 ### src/main.rs
