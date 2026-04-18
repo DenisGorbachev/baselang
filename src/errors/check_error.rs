@@ -6,8 +6,8 @@ use thiserror::Error;
 #[derive(new, Error, From, Clone, Debug)]
 #[error("invalid application: {fun:?} on {arg:?}")]
 pub struct InvalidApplicationError {
-    fun: Typ,
-    arg: Typ,
+    pub fun: Typ,
+    pub arg: Typ,
 }
 
 impl AlphaEq for InvalidApplicationError {
