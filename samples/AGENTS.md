@@ -9,20 +9,28 @@ The disputes are resolved by formal logic. Every person expresses their beliefs 
 
 The semantic check tries to find a proof of `Bullshit` (a built-in type with no constructors) (aka `False`, `Void`, `Bottom`). If the compiler finds a proof of `Bullshit`, it presents the full proof to the person who wrote it.
 
-Baselang implements a non-standard type theory:
+## Baselang type theory
 
-- `^_^` is a special "unknown type" (like `None` in Rust, `Nothing` in Haskell, `null` in TypeScript)
-  - Given `A : ^_^` and `B : ^_^`, it is not valid to conclude that `A` and `B` are constructors of the same type (because `^_^` is an "unknown type").
-  - Given `A : T` and `B : T`, it is valid to conclude that `A` and `B` are constructors of the same type (because `T` is a known type).
-- There is no universe hierarchy (the Girard paradox is avoided because a term is not allowed to be a type of itself, i.e. `T : T` is not allowed)
-- Any term can be both a value or a type
-  - `T : ^_^; A : T; B : A;` is valid code (notice that `A` is both a type and a value)
-- Function types are standard (`A -> B` is a type of functions from `A` to `B`)
-- Function values are non-standard:
-  - Match arms are defined as function types, for example:
+- Every term has a type.
+- Some terms have a special type `^_^`, which means "unknown":
+  - `^_^` itself doesn't have a type (`^_^` is not a term).
+  - Given `A : ^_^` and `B : ^_^`, it is not valid to conclude that `A` and `B` are constructors of the same type (because `^_^` means "unknown").
+  - Given `A : T` and `B : T`, it is valid to conclude that `A` and `B` are constructors of the same type (because `T` is known).
+- Every term is both a value and a type:
+  - `T : ^_^; A : T; B : A;` is valid code (notice that `A` is both a value and a type).
+- No term can be a type of itself (i.e. `T : T` is not allowed).
+- There is no universe hierarchy (it is replaced by a term hierarchy, because every term is both a value and a type)
+- Some terms have function types (e.g. `A -> B` is a type of functions from `A` to `B`).
+  - Function types don't have types (they are not terms).
+- Some terms have rewrites (that's how functions are defined):
+  - Match arms are represented as function types, for example:
     ```baselang
     Add : (a : Nat) -> (b : Nat) -> (c : Nat)
     Add.Zero : (b : Nat) -> (Add Zero b -> b)
     Add.Succ : (a : Nat) -> (b : Nat) -> (Add (Succ a) b -> Succ (Add a b))
     ```
-  - Totality and termination checks are deferred until call-time, so it's possible to add / remove match arms to existing functions (in general: it's possible to add / remove constructors for existing types)
+  - Totality and termination checks are deferred until call-time, so it's possible to add / remove match arms to existing functions (in general: it's possible to add / remove constructors for existing types).
+- Evaluation of expressions doesn't change their type (so preservation holds).
+- Data are values of type `^_^` (e.g. `Nat : ^_^`, `List : (T : ^_^) -> ^_^`)
+- Propositions are values of type `^_^` (e.g. `Eq : (T : ^_^) -> (a : T) -> (b : T) -> ^_^`)
+  - There is no distinction between `Type` and `Prop`.
