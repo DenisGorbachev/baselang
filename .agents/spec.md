@@ -26,8 +26,8 @@ Notes:
 An enum that represents a value of the variable.
 
 - Must have exactly the following variants:
-  - `Known { exp: Exp }`
-  - `Unknown { typ: Typ }`
+  - `Known(Exp)`
+  - `Unknown(Typ)`
 
 ## `Typ`
 
@@ -35,16 +35,16 @@ An enum that represents a type of the variable.
 
 - Must have exactly the following variants:
   - `Top`,
-  - `One { exp: Exp }`
-  - `Fun { vars: DuoVec<VarRc> }`
+  - `One(Exp)`
+  - `Fun(DuoVec<VarRc>)`
 
 ## `Exp`
 
 An enum that represents an expression.
 
 - Must have exactly the following variants:
-  - `Sol { var: VarRc }`
-  - `App { fun: ExpBox, arg: ExpBox, typ: TypBox }`
+  - `Sol(VarRc)`
+  - `App(ExpBox, ExpBox, TypBox)`
 - Must have at least the following methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
 
