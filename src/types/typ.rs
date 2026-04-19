@@ -12,10 +12,10 @@ pub enum Typ {
     Top,
     /// Maybe it can own the exp
     /// Name is chosen so that it could be exported (doesn't conflict with other names)
-    One(Exp),
+    One(/* exp */ Exp),
     /// Must wrap [`Var`] in [`Rc`] because this var may be used in the following typ (e.g. in `Nil : (t : Top) -> List t`, the `t` var is used in `List t`)
     /// Must wrap [`Typ`] in [`Box`] to avoid "recursive type" error
-    Fun(VarRc, TypBox),
+    Fun(/* fun */ VarRc, /* typ */ TypBox),
 }
 
 pub use Typ::*;

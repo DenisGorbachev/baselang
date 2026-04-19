@@ -123,3 +123,44 @@ pub fn constructors_should_be_forward_mutable() -> bool {
 pub fn should_support_let_bindings() -> bool {
     true
 }
+
+/// Prioritize code readability
+pub fn enum_variant_format() -> EnumVariantFormat {
+    if struct_enum_variant_fields_are_rendered_on_separate_lines_by_rustfmt() {
+        EnumVariantFormat::Tuple
+    } else {
+        EnumVariantFormat::Struct
+    }
+}
+
+/// Whether `rustfmt` renders struct enum variants in match arms or destructuring assignments on separate lines, like this:
+///
+/// ```rust,ignore
+/// App {
+///   fun,
+///   arg,
+///   typ,
+/// } = ...
+/// ```
+///
+/// This is harder to read.
+pub fn struct_enum_variant_fields_are_rendered_on_separate_lines_by_rustfmt() -> bool {
+    true
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum EnumVariantFormat {
+    Struct,
+    Tuple,
+}
+
+impl EnumVariantFormat {
+    /// Prioritize code readability
+    pub fn choose() -> Self {
+        if struct_enum_variant_fields_are_rendered_on_separate_lines_by_rustfmt() {
+            EnumVariantFormat::Tuple
+        } else {
+            EnumVariantFormat::Struct
+        }
+    }
+}

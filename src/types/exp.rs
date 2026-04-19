@@ -9,12 +9,12 @@ pub enum Exp {
     /// [`Sol`] means `solo` (a single variable)
     /// Must wrap [`Var`] in [`Rc`] because a single var can be used in multiple exps (e.g. `Nat` can be used in multiple exps)
     /// Name comes from "solo" (needed a three-letter term that doesn't conflict with other terms)
-    Sol(VarRc),
+    Sol(/* var */ VarRc),
     /// [`App`] means `application` (of one expression on another expression)
     /// IMPORTANT: Never construct this variant directly, call [`Exp::app`] instead (which performs the type check)
     /// Must wrap [`Exp`] in [`Box`] to avoid "recursive type" error
     /// [`TypBox`] is a cached type of this expression (calculated in [`Exp::app`])
-    App(ExpBox, ExpBox, TypBox),
+    App(/* fun */ ExpBox, /* arg */ ExpBox, /* typ */ TypBox),
 }
 
 pub use Exp::*;
