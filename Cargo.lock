@@ -21,6 +21,7 @@ dependencies = [
  "facet",
  "rustc-hash",
  "smallvec 1.15.1",
+ "stub-macro 0.3.0",
  "thiserror",
 ]
 

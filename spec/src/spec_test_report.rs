@@ -9,6 +9,7 @@ use tokio::runtime::Builder as RuntimeBuilder;
 pub struct SpecTestReport {
     /// `struct Var`
     pub struct_var: Result<StructVar, StructVarNewError>,
+    pub tests: Tests,
 }
 
 impl SpecTestReport {
@@ -21,8 +22,10 @@ impl SpecTestReport {
     pub async fn new_async(ctx: &Ctx<'_>) -> Self {
         tokio::task::yield_now().await;
         let struct_var = StructVar::new(ctx);
+        let tests = Tests::new();
         Self {
             struct_var,
+            tests,
         }
     }
 }
@@ -36,3 +39,7 @@ pub enum ReportGenerateError {
 mod struct_var;
 
 pub use struct_var::*;
+
+mod tests;
+
+pub use tests::*;

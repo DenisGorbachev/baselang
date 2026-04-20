@@ -10,27 +10,45 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 mod outcome;
+
 pub use outcome::*;
 
 mod with_tcx;
+
 pub use with_tcx::*;
 
 mod get_mutators;
+
 pub use get_mutators::*;
 
 mod into_symbol;
+
 pub use into_symbol::*;
 
 mod ctx;
+
 pub use ctx::*;
 
 mod adt;
+
 pub use adt::*;
 
 mod field;
+
 pub use field::*;
 
 mod functions;
+
 pub use functions::*;
+
 mod helpers;
+
 pub use helpers::*;
+
+mod fn_item;
+
+pub use fn_item::*;
+
+mod r#fn;
+
+pub use r#fn::*;

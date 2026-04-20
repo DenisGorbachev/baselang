@@ -13,3 +13,4 @@ facet = { version = "0.44.3", features = ["reflect"] }
 rustc-hash = { version = "2.1.2" }
 smallvec = "1.15.1"
 thiserror = "2.0.18"
+stub-macro = "0.3.0"

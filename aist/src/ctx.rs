@@ -7,6 +7,7 @@ use rustc_middle::ty::TyCtxt;
 use rustc_span::Symbol;
 use rustc_span::def_id::LocalDefId;
 use smallvec::SmallVec;
+use stub_macro::stub_iter;
 use thiserror::Error;
 
 /// A wrapper around [`TyCtxt`] with a nicer API and caching.
@@ -46,6 +47,17 @@ impl<'c> Ctx<'c> {
         let adt = handle!(self.adt(symbol), GetLocalDefIdFailed);
         handle_bool!(!adt.is_struct(), NotStruct, symbol);
         Ok(adt)
+    }
+
+    pub fn tests_def_ids(&self) -> impl Iterator<Item = LocalDefId> {
+        stub_iter!()
+    }
+
+    /// Returns the functions marked with `#[test]`
+    pub fn tests() {
+        // TODO: Must call tests_def_ids()
+        // TODO: Must return an impl Iterator
+        // TODO: Should return an impl Iterator<Item = Fn> (aist/src/fn.rs) if possible
     }
 }
 
