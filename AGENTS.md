@@ -482,6 +482,30 @@ A newtype for `Vec` that has at least two elements.
   * Must set env vars:
     * `RUSTC_WORKSPACE_WRAPPER` (set it to the path to `spec` package main binary, which should be already built)
 
+### Smart application
+
+An algorithm for applying a function to an argument that fills some parameters automatically.
+
+Algorithm:
+
+* Find the first parameter that unifies with the argument
+* Fill that parameter
+* Fill preceding parameters recursively, working backwards, based on the unifications that were already performed
+  * Fill parameters of type `^_^` from unifications
+  * Fill parameters of other types either from unifications or from a map of canonical values of these types (similar to typeclasses)
+
+Examples:
+
+```baselang
+F : (T : ^_^) -> (x : T)
+
+// It is always valid to specify all arguments:
+A1 : F Bool True
+
+// It is valid to specify `True` because it is matched with x = True (which implies T = Bool):
+A2 : F True 
+```
+
 ## Error handling
 
 ### Princicle

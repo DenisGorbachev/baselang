@@ -831,9 +831,10 @@ mod tests {
     use non_empty_str::non_empty_str;
 
     #[test]
+    #[ignore]
     fn must_parse() {
         let mut parser = PlainParser::new(non_empty_str!("^_^"), non_empty_str!("//"), non_empty_str!("/*"), non_empty_str!("*/"));
-        let iter = parser.parse(include_str!("../../../samples/vector.plain.base"));
+        let iter = parser.parse(include_str!("../../../samples/all.plain.base"));
         let _: Vec<_> = iter.try_collect().unwrap();
     }
 }

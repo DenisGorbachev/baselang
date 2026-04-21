@@ -1,0 +1,88 @@
+/*
+ * This file is written in a "Plain" dialect of Baselang language.
+ *
+ * In "Plain" dialect:
+ * - Whitespace is insignificant
+ * - "^_^" is an unknown type
+ * - "_" is an anonymous var
+ * - Application is "smart" (see concepts.md)
+ */
+
+// Booleans
+Bool : ^_^
+False : Bool
+True : Bool
+
+// Generic negation
+Neg : (T : ^_^) -> (x : T) -> (_ : T)
+
+// Negation of booleans
+Neg.Bool.True : Neg Bool True -> False
+Neg.Bool.False : Neg Bool False -> True
+
+// Equality
+Eq : (T : ^_^) -> (left : T) -> (right : T) -> ^_^
+Refl : (T : ^_^) -> (input : T) -> Eq T input input
+
+// Repeated application of `Neg Bool` returns the initial argument
+// Note that it uses "smart application": `Neg` requires `T` as the first argument, but `T` is inferred from `x`
+// The proof relies on reduction
+NegNegBoolEq : (x : Bool) -> Eq x (Neg (Neg x)) -> ^_^
+NegNegBoolEq.True : NegNegBoolEq True (Eq True (Neg (Neg True)))
+NegNegBoolEq.False : NegNegBoolEq False (Eq False (Neg (Neg False)))
+
+// Every identifier that begins with "@" is a compiler builtin
+// @CheckTheorem checks that the relation is total in standard mode (all parameters except the last are inputs, the last parameter is an output)
+@CheckTheorem NegNegBoolEq
+
+// Natural numbers
+Nat : ^_^
+Zero : Nat
+Succ : Nat -> Nat
+
+// Generic addition
+Add : (T : ^_^) -> (x : T) -> (y : T) -> (_ : T)
+
+// Addition of natural numbers
+Add.Nat.Zero : (b : Nat) -> (Add Nat Zero b -> b)
+Add.Nat.Succ : (a : Nat) -> (b : Nat) -> (Add Nat (Succ a) b -> Succ (Add Nat a b))
+
+// Lists
+List : (T : ^_^) -> ^_^
+List.Nil : (T : ^_^) -> List T
+List.Cons : (T : ^_^) -> (head : T) -> (tail : List T) -> List T
+
+// Vectors
+Vector : (T : ^_^) -> (len : Nat) -> ^_^
+Vector.Nil : (T : ^_^) -> Vector T Zero
+Vector.Cons : (T : ^_^) -> (len : Nat) -> (head : T) -> (tail : Vector T len) -> Vector T (Succ len)
+
+Vector.Append :
+  (T : ^_^) ->
+  (len_a : Nat) ->
+  (len_b : Nat) ->
+  (a : Vector T len_a) ->
+  (b : Vector T len_b) ->
+  Vector T (Add len_a len_b) // append preserves lengths
+
+Vector.Append.Nil :
+  (T : ^_^) ->
+  (len_b : Nat) ->
+  (b : Vector T len_b) ->
+  Vector.Append T Zero len_b (Vector.Nil T) b ->
+  b
+
+Vector.Append.Cons :
+  (T : ^_^) ->
+  (len_a : Nat) ->
+  (len_b : Nat) ->
+  (head : T) ->
+  (tail : Vector T len_a) ->
+  (b : Vector T len_b) ->
+  Vector.Append T (Succ len_a) len_b (Vector.Cons T len_a head tail) b ->
+  Vector.Cons T (Add len_a len_b) head (Vector.Append T len_a len_b tail b)
+
+// Notice that Double uses Add, which is not total in all types, but is total in Nat
+// Double itself is total in Nat
+Double : (T : ^_^) -> (x : T) -> (_ : T)
+Double.Nat : (x : Nat) -> Double Nat x -> Add Nat x x
