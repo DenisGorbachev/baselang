@@ -22,14 +22,15 @@ Neg.Bool.False : Neg Bool False -> True
 
 // Equality
 Eq : (T : ^_^) -> (left : T) -> (right : T) -> ^_^
-Refl : (T : ^_^) -> (input : T) -> Eq T input input
+Eq.Refl : (T : ^_^) -> (input : T) -> Eq T input input
 
 // Repeated application of `Neg Bool` returns the initial argument
 // Note that it uses "smart application": `Neg` requires `T` as the first argument, but `T` is inferred from `x`
-// The proof relies on reduction
+// The proof relies on reduction of Neg
+// The theorem is written as a relation (like in Twelf)
 NegNegBoolEq : (x : Bool) -> Eq x (Neg (Neg x)) -> ^_^
-NegNegBoolEq.True : NegNegBoolEq True (Eq True (Neg (Neg True)))
-NegNegBoolEq.False : NegNegBoolEq False (Eq False (Neg (Neg False)))
+NegNegBoolEq.True : NegNegBoolEq True (Eq.Refl True)
+NegNegBoolEq.False : NegNegBoolEq False (Eq.Refl False)
 
 // Every identifier that begins with "@" is a compiler builtin
 // @CheckTheorem checks that the relation is total in standard mode (all parameters except the last are inputs, the last parameter is an output)
