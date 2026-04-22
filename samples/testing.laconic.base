@@ -67,7 +67,7 @@ Finite:
   ^_^
 
 // Generator is finite if there is a List T that contains every possible f n for any n
-Finite.Proof
+Finite.Proof:
   T: ^_^
   gen: Nat -> T
   all: List T
