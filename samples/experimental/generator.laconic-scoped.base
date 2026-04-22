@@ -1,0 +1,20 @@
+// Experiment: use {} scope to avoid repeating the vars and the prefix
+
+Generator:
+  T: ^_^
+  ^_^
+  {
+    New:
+      f: Nat -> T
+      _: Generator T
+    F:
+      g: Generator T
+      f: Nat -> T
+      {
+        Impl:
+          New f
+          f
+      }
+  }
+
+// Easier to write but harder to read

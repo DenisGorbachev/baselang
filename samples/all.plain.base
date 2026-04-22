@@ -2,9 +2,9 @@
  * This file is written in a "Plain" dialect of Baselang language.
  *
  * In "Plain" dialect:
+ * - "^_^" means "unknown type"
+ * - "_" means "unknown var name" (allows to declare anonymous vars)
  * - Whitespace is insignificant
- * - "^_^" is an unknown type
- * - "_" is an anonymous var
  * - Application is "smart" (see concepts.md)
  */
 

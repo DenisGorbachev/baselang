@@ -1,0 +1,75 @@
+/*
+ * This file is written in a "Laconic" dialect of Baselang language.
+ *
+ * Laconic Baselang uses the minimum amount of symbols and relies on indentation to group the terms.
+ *
+ * - "^_^" means "unknown type"
+ * - "_" means "unknown var name" (allows to declare anonymous vars)
+ * - Whitespace is significant
+ * - Every line is a var declaration
+ * - If a line doesn't have a declaration symbol ":", then it's treated as the type of the anonymous
+ */
+
+Nat: ^_^
+Nat.Zero: Nat
+Nat.Succ: Nat -> Nat // short form
+// Nat.Succ: (_: Nat) -> (_: Nat) // long form
+
+List: (T: ^_^) -> ^_^
+
+List.Nil:
+  T: ^_^
+  List T
+
+List.Cons:
+  T: ^_^
+  head: T
+  tail: List T
+  List T
+
+Fact:
+  Input: ^_^
+  Output: ^_^
+  ^_^
+
+Fact.New:
+  Input: ^_^
+  Output: ^_^
+  input: Input
+  output: Output
+  _: Fact Input Output
+
+// Generator of T is a struct that contains a generator function from Nat to T
+
+Generator:
+  T: ^_^
+  ^_^
+
+Generator.New:
+  T: ^_^
+  f: Nat -> T
+  _: Generator T
+
+Generator.F:
+  T: ^_^
+  g: Generator T
+  f: Nat -> T
+
+Generator.F.Impl:
+  T: ^_^
+  f: Nat -> T
+  _: Generator.F (Generator.New T f)
+  _: f
+
+Finite:
+  T: ^_^
+  gen: Nat -> T
+  ^_^
+
+// Generator is finite if there is a List T that contains every possible f n for any n
+Finite.Proof
+  T: ^_^
+  gen: Nat -> T
+  all: List T
+  all_contains_every_gen_n: (n: Nat) -> List.Contains (gen n) all  // for all `n`, `f n` is in `all`
+  Finite gen
