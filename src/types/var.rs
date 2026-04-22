@@ -61,6 +61,10 @@ impl Var {
         self.constructors = constructors.into();
     }
 
+    pub fn typ_last(&self) -> &Typ {
+        self.typ.last()
+    }
+
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         let typ = self.typ.substitute(var, arg);
         let constructors = self.constructors.as_ref().map(|constructors| {

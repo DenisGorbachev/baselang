@@ -41,6 +41,11 @@ impl Typ {
         Fun(var.clone(), Box::new(typ.into()))
     }
 
+    /// Returns output type of the function (or self if it's not a function)
+    pub fn last(&self) -> &Self {
+        if let Fun(_fun, typ) = self { typ.as_ref() } else { self }
+    }
+
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         debug_assert!(var.typ().alpha_eq(arg.typ()));
         match self {
