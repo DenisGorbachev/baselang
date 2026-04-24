@@ -25,11 +25,11 @@ impl AlphaEqCtx {
         match (left, right) {
             (Top, Top) => true,
             (One(left_exp), One(right_exp)) => self.exp(left_exp, right_exp),
-            (Fun(left_var, left_typ), Fun(right_var, right_typ)) => {
-                if !self.typ(left_var.typ(), right_var.typ()) {
+            (Fun(left_param, left_typ), Fun(right_var, right_typ)) => {
+                if !self.typ(left_param.typ(), right_var.typ()) {
                     return false;
                 }
-                self.bindings.push((left_var.clone(), right_var.clone()));
+                self.bindings.push((left_param.clone(), right_var.clone()));
                 let is_body_equal = self.typ(left_typ, right_typ);
                 self.bindings.pop();
                 is_body_equal

@@ -66,8 +66,8 @@ impl EnglishRenderer {
         match typ {
             Typ::Top => Some(Owned(self.top.singular.to_string())),
             Typ::One(exp) => self.render_exp_inner(exp, false, true, false),
-            Typ::Fun(var, typ) => {
-                let var_render = self.render_var_inner(var, false, true, false, true)?;
+            Typ::Fun(param, typ) => {
+                let var_render = self.render_var_inner(param, false, true, false, true)?;
                 let typ_render = self.render_typ_inner_with_article(typ)?;
                 Some(Owned(format!("program that takes `{var_render}` and gives `{typ_render}`")))
             }

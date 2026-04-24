@@ -15,7 +15,7 @@ pub enum Typ {
     One(/* exp */ Exp),
     /// Must wrap [`Var`] in [`Rc`] because this var may be used in the following typ (e.g. in `Nil : (t : Top) -> List t`, the `t` var is used in `List t`)
     /// Must wrap [`Typ`] in [`Box`] to avoid "recursive type" error
-    Fun(/* fun */ VarRc, /* typ */ TypBox),
+    Fun(/* param */ VarRc, /* typ */ TypBox),
 }
 
 pub use Typ::*;
@@ -37,13 +37,13 @@ impl Typ {
     }
 
     #[inline(always)]
-    pub fn fun(var: &VarRc, typ: impl Into<Typ>) -> Self {
-        Fun(var.clone(), Box::new(typ.into()))
+    pub fn fun(param: &VarRc, typ: impl Into<Typ>) -> Self {
+        Fun(param.clone(), Box::new(typ.into()))
     }
 
     /// Returns output type of the function (or self if it's not a function)
     pub fn last(&self) -> &Self {
-        if let Fun(_fun, typ) = self { typ.as_ref() } else { self }
+        if let Fun(_, typ) = self { typ.as_ref() } else { self }
     }
 
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
@@ -51,18 +51,18 @@ impl Typ {
         match self {
             Top => Top,
             One(exp) => One(exp.substitute(var, arg)),
-            Fun(fun, typ) => {
-                if Rc::ptr_eq(fun, var) {
+            Fun(param, typ) => {
+                if Rc::ptr_eq(param, var) {
                     self.clone()
                 } else {
-                    let substituted_fun = substitute_var_rc(fun, var, arg);
+                    let substituted_param = substitute_var_rc(param, var, arg);
                     let substituted_typ = typ.substitute(var, arg);
-                    let substituted_typ = if Rc::ptr_eq(&substituted_fun, fun) {
+                    let substituted_typ = if Rc::ptr_eq(&substituted_param, param) {
                         substituted_typ
                     } else {
-                        substituted_typ.replace(fun, &substituted_fun)
+                        substituted_typ.replace(param, &substituted_param)
                     };
-                    Fun(substituted_fun, Box::new(substituted_typ))
+                    Fun(substituted_param, Box::new(substituted_typ))
                 }
             }
         }
@@ -72,7 +72,7 @@ impl Typ {
         match self {
             Top => false,
             One(exp) => exp.contains_var(target),
-            Fun(fun, typ) => fun.contains_var(target) || typ.contains_var(target),
+            Fun(param, typ) => param.contains_var(target) || typ.contains_var(target),
         }
     }
 
@@ -80,10 +80,10 @@ impl Typ {
         match self {
             Top => Top,
             One(exp) => One(exp.replace(from, to)),
-            Fun(fun, typ) => {
-                let replaced_fun = replace_var_rc(fun, from, to);
+            Fun(param, typ) => {
+                let replaced_param = replace_var_rc(param, from, to);
                 let replaced_typ = typ.replace(from, to);
-                Fun(replaced_fun, Box::new(replaced_typ))
+                Fun(replaced_param, Box::new(replaced_typ))
             }
         }
     }
@@ -133,15 +133,15 @@ impl From<Exp> for Typ {
 
 impl From<(Var, Typ)> for Typ {
     #[inline(always)]
-    fn from((var, typ): (Var, Typ)) -> Self {
-        Fun(Rc::new(var), Box::new(typ))
+    fn from((param, typ): (Var, Typ)) -> Self {
+        Fun(Rc::new(param), Box::new(typ))
     }
 }
 
 impl From<(VarRc, Typ)> for Typ {
     #[inline(always)]
-    fn from((var, typ): (VarRc, Typ)) -> Self {
-        Fun(var, Box::new(typ))
+    fn from((param, typ): (VarRc, Typ)) -> Self {
+        Fun(param, Box::new(typ))
     }
 }
 

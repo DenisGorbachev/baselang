@@ -36,12 +36,12 @@ impl Exp {
         match (fun.typ().clone(), arg.typ().clone()) {
             (Top, arg_typ) => Err(InvalidApplicationError::new(Top, arg_typ)),
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
-            (Fun(var, typ_old), arg_typ) => {
-                if var.typ().alpha_eq(&arg_typ) {
-                    let typ_new = Box::new(typ_old.substitute(&var, &arg));
+            (Fun(param, typ_old), arg_typ) => {
+                if param.typ().alpha_eq(&arg_typ) {
+                    let typ_new = Box::new(typ_old.substitute(&param, &arg));
                     Ok(App(Box::new(fun), Box::new(arg), typ_new))
                 } else {
-                    Err(InvalidApplicationError::new(Fun(var, typ_old), arg_typ))
+                    Err(InvalidApplicationError::new(Fun(param, typ_old), arg_typ))
                 }
             }
         }

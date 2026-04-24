@@ -25,8 +25,8 @@ impl PlainRenderer {
         match typ {
             Typ::Top => self.top.clone().into_owned(),
             Typ::One(exp) => self.render_exp_inner(exp, false, false),
-            Typ::Fun(var, typ) => {
-                format!("{var} -> {typ}", var = self.render_var_inner(var, false, true, true), typ = self.render_typ_inner(typ))
+            Typ::Fun(param, typ) => {
+                format!("{var} -> {typ}", var = self.render_var_inner(param, false, true, true), typ = self.render_typ_inner(typ))
             }
         }
     }

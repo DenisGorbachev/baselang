@@ -1973,7 +1973,7 @@ exclude = [
     "mise.toml",
     "rumdl.toml",
     "rustfmt.toml",
-    "yolobox"
+    ".yolobox"
 ]
 
 [package.metadata.details]
@@ -2028,8 +2028,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 # Core Concepts
 
-* **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`],
-  or function types [`Fun`].
+* **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`], function types [`Fun`].
 * **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
 * **Variables**: Represented by [`Var`], which have names and types.
 * **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
