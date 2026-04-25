@@ -25,15 +25,7 @@ impl AlphaEqCtx {
         match (left, right) {
             (Top, Top) => true,
             (One(left_exp), One(right_exp)) => self.exp(left_exp, right_exp),
-            (Fun(left_param, left_typ), Fun(right_var, right_typ)) => {
-                if !self.typ(left_param.typ(), right_var.typ()) {
-                    return false;
-                }
-                self.bindings.push((left_param.clone(), right_var.clone()));
-                let is_body_equal = self.typ(left_typ, right_typ);
-                self.bindings.pop();
-                is_body_equal
-            }
+            (Fun(left_vars), Fun(right_vars)) => self.fun(left_vars, right_vars),
             _ => false,
         }
     }
@@ -64,5 +56,21 @@ impl AlphaEqCtx {
         } else {
             Rc::ptr_eq(left, right)
         }
+    }
+
+    fn fun(&mut self, left: &crate::DuoVec<VarRc>, right: &crate::DuoVec<VarRc>) -> bool {
+        if left.len() != right.len() {
+            return false;
+        }
+        let binding_len = self.bindings.len();
+        for (left_var, right_var) in core::iter::zip(left, right) {
+            if !self.typ(left_var.typ(), right_var.typ()) {
+                self.bindings.truncate(binding_len);
+                return false;
+            }
+            self.bindings.push((left_var.clone(), right_var.clone()));
+        }
+        self.bindings.truncate(binding_len);
+        true
     }
 }

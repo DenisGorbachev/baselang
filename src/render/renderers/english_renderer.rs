@@ -45,18 +45,31 @@ impl EnglishRenderer {
     }
 
     pub fn name_canonical<'a>(&self, var: &'a Var) -> Option<Cow<'a, str>> {
-        Some(var.nym().get(self.form)?.en.singular.to_canonical())
+        Some(
+            var.nym()
+                .as_ref()?
+                .get(self.form)?
+                .en
+                .singular
+                .to_canonical(),
+        )
     }
 
     pub fn name_is_typ(&self, var: &Var) -> Option<String> {
-        let name = &var.nym().get(self.form)?.en.singular;
+        if var.is_anon() {
+            return self.render_typ_inner_with_article(var.typ());
+        }
+        let name = &var.nym().as_ref()?.get(self.form)?.en.singular;
         let name = if self.capitalize { name.to_capitalized() } else { name.to_canonical() };
         let typ = self.render_typ_inner_with_article(var.typ())?;
         Some(format!("{name} is {typ}"))
     }
 
     pub fn typ_called_name(&self, var: &Var) -> Option<String> {
-        let name = &var.nym().get(self.form)?.en.singular;
+        if var.is_anon() {
+            return self.render_typ_inner_with_article(var.typ());
+        }
+        let name = &var.nym().as_ref()?.get(self.form)?.en.singular;
         let typ = self.render_typ_inner_with_article(var.typ())?;
         Some(format!("{typ} called \"{name}\""))
     }
@@ -66,10 +79,26 @@ impl EnglishRenderer {
         match typ {
             Typ::Top => Some(Owned(self.top.singular.to_string())),
             Typ::One(exp) => self.render_exp_inner(exp, false, true, false),
-            Typ::Fun(param, typ) => {
-                let var_render = self.render_var_inner(param, false, true, false, true)?;
-                let typ_render = self.render_typ_inner_with_article(typ)?;
-                Some(Owned(format!("program that takes `{var_render}` and gives `{typ_render}`")))
+            Typ::Fun(vars) => {
+                let mut vars = vars.iter();
+                let output = vars
+                    .next_back()
+                    .expect("always succeeds because DuoVec always has at least 2 elements");
+                let inputs = vars
+                    .map(|input| {
+                        self.render_var_inner(input, false, !input.is_anon(), true, true)
+                            .map(Cow::into_owned)
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                let output_render = self
+                    .render_var_inner(output, false, !output.is_anon(), true, true)?
+                    .into_owned();
+                let takes = inputs
+                    .into_iter()
+                    .map(|input| format!("takes `{input}`"))
+                    .collect::<Vec<_>>()
+                    .join(", then ");
+                Some(Owned(format!("program that {takes} and gives `{output_render}`")))
             }
         }
     }

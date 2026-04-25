@@ -18,8 +18,10 @@ impl Ints {
 
         var!(int: typ!());
         var!(zero: typ!(&int));
-        var!(pos: typ!(n => &int));
-        var!(neg: typ!(n => &int));
+        var!(o: typ!(&int));
+        var!(pos: typ!(&n => &o));
+        var!(o: typ!(&int));
+        var!(neg: typ!(&n => &o));
 
         Self {
             int,

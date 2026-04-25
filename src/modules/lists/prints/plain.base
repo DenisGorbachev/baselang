@@ -1,5 +1,5 @@
-list : (t : top) -> top
+list : (t : top) -> (o : top)
 
-nil : (t : top) -> list t
+nil : (t : top) -> (o : list t)
 
-cons : (t : top) -> (a : t) -> list t
+cons : (t : top) -> (a : t) -> (o : list t)

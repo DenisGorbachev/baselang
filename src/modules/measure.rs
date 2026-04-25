@@ -10,13 +10,15 @@ module!(
 
 impl Measure {
     pub fn new(rat: &Rats) -> Self {
-        var!(value: typ!(exp!(rat.rat)));
+        var!(value: typ!(&rat.rat));
         var!(unit: typ!());
 
-        var!(measure: typ!(unit => typ!()));
+        var!(o: typ!());
+        var!(measure: typ!(&unit => &o));
 
         let measure_of_unit = exp!(&measure, &unit);
-        var!(new: typ!(value => typ!(unit => typ!(measure_of_unit))));
+        var!(o: typ!(measure_of_unit));
+        var!(new: typ!(&value => &unit => &o));
 
         Self {
             measure,

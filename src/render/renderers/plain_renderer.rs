@@ -12,12 +12,16 @@ pub struct PlainRenderer {
 
 impl PlainRenderer {
     pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
-        let name = &var.nym().short.en.singular;
+        let name = var
+            .nym()
+            .as_ref()
+            .map(|nym| nym.short.en.singular.to_string())
+            .unwrap_or_else(|| "_".to_string());
         if with_type {
             let typ = self.render_typ_inner(var.typ());
             if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
         } else {
-            name.to_string()
+            name
         }
     }
 
@@ -25,9 +29,11 @@ impl PlainRenderer {
         match typ {
             Typ::Top => self.top.clone().into_owned(),
             Typ::One(exp) => self.render_exp_inner(exp, false, false),
-            Typ::Fun(param, typ) => {
-                format!("{var} -> {typ}", var = self.render_var_inner(param, false, true, true), typ = self.render_typ_inner(typ))
-            }
+            Typ::Fun(vars) => vars
+                .iter()
+                .map(|var| self.render_var_inner(var, false, true, true))
+                .collect::<Vec<_>>()
+                .join(" -> "),
         }
     }
 

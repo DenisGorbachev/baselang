@@ -21,27 +21,29 @@ impl Nats {
         var!(nat: typ!(); Self::nat_nym());
 
         // `var!(nat: typ!());` expands to the following declaration:
-        debug_assert!(nat.nym() == &Self::nat_nym());
+        debug_assert!(nat.nym().as_ref() == Some(&Self::nat_nym()));
         debug_assert!(nat.typ().alpha_eq(&Typ::top()));
         debug_assert!(nat.constructors().is_none());
         // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
 
         // Zero : Nat
-        var!(zero: typ!(exp!(nat)));
+        var!(zero: typ!(&nat));
 
         // Succ : (n : Nat) -> Nat
-        var!(n: typ!(exp!(nat)));
-        var!(next: typ!(n => typ!(exp!(nat))));
+        var!(n: typ!(&nat));
+        var!(o: typ!(&nat));
+        var!(next: typ!(&n => &o));
 
         // Add : (a : Nat) -> (b : Nat) -> Nat
-        var!(a: typ!(exp!(nat)));
-        var!(b: typ!(exp!(nat)));
-        var!(add: typ!(a => typ!(b => typ!(exp!(nat)))));
+        var!(a: typ!(&nat));
+        var!(b: typ!(&nat));
+        var!(o: typ!(&nat));
+        var!(add: typ!(&a => &b => &o));
 
         // Add.Zero : (b : Nat) -> (Add Zero b -> b)
         let add_zero_b_exp = exp!(&add, &zero, &b);
         var!(add_zero_b: typ!(add_zero_b_exp));
-        var!(add_zero: typ!(b => typ!(add_zero_b => typ!(&b))));
+        var!(add_zero: typ!(&b => &add_zero_b => &b));
 
         // Add.Next : (a : Nat) -> (b : Nat) -> (Add (Next a) b -> Next (Add a b))
         let next_a = exp!(&next, &a);
@@ -49,7 +51,8 @@ impl Nats {
         var!(add_next_a_b: typ!(add_next_a_b_exp));
         let add_a_b_exp = exp!(&add, &a, &b);
         let next_add_a_b_exp = exp!(&next, add_a_b_exp);
-        var!(add_next: typ!(a => typ!(b => typ!(add_next_a_b => typ!(next_add_a_b_exp)))));
+        var!(o: typ!(next_add_a_b_exp));
+        var!(add_next: typ!(&a => &b => &add_next_a_b => &o));
 
         Self {
             nat,

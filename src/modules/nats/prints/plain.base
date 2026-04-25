@@ -2,10 +2,10 @@ nat : top
 
 zero : nat
 
-next : (n : nat) -> nat
+next : (n : nat) -> (o : nat)
 
-add : (a : nat) -> (b : nat) -> nat
+add : (a : nat) -> (b : nat) -> (o : nat)
 
-add_zero : (b : nat) -> (add_zero_b : add zero b) -> b
+add_zero : (b : nat) -> (add_zero_b : add zero b) -> (b : nat)
 
-add_next : (a : nat) -> (b : nat) -> (add_next_a_b : add next a b) -> next add a b
+add_next : (a : nat) -> (b : nat) -> (add_next_a_b : add next a b) -> (o : next add a b)

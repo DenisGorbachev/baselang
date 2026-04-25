@@ -1,3 +1,6 @@
+mod duo_vec;
+pub use duo_vec::*;
+
 mod exp;
 
 pub use exp::*;

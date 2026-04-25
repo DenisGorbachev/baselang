@@ -13,7 +13,8 @@ impl Wats {
         var!(wat: typ!());
 
         var!(n: typ!(&nats.nat));
-        var!(wrap: typ!(n => &wat); NymEn::from("wat.wrap"));
+        var!(o: typ!(&wat));
+        var!(wrap: typ!(&n => &o); NymEn::from("wat.wrap"));
 
         Self {
             wat,

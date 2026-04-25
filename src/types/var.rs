@@ -10,8 +10,9 @@ use std::rc::Rc;
 pub struct Var {
     /// Names of this var.
     ///
-    /// `Nym` is needed for printing (we need to print the names of outer vars that are referenced by [`Var::typ`] while printing the current var)
-    nym: Nym,
+    /// `Some(Nym)` is needed for printing named vars.
+    /// `None` means that the var is anonymous.
+    nym: Option<Nym>,
 
     /// Do we need to wrap the `typ` in [`Rc`]?
     /// * Yes: because multiple variables can have the same type (e.g. `n : Nat`, `Zero : Nat`)
@@ -31,7 +32,7 @@ pub type VarRc = Rc<Var>;
 impl Var {
     pub fn new(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Self {
         Self {
-            nym: nym.into(),
+            nym: Some(nym.into()),
             typ: typ.into(),
             constructors: constructors.into(),
         }
@@ -39,7 +40,7 @@ impl Var {
 
     pub fn new_top(nym: impl Into<Nym>, constructors: impl Into<Constructors>) -> Self {
         Self {
-            nym: nym.into(),
+            nym: Some(nym.into()),
             typ: Typ::Top,
             constructors: constructors.into(),
         }
@@ -53,8 +54,16 @@ impl Var {
         Rc::new(Self::new_top(nym, constructors))
     }
 
+    pub fn new_anon_rc(typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Rc<Self> {
+        Rc::new(Self {
+            nym: None,
+            typ: typ.into(),
+            constructors: constructors.into(),
+        })
+    }
+
     pub fn set_nym(&mut self, nym: impl Into<Nym>) {
-        self.nym = nym.into()
+        self.nym = Some(nym.into())
     }
 
     pub fn set_constructors(&mut self, constructors: impl Into<Option<Vec<Self>>>) {
@@ -65,6 +74,10 @@ impl Var {
         self.typ.last()
     }
 
+    pub fn is_anon(&self) -> bool {
+        self.nym.is_none()
+    }
+
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         let typ = self.typ.substitute(var, arg);
         let constructors = self.constructors.as_ref().map(|constructors| {
@@ -73,7 +86,11 @@ impl Var {
                 .map(|constructor| constructor.substitute(var, arg))
                 .collect::<Vec<_>>()
         });
-        Self::new(self.nym.clone(), typ, constructors)
+        Self {
+            nym: self.nym.clone(),
+            typ,
+            constructors,
+        }
     }
 
     pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
@@ -84,7 +101,11 @@ impl Var {
                 .map(|constructor| constructor.replace_var(from, to))
                 .collect::<Vec<_>>()
         });
-        Self::new(self.nym.clone(), typ, constructors)
+        Self {
+            nym: self.nym.clone(),
+            typ,
+            constructors,
+        }
     }
 
     /// Returns `true` if this variable's type or constructors mention `target` by identity.
@@ -113,7 +134,7 @@ impl From<(Nym, Typ)> for Var {
     }
 }
 
-impl From<Var> for (Nym, Typ, Constructors) {
+impl From<Var> for (Option<Nym>, Typ, Constructors) {
     fn from(value: Var) -> Self {
         let Var {
             nym,
@@ -121,22 +142,6 @@ impl From<Var> for (Nym, Typ, Constructors) {
             constructors,
         } = value;
         (nym, typ, constructors)
-    }
-}
-
-pub trait ToVarRc {
-    fn to_var_rc(self) -> VarRc;
-}
-
-impl ToVarRc for VarRc {
-    fn to_var_rc(self) -> VarRc {
-        self
-    }
-}
-
-impl ToVarRc for &VarRc {
-    fn to_var_rc(self) -> VarRc {
-        self.clone()
     }
 }
 

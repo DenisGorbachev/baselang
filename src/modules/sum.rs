@@ -18,21 +18,24 @@ impl Sum {
             ..
         } = nat;
 
-        var!(a: typ!(exp!(nat)));
-        var!(b: typ!(exp!(nat)));
-        var!(c: typ!(exp!(nat)));
+        var!(a: typ!(nat));
+        var!(b: typ!(nat));
+        var!(c: typ!(nat));
 
-        var!(sum: typ!(a => typ!(b => typ!(c => top!()))));
+        var!(o: top!());
+        var!(sum: typ!(&a => &b => &c => &o));
 
         let sum_zero_c_c_exp = exp!(&sum, zero, &c, &c);
-        var!(sum_base: typ!(c => sum_zero_c_c_exp));
+        var!(o: typ!(sum_zero_c_c_exp));
+        var!(sum_base: typ!(&c => &o));
 
         let next_a = exp!(next, &a);
         let next_c = exp!(next, &c);
         let sum_a_b_c_exp = exp!(&sum, &a, &b, &c);
         var!(sum_a_b_c: typ!(sum_a_b_c_exp));
         let sum_next_a_b_next_c_exp = exp!(&sum, next_a, &b, next_c);
-        var!(sum_step: typ!(a => typ!(b => typ!(c => typ!(sum_a_b_c => typ!(sum_next_a_b_next_c_exp))))));
+        var!(o: typ!(sum_next_a_b_next_c_exp));
+        var!(sum_step: typ!(&a => &b => &c => &sum_a_b_c => &o));
 
         Self {
             sum,

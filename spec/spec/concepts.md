@@ -108,3 +108,11 @@ A struct whose every field is either [Outcome](#outcome-enum) or another [Outcom
 ### Outcome enum
 
 `Outcome` enum from `aist` crate.
+
+### Strict Mono-Result
+
+A `Result` whose `T` = `()` and whose `E` has only a single variant
+
+### Relaxed Mono-Result
+
+A `Result` whose `T` = `()` (no restriction on `E`)

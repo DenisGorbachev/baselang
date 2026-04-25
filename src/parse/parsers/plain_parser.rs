@@ -264,7 +264,7 @@ fn parse_line(line: &str, scope: &[VarRc], top: &str) -> Result<VarRc, PlainPars
             });
         }
     };
-    Ok(Var::new_rc(name.to_string(), typ, None))
+    Ok(new_var_rc(name, typ))
 }
 
 fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParserParseError> {
@@ -408,12 +408,12 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                 };
                 let binders = names
                     .into_iter()
-                    .map(|name| Var::new_rc(name.to_string(), binder_typ.clone(), None))
+                    .map(|name| new_var_rc(name, binder_typ.clone()))
                     .collect::<Vec<_>>();
                 let mut inner_scope = scope.to_vec();
                 inner_scope.extend(binders.iter().cloned());
-                let codomain = match parse_typ(codomain, &inner_scope, top) {
-                    Ok(codomain) => codomain,
+                let output = match parse_output_var(codomain, &inner_scope, top) {
+                    Ok(output) => output,
                     Err(source) => {
                         return Err(ParseCodomainFailed {
                             source: Box::new(source),
@@ -421,10 +421,10 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                         });
                     }
                 };
-                return Ok(binders
-                    .into_iter()
-                    .rev()
-                    .fold(codomain, |acc, binder| Typ::fun(&binder, acc)));
+                let mut vars = binders;
+                vars.push(output);
+                let typ = Typ::fun(vars);
+                return Ok(typ);
             }
         }
         let domain_typ = match parse_typ(wrapped_domain.unwrap_or(domain), scope, top) {
@@ -436,8 +436,8 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                 });
             }
         };
-        let codomain = match parse_typ(codomain, scope, top) {
-            Ok(codomain) => codomain,
+        let output = match parse_output_var(codomain, scope, top) {
+            Ok(output) => output,
             Err(source) => {
                 return Err(ParseCodomainFailed {
                     source: Box::new(source),
@@ -445,8 +445,8 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                 });
             }
         };
-        let binder = Var::new_rc("_", domain_typ, None);
-        return Ok(Typ::fun(&binder, codomain));
+        let binder = Var::new_anon_rc(domain_typ, None);
+        return Ok(Typ::fun([binder, output]));
     }
 
     if input == top && find_var(scope, input).is_none() {
@@ -462,6 +462,97 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
         }
     };
     Ok(Typ::one(exp))
+}
+
+fn parse_output_var(input: &str, scope: &[VarRc], top: &str) -> Result<VarRc, PlainParserParseError> {
+    use PlainParserParseError::*;
+    let input = input.trim();
+    let has_arrow = match find_first_top_level_arrow(input) {
+        Ok(has_arrow) => has_arrow,
+        Err(source) => {
+            return Err(ScanTextFailed {
+                source: Box::new(source),
+                input: input.to_string(),
+            });
+        }
+    };
+    if has_arrow.is_some() {
+        let typ = match parse_typ(input, scope, top) {
+            Ok(typ) => typ,
+            Err(source) => {
+                return Err(ParseTypeFailed {
+                    source: Box::new(source),
+                    input: input.to_string(),
+                });
+            }
+        };
+        return Ok(Var::new_anon_rc(typ, None));
+    }
+    if let Some(inner) = match strip_outer_parens(input) {
+        Ok(inner) => inner,
+        Err(source) => {
+            return Err(ScanTextFailed {
+                source: Box::new(source),
+                input: input.to_string(),
+            });
+        }
+    } {
+        let binder_colon_index = match find_first_top_level_colon(inner) {
+            Ok(binder_colon_index) => binder_colon_index,
+            Err(source) => {
+                return Err(ScanTextFailed {
+                    source: Box::new(source),
+                    input: inner.to_string(),
+                });
+            }
+        };
+        if let Some(binder_colon_index) = binder_colon_index {
+            let name = match inner.get(..binder_colon_index) {
+                Some(name) => name.trim(),
+                None => {
+                    return Err(TextSliceFailed {
+                        input: inner.to_string(),
+                    });
+                }
+            };
+            let typ = match inner.get(binder_colon_index..) {
+                Some(suffix) => match suffix.strip_prefix(':') {
+                    Some(typ) => typ.trim(),
+                    None => {
+                        return Err(TextSliceFailed {
+                            input: inner.to_string(),
+                        });
+                    }
+                },
+                None => {
+                    return Err(TextSliceFailed {
+                        input: inner.to_string(),
+                    });
+                }
+            };
+            if name.is_empty() || name.chars().any(char::is_whitespace) {
+                return Err(InvalidBinderName {
+                    input: name.to_string(),
+                });
+            }
+            let typ = match parse_typ(typ, scope, top) {
+                Ok(typ) => typ,
+                Err(source) => {
+                    return Err(ParseBinderTypeFailed {
+                        source: Box::new(source),
+                        input: typ.to_string(),
+                    });
+                }
+            };
+            return Ok(new_var_rc(name, typ));
+        }
+    }
+    match parse_exp(input, scope, top)? {
+        Exp::Sol(var) => Ok(var),
+        _ => Err(OutputVarExpected {
+            input: input.to_string(),
+        }),
+    }
 }
 
 fn parse_exp(input: &str, scope: &[VarRc], top: &str) -> Result<Exp, PlainParserParseError> {
@@ -558,21 +649,22 @@ fn parse_exp_atom(input: &str, scope: &[VarRc], top: &str) -> Result<Exp, PlainP
 fn parse_application(fun: Exp, arg: Exp) -> Result<Exp, InvalidApplicationError> {
     match Exp::app(fun.clone(), arg.clone()) {
         Ok(exp) => Ok(exp),
-        Err(source) => {
-            let typ = fun.typ().clone();
-            match typ {
-                Typ::Fun(_, typ) => Ok(Exp::App(Box::new(fun), Box::new(arg), typ)),
-                _ => Err(source),
-            }
-        }
+        Err(source) => match fun.typ().after_apply(&arg) {
+            Some(typ) => Ok(Exp::App(Box::new(fun), Box::new(arg), Box::new(typ))),
+            None => Err(source),
+        },
     }
 }
 
 fn find_var(scope: &[VarRc], name: &str) -> Option<VarRc> {
     scope.iter().rev().find_map(|var| {
-        let candidate = var.nym().short.en.singular.canonical.as_str();
+        let candidate = var.nym().as_ref()?.short.en.singular.canonical.as_str();
         if candidate == name { Some(var.clone()) } else { None }
     })
+}
+
+fn new_var_rc(name: &str, typ: Typ) -> VarRc {
+    if name == "_" { Var::new_anon_rc(typ, None) } else { Var::new_rc(name.to_string(), typ, None) }
 }
 
 fn strip_outer_parens(input: &str) -> Result<Option<&str>, PlainParserParseError> {
@@ -806,6 +898,8 @@ pub enum PlainParserParseError {
     EmptyExpression { input: String },
     #[error("standalone binder type is invalid: '{input}'")]
     StandaloneBinderTypeInvalid { input: String },
+    #[error("output '{input}' must be a named var")]
+    OutputVarExpected { input: String },
     #[error("invalid binder name '{input}'")]
     InvalidBinderName { input: String },
     #[error("unknown identifier '{name}' in '{input}'")]

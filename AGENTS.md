@@ -430,7 +430,7 @@ You are running in a sandbox with limited network access.
 A struct that represents a variable.
 
 * Must have at least the following fields:
-  * `nym: Nym`
+  * `nym: Option<Nym>`
   * `value: Value`
 * Must have at least the following functions:
   * `pub fn typ(&self) -> &Typ`

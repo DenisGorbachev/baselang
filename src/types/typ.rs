@@ -1,6 +1,6 @@
 use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
-use crate::{AlphaEq, alpha_eq_typ};
+use crate::{AlphaEq, DuoVec, alpha_eq_typ};
 use Exp::Sol;
 use std::rc::Rc;
 
@@ -13,14 +13,12 @@ pub enum Typ {
     /// Maybe it can own the exp
     /// Name is chosen so that it could be exported (doesn't conflict with other names)
     One(/* exp */ Exp),
-    /// Must wrap [`Var`] in [`Rc`] because this var may be used in the following typ (e.g. in `Nil : (t : Top) -> List t`, the `t` var is used in `List t`)
-    /// Must wrap [`Typ`] in [`Box`] to avoid "recursive type" error
-    Fun(/* param */ VarRc, /* typ */ TypBox),
+    /// Must wrap [`Var`] in [`Rc`] because function vars may be reused in dependent output types.
+    Fun(DuoVec<VarRc>),
 }
 
 pub use Typ::*;
 
-pub type TypRc = Rc<Typ>;
 pub type TypBox = Box<Typ>;
 
 impl Typ {
@@ -37,13 +35,18 @@ impl Typ {
     }
 
     #[inline(always)]
-    pub fn fun(param: &VarRc, typ: impl Into<Typ>) -> Self {
-        Fun(param.clone(), Box::new(typ.into()))
+    pub fn fun(vars: impl IntoIterator<Item = VarRc>) -> Self {
+        let vars = vars.into_iter().collect::<Vec<_>>();
+        let vars = DuoVec::try_from(vars).expect("always succeeds because Typ::fun is called only with at least two vars");
+        Fun(vars)
     }
 
     /// Returns output type of the function (or self if it's not a function)
     pub fn last(&self) -> &Self {
-        if let Fun(_, typ) = self { typ.as_ref() } else { self }
+        match self {
+            Fun(vars) => vars.last().typ().last(),
+            _ => self,
+        }
     }
 
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
@@ -51,20 +54,7 @@ impl Typ {
         match self {
             Top => Top,
             One(exp) => One(exp.substitute(var, arg)),
-            Fun(param, typ) => {
-                if Rc::ptr_eq(param, var) {
-                    self.clone()
-                } else {
-                    let substituted_param = substitute_var_rc(param, var, arg);
-                    let substituted_typ = typ.substitute(var, arg);
-                    let substituted_typ = if Rc::ptr_eq(&substituted_param, param) {
-                        substituted_typ
-                    } else {
-                        substituted_typ.replace(param, &substituted_param)
-                    };
-                    Fun(substituted_param, Box::new(substituted_typ))
-                }
-            }
+            Fun(vars) => Fun(substitute_fun_vars(vars, var, arg)),
         }
     }
 
@@ -72,7 +62,7 @@ impl Typ {
         match self {
             Top => false,
             One(exp) => exp.contains_var(target),
-            Fun(param, typ) => param.contains_var(target) || typ.contains_var(target),
+            Fun(vars) => vars.iter().any(|var| var.contains_var(target)),
         }
     }
 
@@ -80,26 +70,88 @@ impl Typ {
         match self {
             Top => Top,
             One(exp) => One(exp.replace(from, to)),
-            Fun(param, typ) => {
-                let replaced_param = replace_var_rc(param, from, to);
-                let replaced_typ = typ.replace(from, to);
-                Fun(replaced_param, Box::new(replaced_typ))
-            }
+            Fun(vars) => Fun(map_fun_vars(vars, |var| replace_bound_var_rc(var, from, to))),
+        }
+    }
+
+    pub fn after_apply(&self, arg: &Exp) -> Option<Self> {
+        match self {
+            Fun(vars) => Some(fun_after_apply(vars, arg)),
+            _ => None,
         }
     }
 }
 
-fn substitute_var_rc(fun: &VarRc, var: &VarRc, arg: &Exp) -> VarRc {
-    if fun.contains_var(var) { Rc::new(fun.substitute(var, arg)) } else { fun.clone() }
+fn substitute_fun_vars(vars: &DuoVec<VarRc>, var: &VarRc, arg: &Exp) -> DuoVec<VarRc> {
+    let mut replacements = Vec::<(VarRc, VarRc)>::new();
+    let mut shadowed = false;
+    map_fun_vars(vars, |current| {
+        let current_new = apply_bound_var_replacements(current, &replacements);
+        let current_new = if shadowed || Rc::ptr_eq(current, var) {
+            current_new
+        } else {
+            substitute_bound_var_rc(&current_new, var, arg)
+        };
+        if !Rc::ptr_eq(&current_new, current) {
+            replacements.push((current.clone(), current_new.clone()));
+        }
+        if Rc::ptr_eq(current, var) {
+            shadowed = true;
+        }
+        current_new
+    })
 }
 
-fn replace_var_rc(fun: &VarRc, from: &VarRc, to: &VarRc) -> VarRc {
-    if Rc::ptr_eq(fun, from) {
+fn fun_after_apply(vars: &DuoVec<VarRc>, arg: &Exp) -> Typ {
+    let input = vars.first();
+    let mut replacements = Vec::<(VarRc, VarRc)>::new();
+    let remaining = vars
+        .iter()
+        .skip(1)
+        .map(|current| {
+            let current_new = apply_bound_var_replacements(current, &replacements);
+            let current_new = substitute_bound_var_rc(&current_new, input, arg);
+            if !Rc::ptr_eq(&current_new, current) {
+                replacements.push((current.clone(), current_new.clone()));
+            }
+            current_new
+        })
+        .collect::<Vec<_>>();
+    typ_from_fun_tail(remaining)
+}
+
+fn typ_from_fun_tail(mut vars: Vec<VarRc>) -> Typ {
+    if vars.get(1).is_none() {
+        return vars
+            .pop()
+            .expect("always succeeds because a one-item Vec contains one output var")
+            .typ()
+            .clone();
+    }
+    Fun(DuoVec::try_from(vars).expect("always succeeds because a function tail with more than one var has at least two vars"))
+}
+
+fn map_fun_vars(vars: &DuoVec<VarRc>, mapper: impl FnMut(&VarRc) -> VarRc) -> DuoVec<VarRc> {
+    DuoVec::try_from(vars.iter().map(mapper).collect::<Vec<_>>()).expect("always succeeds because mapping preserves DuoVec length")
+}
+
+fn apply_bound_var_replacements(bound: &VarRc, replacements: &[(VarRc, VarRc)]) -> VarRc {
+    replacements
+        .iter()
+        .fold(bound.clone(), |bound, (from, to)| replace_bound_var_rc(&bound, from, to))
+}
+
+fn substitute_bound_var_rc(bound: &VarRc, var: &VarRc, arg: &Exp) -> VarRc {
+    if bound.contains_var(var) { Rc::new(bound.substitute(var, arg)) } else { bound.clone() }
+}
+
+fn replace_bound_var_rc(bound: &VarRc, from: &VarRc, to: &VarRc) -> VarRc {
+    if Rc::ptr_eq(bound, from) {
         to.clone()
-    } else if fun.contains_var(from) {
-        Rc::new(fun.replace_var(from, to))
+    } else if bound.contains_var(from) {
+        Rc::new(bound.replace_var(from, to))
     } else {
-        fun.clone()
+        bound.clone()
     }
 }
 
@@ -131,31 +183,9 @@ impl From<Exp> for Typ {
     }
 }
 
-impl From<(Var, Typ)> for Typ {
-    #[inline(always)]
-    fn from((param, typ): (Var, Typ)) -> Self {
-        Fun(Rc::new(param), Box::new(typ))
-    }
-}
-
-impl From<(VarRc, Typ)> for Typ {
-    #[inline(always)]
-    fn from((param, typ): (VarRc, Typ)) -> Self {
-        Fun(param, Box::new(typ))
-    }
-}
-
-impl From<(&VarRc, Typ)> for Typ {
-    #[inline(always)]
-    fn from((var, typ): (&VarRc, Typ)) -> Self {
-        Self::from((var.clone(), typ))
-    }
-}
-
-impl From<(&VarRc, Exp)> for Typ {
-    #[inline(always)]
-    fn from((var, exp): (&VarRc, Exp)) -> Self {
-        Self::from((var.clone(), Self::from(exp)))
+impl<const N: usize> From<[&VarRc; N]> for Typ {
+    fn from(vars: [&VarRc; N]) -> Self {
+        Self::fun(vars.into_iter().cloned())
     }
 }
 
@@ -165,19 +195,17 @@ impl AlphaEq for Typ {
     }
 }
 
-/// This macro uses `$var.clone()` to avoid the "&" before variables.
-/// `$var` should have a [`VarRc`] type.
-/// `$var.clone()` is also used in [`exp`](crate::exp) macro.
+/// This macro accepts either a plain type expression or a function type.
 #[macro_export]
 macro_rules! typ {
     () => {
         $crate::Typ::top()
     };
     ($exp: expr) => {
-        $crate::Typ::one($exp)
+        $crate::Typ::from($exp)
     };
-    ($var: ident => $typ: expr) => {
-        $crate::Typ::fun(&$var, $typ)
+    ($first: expr $(=> $rest: expr)+) => {
+        $crate::Typ::from([$first, $($rest),+])
     };
 }
 
@@ -199,10 +227,13 @@ mod tests {
         var!(x);
         var!(y);
         var!(z);
+        var!(ox: typ!(&x));
+        var!(oy: typ!(&y));
+        var!(oz: typ!(&z));
 
-        let left = typ!(x => &x);
-        let right = typ!(y => &y);
-        let different = typ!(y => &z);
+        let left = typ!(&x => &ox);
+        let right = typ!(&y => &oy);
+        let different = typ!(&y => &oz);
 
         assert!(left.alpha_eq(&right));
         assert!(!left.alpha_eq(&different));
@@ -237,12 +268,14 @@ mod tests {
     fn must_not_capture_free_var_in_substituted_argument() {
         var!(x);
         var!(y);
+        var!(oy: typ!(&y));
 
-        let f_typ = typ!(x => &y);
+        let f_typ = typ!(&x => &oy);
         let actual = f_typ.substitute(&y, &Exp::sol(&x));
 
         var!(x_fresh);
-        let expected = typ!(x_fresh => &x);
+        var!(o_fresh: typ!(&x));
+        let expected = typ!(&x_fresh => &o_fresh);
 
         assert!(!f_typ.alpha_eq(&expected));
         assert!(actual.alpha_eq(&expected));
@@ -255,8 +288,9 @@ mod tests {
         var!(y2: top!(); "y");
         var!(z);
 
-        var!(x1: typ!(&y1));
-        let f_typ = typ!(x1 => &y1);
+        var!(u1: typ!(&y1));
+        var!(o1: typ!(&y1));
+        let f_typ = typ!(&u1 => &o1);
 
         // this substitution must change the type
         let actual_1 = f_typ.substitute(&y1, &Exp::sol(&y2));
@@ -265,7 +299,8 @@ mod tests {
         let actual_2 = actual_1.substitute(&y1, &Exp::sol(&z));
 
         var!(v2: typ!(&y2));
-        let expected = typ!(v2 => &y2);
+        var!(o2: typ!(&y2));
+        let expected = typ!(&v2 => &o2);
 
         assert!(!f_typ.alpha_eq(&expected));
         assert!(actual_1.alpha_eq(&expected));

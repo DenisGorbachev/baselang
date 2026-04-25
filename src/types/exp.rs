@@ -36,12 +36,17 @@ impl Exp {
         match (fun.typ().clone(), arg.typ().clone()) {
             (Top, arg_typ) => Err(InvalidApplicationError::new(Top, arg_typ)),
             (One(exp), arg_typ) => Err(InvalidApplicationError::new(One(exp), arg_typ)),
-            (Fun(param, typ_old), arg_typ) => {
-                if param.typ().alpha_eq(&arg_typ) {
-                    let typ_new = Box::new(typ_old.substitute(&param, &arg));
+            (Fun(vars), arg_typ) => {
+                let input = vars.first().clone();
+                if input.typ().alpha_eq(&arg_typ) {
+                    let typ_new = Box::new(
+                        fun.typ()
+                            .after_apply(&arg)
+                            .expect("always succeeds because function types always support application"),
+                    );
                     Ok(App(Box::new(fun), Box::new(arg), typ_new))
                 } else {
-                    Err(InvalidApplicationError::new(Fun(param, typ_old), arg_typ))
+                    Err(InvalidApplicationError::new(Fun(vars), arg_typ))
                 }
             }
         }
@@ -298,13 +303,14 @@ mod tests {
 
         let actual = add_next.of(two.clone()).unwrap();
 
-        var!(b: typ!(exp!(nat)));
+        var!(b: typ!(&nat));
         let next_two = exp!(&next, two.clone());
         let add_next_two_b_exp = exp!(&add, next_two, &b);
         var!(add_next_a_b: typ!(add_next_two_b_exp));
         let add_two_b_exp = exp!(&add, two.clone(), &b);
         let next_add_two_b_exp = exp!(&next, add_two_b_exp);
-        var!(expected: typ!(b => typ!(add_next_a_b => typ!(next_add_two_b_exp))));
+        var!(out: typ!(next_add_two_b_exp));
+        var!(expected: typ!(&b => &add_next_a_b => &out));
 
         assert!(actual.typ().alpha_eq(expected.typ()));
     }
@@ -356,7 +362,8 @@ mod tests {
         let add_one_two = exp!(&add, one.clone(), two.clone());
         let append_bool_one_two_tail_b = exp!(&append, &bool, one, two, &tail, &b);
         let cons_bool_add_one_two_yes_append = exp!(&cons, &bool, add_one_two, &yes, append_bool_one_two_tail_b);
-        var!(expected: typ!(tail => typ!(b => typ!(append_t_next_len_a_len_b_cons_b => typ!(cons_bool_add_one_two_yes_append)))));
+        var!(out: typ!(cons_bool_add_one_two_yes_append));
+        var!(expected: typ!(&tail => &b => &append_t_next_len_a_len_b_cons_b => &out));
 
         assert!(actual.typ().alpha_eq(expected.typ()));
     }

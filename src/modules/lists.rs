@@ -15,18 +15,21 @@ impl Lists {
         // List : (t : Top) -> Top
         // List (t : Top) : Top
         var!(t: Top);
-        var!(list: typ!(t => Top));
+        var!(o: typ!());
+        var!(list: typ!(&t => &o));
 
         // Nil : (t : Top) -> List t
         // Nil (t : Top) : List t
         let list_t = exp!(&list, &t);
-        var!(nil: typ!(t => typ!(list_t)));
+        var!(o: typ!(list_t));
+        var!(nil: typ!(&t => &o));
 
         // Cons : (t : Top) -> (a : t) -> List t
         // Cons (t : Top) (a : t) : List t
-        var!(a: typ!(exp!(t)));
+        var!(a: typ!(&t));
         let list_t = exp!(&list, &t);
-        let cons_typ = typ!(t => typ!(a => typ!(list_t)));
+        var!(o: typ!(list_t));
+        let cons_typ = typ!(&t => &a => &o);
         var!(cons: cons_typ);
 
         Self {

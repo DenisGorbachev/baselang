@@ -10,7 +10,7 @@ fn must_render_app() {
     let nat = prelude.nat.nat;
     let cons_nat = cons.of(nat).unwrap();
     let rendering = RENDERER.render_exp(&cons_nat).unwrap();
-    assert_eq!(rendering, "(cons nat) : (a : nat) -> list nat")
+    assert_eq!(rendering, "(cons nat) : (a : nat) -> (o : list nat)")
 }
 
 #[test]
