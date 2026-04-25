@@ -209,13 +209,6 @@ macro_rules! typ {
     };
 }
 
-#[macro_export]
-macro_rules! top {
-    () => {
-        $crate::Typ::top()
-    };
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -284,8 +277,8 @@ mod tests {
     #[test]
     fn must_refresh_binder_identity_when_substitution_changes_it_to_equal_var() {
         // vars are still different even if they have the same name
-        var!(y1: top!(); "y");
-        var!(y2: top!(); "y");
+        var!(y1: typ!(); "y");
+        var!(y2: typ!(); "y");
         var!(z);
 
         var!(u1: typ!(&y1));

@@ -1,4 +1,4 @@
-use crate::{Nats, exp, module, top, typ, var};
+use crate::{Nats, exp, module, typ, var};
 
 // TODO: Move it to `Nats`
 module!(
@@ -22,7 +22,7 @@ impl Sum {
         var!(b: typ!(nat));
         var!(c: typ!(nat));
 
-        var!(o: top!());
+        var!(o: typ!());
         var!(sum: typ!(&a => &b => &c => &o));
 
         let sum_zero_c_c_exp = exp!(&sum, zero, &c, &c);
