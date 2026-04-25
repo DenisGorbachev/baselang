@@ -5,17 +5,14 @@ use thiserror::Error;
 
 #[derive(Facet, Debug)]
 pub struct StructVarFields {
-    pub constructors: Result<StructVarFieldsConstructors, StructVarFieldsConstructorsNewError>,
     pub typ: StructVarFieldsTyp,
 }
 
 impl StructVarFields {
     /// `var` must be a struct
     pub fn new(var: Adt) -> Self {
-        let constructors = StructVarFieldsConstructors::new(var);
         let typ = StructVarFieldsTyp::new(var);
         Self {
-            constructors,
             typ,
         }
     }
@@ -40,10 +37,10 @@ pub enum StructVarFieldsFieldIsNotMutatedByMethodsError {
     MutatorsFound { field_name: String, methods: Vec<String> },
 }
 
-mod struct_var_fields_constructors;
-
-pub use struct_var_fields_constructors::*;
-
 mod struct_var_fields_typ;
 
 pub use struct_var_fields_typ::*;
+
+mod struct_var_fields_constructors;
+
+pub use struct_var_fields_constructors::*;

@@ -1,5 +1,5 @@
 use crate::types::typ::Typ;
-use crate::{Constructors, Exp, InvalidApplicationError, Nym, Of};
+use crate::{Exp, InvalidApplicationError, Nym, Of};
 use derive_getters::Getters;
 use std::rc::Rc;
 
@@ -19,55 +19,42 @@ pub struct Var {
     /// * No: because we can wrap the variables themselves in Rc and pass them into Exp
     ///   We can't make `typ` `pub` because that would allow mutating it after the [`Var`] was used to construct an [`Exp::App`], which would break caching of [`Typ`] of the resulting expression
     typ: Typ,
-
-    /// Constructors of this var.
-    ///
-    /// `None` means that var doesn't need constructors (we assume that it has a proof)
-    /// `Some(vec![])` means that var has no constructors (we know that it doesn't have a proof) (example: `Void` aka `False` type)
-    constructors: Constructors,
 }
 
 pub type VarRc = Rc<Var>;
 
 impl Var {
-    pub fn new(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Self {
+    pub fn new(nym: impl Into<Nym>, typ: impl Into<Typ>) -> Self {
         Self {
             nym: Some(nym.into()),
             typ: typ.into(),
-            constructors: constructors.into(),
         }
     }
 
-    pub fn new_top(nym: impl Into<Nym>, constructors: impl Into<Constructors>) -> Self {
+    pub fn new_top(nym: impl Into<Nym>) -> Self {
         Self {
             nym: Some(nym.into()),
             typ: Typ::Top,
-            constructors: constructors.into(),
         }
     }
 
-    pub fn new_rc(nym: impl Into<Nym>, typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Rc<Self> {
-        Rc::new(Self::new(nym, typ, constructors))
+    pub fn new_rc(nym: impl Into<Nym>, typ: impl Into<Typ>) -> Rc<Self> {
+        Rc::new(Self::new(nym, typ))
     }
 
-    pub fn new_top_rc(nym: impl Into<Nym>, constructors: impl Into<Constructors>) -> Rc<Self> {
-        Rc::new(Self::new_top(nym, constructors))
+    pub fn new_top_rc(nym: impl Into<Nym>) -> Rc<Self> {
+        Rc::new(Self::new_top(nym))
     }
 
-    pub fn new_anon_rc(typ: impl Into<Typ>, constructors: impl Into<Constructors>) -> Rc<Self> {
+    pub fn new_anon_rc(typ: impl Into<Typ>) -> Rc<Self> {
         Rc::new(Self {
             nym: None,
             typ: typ.into(),
-            constructors: constructors.into(),
         })
     }
 
     pub fn set_nym(&mut self, nym: impl Into<Nym>) {
         self.nym = Some(nym.into())
-    }
-
-    pub fn set_constructors(&mut self, constructors: impl Into<Option<Vec<Self>>>) {
-        self.constructors = constructors.into();
     }
 
     pub fn typ_last(&self) -> &Typ {
@@ -80,42 +67,23 @@ impl Var {
 
     pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
         let typ = self.typ.substitute(var, arg);
-        let constructors = self.constructors.as_ref().map(|constructors| {
-            constructors
-                .iter()
-                .map(|constructor| constructor.substitute(var, arg))
-                .collect::<Vec<_>>()
-        });
         Self {
             nym: self.nym.clone(),
             typ,
-            constructors,
         }
     }
 
     pub fn replace_var(&self, from: &VarRc, to: &VarRc) -> Self {
         let typ = self.typ.replace(from, to);
-        let constructors = self.constructors.as_ref().map(|constructors| {
-            constructors
-                .iter()
-                .map(|constructor| constructor.replace_var(from, to))
-                .collect::<Vec<_>>()
-        });
         Self {
             nym: self.nym.clone(),
             typ,
-            constructors,
         }
     }
 
-    /// Returns `true` if this variable's type or constructors mention `target` by identity.
+    /// Returns `true` if this variable's type mentions `target` by identity.
     pub fn contains_var(&self, target: &VarRc) -> bool {
         self.typ.contains_var(target)
-            || self.constructors.as_ref().is_some_and(|constructors| {
-                constructors
-                    .iter()
-                    .any(|constructor| constructor.contains_var(target))
-            })
     }
 
     pub fn of_at(&self, _arg: &VarRc) -> Result<Exp, InvalidApplicationError> {
@@ -130,18 +98,17 @@ impl Var {
 
 impl From<(Nym, Typ)> for Var {
     fn from((nym, typ): (Nym, Typ)) -> Self {
-        Self::new(nym, typ, None)
+        Self::new(nym, typ)
     }
 }
 
-impl From<Var> for (Option<Nym>, Typ, Constructors) {
+impl From<Var> for (Option<Nym>, Typ) {
     fn from(value: Var) -> Self {
         let Var {
             nym,
             typ,
-            constructors,
         } = value;
-        (nym, typ, constructors)
+        (nym, typ)
     }
 }
 
@@ -190,12 +157,12 @@ impl Of<Exp> for VarRc {
 #[macro_export]
 macro_rules! var {
     ($name:ident) => {
-        let $name = $crate::Var::new_top_rc(stringify!($name), None);
+        let $name = $crate::Var::new_top_rc(stringify!($name));
     };
     ($name: ident: $typ: expr) => {
-        let $name = $crate::Var::new_rc(stringify!($name), $typ, None);
+        let $name = $crate::Var::new_rc(stringify!($name), $typ);
     };
     ($name: ident: $typ: expr; $nym: expr) => {
-        let $name = $crate::Var::new_rc($nym, $typ, None);
+        let $name = $crate::Var::new_rc($nym, $typ);
     };
 }

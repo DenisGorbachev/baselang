@@ -445,7 +445,7 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                 });
             }
         };
-        let binder = Var::new_anon_rc(domain_typ, None);
+        let binder = Var::new_anon_rc(domain_typ);
         return Ok(Typ::fun([binder, output]));
     }
 
@@ -486,7 +486,7 @@ fn parse_output_var(input: &str, scope: &[VarRc], top: &str) -> Result<VarRc, Pl
                 });
             }
         };
-        return Ok(Var::new_anon_rc(typ, None));
+        return Ok(Var::new_anon_rc(typ));
     }
     if let Some(inner) = match strip_outer_parens(input) {
         Ok(inner) => inner,
@@ -664,7 +664,7 @@ fn find_var(scope: &[VarRc], name: &str) -> Option<VarRc> {
 }
 
 fn new_var_rc(name: &str, typ: Typ) -> VarRc {
-    if name == "_" { Var::new_anon_rc(typ, None) } else { Var::new_rc(name.to_string(), typ, None) }
+    if name == "_" { Var::new_anon_rc(typ) } else { Var::new_rc(name.to_string(), typ) }
 }
 
 fn strip_outer_parens(input: &str) -> Result<Option<&str>, PlainParserParseError> {

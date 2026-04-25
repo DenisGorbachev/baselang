@@ -21,13 +21,13 @@ pub type BoolsTuple = (VarRc, VarRc, VarRc);
 impl Bools {
     pub fn new() -> Self {
         // Bool : Top
-        let bool = Var::new_rc("bool", Typ::top(), None);
+        let bool = Var::new_rc("bool", Typ::top());
 
         // Yes : Bool
-        let yes = Var::new_rc("true", Typ::one(Exp::sol(&bool)), None);
+        let yes = Var::new_rc("true", Typ::one(Exp::sol(&bool)));
 
         // No : Bool
-        let no = Var::new_rc("false", Typ::one(Exp::sol(&bool)), None);
+        let no = Var::new_rc("false", Typ::one(Exp::sol(&bool)));
 
         Self {
             bool,

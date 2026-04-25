@@ -70,10 +70,13 @@ pub fn definitions_are_content_addressable() -> bool {
 }
 
 pub fn var_struct_must_have_field_constructors_of_option_vec() -> Option<bool> {
-    match (must_support_types_with_empty_set_of_constructors(), must_not_require_constructors_of_constructors(), every_type_must_be_static()) {
-        (true, true, Some(true)) => Some(true),
-        _ => None,
-    }
+    // match (must_support_types_with_empty_set_of_constructors(), must_not_require_constructors_of_constructors(), every_type_must_be_static()) {
+    //     (true, true, Some(true)) => Some(true),
+    //     _ => None,
+    // }
+    // This field is weird: it should be immutable, but it's impossible to make it immutable because the constructors can be created only after the var itself has already been created (the constructors reference the var)
+    // One solution is to build a set of constructors for each var during the second stage of compilation (after all vars have been created)
+    Some(false)
 }
 
 /// Must support a logical `False` that has a fixed empty set of constructors
