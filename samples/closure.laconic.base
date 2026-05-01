@@ -1,0 +1,16 @@
+List.Map:
+  A: ^_^
+  B: ^_^
+  f: A -> B
+  la: List A
+  lb: List B
+
+List.Map.Nil:
+  _: List.Map f (Nil A)
+  _: Nil B
+
+List.Map.Cons:
+  head: A
+  tail: List A
+  _: List.Map f (Cons head tail)
+  _: Cons (f head) (List.Map f tail)
