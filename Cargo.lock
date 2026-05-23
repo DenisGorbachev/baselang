@@ -100,7 +100,6 @@ dependencies = [
  "non-empty-str",
  "pretty_assertions",
  "strum",
- "stub-macro 0.3.0",
  "thiserror",
  "tokio",
 ]
