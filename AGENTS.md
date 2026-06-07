@@ -2168,8 +2168,8 @@ pretty_assertions = { version = "1.4.1", features = ["unstable"] }
 if_missing = "error"
 
 [providers]
-keychain = { type = "keychain", service = "rust-pre-public-lib-template" }
-pass = { type = "password-store", prefix = "rust-pre-public-lib-template/" }
+keychain = { type = "keychain", service = "baselang" }
+pass = { type = "password-store", prefix = "baselang/" }
 ```
 
 ### src/main.rs
