@@ -3,7 +3,7 @@ use Cow::*;
 use derive_more::{From, Into};
 use derive_new::new;
 use std::borrow::Cow;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 /// This struct holds the canonical and capitalized names of a [`crate::Var`]
 ///
@@ -50,7 +50,7 @@ impl From<String> for Phrase {
 }
 
 impl Display for Phrase {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&self.canonical)
     }
 }

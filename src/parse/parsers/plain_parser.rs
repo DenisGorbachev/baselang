@@ -1,4 +1,5 @@
 use crate::{Exp, InvalidApplicationError, Parse, Typ, Var, VarRc};
+use core::iter::from_fn;
 use derive_new::new;
 use non_empty_str::cow::NonEmptyCowStr;
 use std::borrow::Cow;
@@ -32,7 +33,7 @@ impl Parse for PlainParser {
         let multi_line_comment_end = self.multi_line_comment_end.clone();
         let mut lines = input.lines().enumerate();
         let mut multi_line_comment_start_line_number = None;
-        core::iter::from_fn(move || {
+        from_fn(move || {
             if failed {
                 return None;
             }
