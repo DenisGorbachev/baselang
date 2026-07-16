@@ -34,27 +34,11 @@ Exists : (A : Type) -> (P : A -> Type) -> Type
 
 Exists.Mk : (A : Type) -> (P : A -> Type) -> (a : A) -> (_ : P a) -> Exists A P
 
-BaselinePaths : List Path = [
-  ".agents",
-  "mise.toml",
-  "fnox.toml" // provider defs must come from the baseline repo
-  "lefthook.yml",
-  "AGENTS.ts",
-  ".gitattributes",
-  ".gitignore",
-  ".repoconf/hooks/post-init.sh", // it's not really necessary to propagate these changes; maybe post-init should be in scaffold repos, and removed after successful run? (removed only in the new-style repos)
-  ".github/workflows/ci.yml",
-]
+// NOTE: The actual list has been moved to `personal` repo
+BaselinePaths : List Path = []
 
-ScaffoldPaths : List Path = [
-  "Cargo.toml",
-  "LICENSE-APACHE",
-  "LICENSE-MIT",
-  "src/command.rs",
-  "src/command/print_command.rs",
-  "src/lib.rs",
-  "src/main.rs"
-]
+// NOTE: The actual list has been moved to `personal` repo
+ScaffoldPaths : List Path = []
 
 Not = (A : Type) -> (a : A) -> False
 
