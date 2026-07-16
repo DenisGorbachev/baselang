@@ -1,0 +1,72 @@
+State : Type
+
+State.Zero : State
+
+State.Step : State -> State
+
+Path : Type
+
+// This is a simple definition of a UNIX path
+// Note that this encodes both relative and absolute paths in the same way
+Path.Mk : List String -> Path
+
+AbsPath : Type
+
+AbsPath.Mk : Path -> AbsPath
+
+Byte = Vector 8 Bit
+
+File = List Byte
+
+IsRepo : AbsPath -> Type
+
+// Filesystem is a relation between the current state, the absolute path and the file contents
+// If Filesystem type family does not contain an element for a certain State and AbsPath, then there's no file at this path in this state
+Filesystem : State -> AbsPath -> File -> Type
+
+PathExists : State -> AbsPath -> Type
+
+// Using the auto-var feature that inserts vars into context, automatically inferring their type
+// Path exists if a Filesystem relation exists
+PathExists.Mk : Filesystem state path file -> PathExists state path
+
+Exists : (A : Type) -> (P : A -> Type) -> Type
+
+Exists.Mk : (A : Type) -> (P : A -> Type) -> (a : A) -> (_ : P a) -> Exists A P
+
+BaselinePaths : List Path = [
+  ".agents",
+  "mise.toml",
+  "fnox.toml" // provider defs must come from the baseline repo
+  "lefthook.yml",
+  "AGENTS.ts",
+  ".gitattributes",
+  ".gitignore",
+  ".repomixignore", // TODO: remove repomix?
+  ".repoconf/hooks/post-init.sh", // it's not really necessary to propagate these changes; maybe post-init should be in scaffold repos, and removed after successful run? (removed only if in the new-style repos)
+  ".github/workflows/ci.yml",
+]
+
+ScaffoldPaths : List Path = [
+  "Cargo.toml",
+  "LICENSE-APACHE",
+  "LICENSE-MIT",
+  "src/command.rs",
+  "src/command/print_command.rs",
+  "src/lib.rs",
+  "src/main.rs"
+]
+
+Not = (A : Type) -> (a : A) -> False
+
+ScaffoldRepoWithoutScaffoldPath : (state : State) -> (repo : AbsPath) -> (path : Path) -> (_ : ScaffoldPaths | Contains path) -> (_ : Not ({
+  full_path = repo | Join path
+  PathExists state full_path
+})) -> Type
+
+_ : Exists ScaffoldRepoWithoutScaffoldPath
+
+// Some repos have the same relative files
+_ : (a b : Repo) -> (
+  Exists
+)
