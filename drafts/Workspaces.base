@@ -42,8 +42,7 @@ BaselinePaths : List Path = [
   "AGENTS.ts",
   ".gitattributes",
   ".gitignore",
-  ".repomixignore", // TODO: remove repomix?
-  ".repoconf/hooks/post-init.sh", // it's not really necessary to propagate these changes; maybe post-init should be in scaffold repos, and removed after successful run? (removed only if in the new-style repos)
+  ".repoconf/hooks/post-init.sh", // it's not really necessary to propagate these changes; maybe post-init should be in scaffold repos, and removed after successful run? (removed only in the new-style repos)
   ".github/workflows/ci.yml",
 ]
 
