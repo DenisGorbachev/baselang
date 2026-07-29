@@ -2,15 +2,12 @@
 members = ["aist", "spec"]
 resolver = "3"
 
-[package]
-name = "baselang"
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.93.0"
-description = "Baselang is a language for describing how things work."
+rust-version = "1.93.1"
 homepage = "https://github.com/DenisGorbachev/baselang"
 repository = "https://github.com/DenisGorbachev/baselang"
-readme = "README.md"
 keywords = []
 categories = []
 exclude = [
@@ -26,28 +23,47 @@ exclude = [
     "deno.json",
     "commitlint.config.mjs",
     "fnox.toml",
-    "lefthook.yml",
     "mise.toml",
     "rumdl.toml",
     "rustfmt.toml",
     ".yolobox"
 ]
 
-[package.metadata.details]
+[workspace.metadata.details]
+name = "baselang"
 title = "Baselang"
-tagline = ""
-summary = ""
-announcement = ""
 readme = { }
 
-[lints.rust]
+[workspace.metadata.insert-docs]
+toolchain = "nightly-2026-01-22"
+
+[workspace.lints.rust]
 redundant_imports = "deny"
 unused_import_braces = "deny"
 # unused_qualifications must not be "deny" because our code style has multiple `use Foo::*;`, and some macros (derive_more::Display, strum::Display, strum::EnumString) produce code with full qualifications
 # unused_qualifications = "deny"
 
-[lints.clippy]
+[workspace.lints.clippy]
 absolute_paths = "deny"
+arithmetic_side_effects = "deny"
+
+[package]
+name = "baselang"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Baselang is a language for describing how things work."
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+exclude.workspace = true
+
+[package.metadata.details]
+title = "Baselang"
+
+[lints]
+workspace = true
 
 [dependencies]
 clap = { version = "4.5.11", features = ["derive"] }

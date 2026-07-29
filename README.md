@@ -69,6 +69,11 @@ Options:
   -V, --version  Print version
 ```
 
+## Other packages
+
+* [`aist`](aist/README.md)
+* [`spec`](spec/README.md)
+
 ## Gratitude
 
 Like the project? [⭐ Star this repo](https://github.com/DenisGorbachev/baselang) on GitHub!

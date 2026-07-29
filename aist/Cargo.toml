@@ -5,6 +5,9 @@ edition = "2024"
 rust-version = "1.93.0"
 description = "Compiler analysis helpers for Baselang specs"
 
+[package.metadata.details]
+title = ""
+
 [dependencies]
 derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive_more = { version = "2.1.1", features = ["deref"] }
@@ -14,3 +17,6 @@ rustc-hash = { version = "2.1.2" }
 smallvec = "1.15.1"
 thiserror = "2.0.18"
 stub-macro = "0.3.0"
+
+[lints]
+workspace = true

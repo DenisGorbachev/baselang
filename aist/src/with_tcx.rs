@@ -1,4 +1,5 @@
 use rustc_errors::registry::Registry;
+use rustc_interface::{Config, create_and_enter_global_ctxt, passes::parse, run_compiler};
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config::{Input, Options};
 use rustc_span::FileName;
@@ -10,7 +11,7 @@ pub fn with_tcx<R>(code: &str, f: impl for<'tcx> FnOnce(TyCtxt<'tcx>) -> R + Sen
 where
     R: Send,
 {
-    let config = rustc_interface::Config {
+    let config = Config {
         opts: Options::default(),
         crate_cfg: Vec::new(),
         crate_check_cfg: Vec::new(),
@@ -34,9 +35,9 @@ where
         using_internal_features: &USING_INTERNAL_FEATURES,
     };
 
-    rustc_interface::run_compiler(config, |compiler| {
-        let krate = rustc_interface::passes::parse(&compiler.sess);
-        rustc_interface::create_and_enter_global_ctxt(compiler, krate, |tcx| {
+    run_compiler(config, |compiler| {
+        let krate = parse(&compiler.sess);
+        create_and_enter_global_ctxt(compiler, krate, |tcx| {
             tcx.ensure_ok().analysis(());
             f(tcx)
         })

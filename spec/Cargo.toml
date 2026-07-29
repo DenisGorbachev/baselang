@@ -5,6 +5,9 @@ edition = "2024"
 rust-version = "1.93.0"
 description = "Specification for Baselang"
 
+[package.metadata.details]
+title = ""
+
 [dependencies]
 aist = { path = "../aist" }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
@@ -15,3 +18,6 @@ tokio = { version = "1.50.0", features = ["fs", "rt"] }
 stub-macro = "0.2.1"
 facet = { version = "0.44.3", features = ["reflect"] }
 facet-pretty = "0.44.4"
+
+[lints]
+workspace = true

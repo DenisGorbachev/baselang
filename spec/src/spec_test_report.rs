@@ -4,6 +4,7 @@ use facet::Facet;
 use std::io;
 use thiserror::Error;
 use tokio::runtime::Builder as RuntimeBuilder;
+use tokio::task::yield_now;
 
 #[derive(Facet, Debug)]
 pub struct SpecTestReport {
@@ -20,7 +21,7 @@ impl SpecTestReport {
     }
 
     pub async fn new_async(ctx: &Ctx<'_>) -> Self {
-        tokio::task::yield_now().await;
+        yield_now().await;
         let struct_var = StructVar::new(ctx);
         let tests = Tests::new();
         Self {
