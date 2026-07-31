@@ -1,4 +1,3 @@
-use rustc_errors::registry::Registry;
 use rustc_interface::{Config, create_and_enter_global_ctxt, passes::parse, run_compiler};
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config::{Input, Options};
@@ -23,15 +22,13 @@ where
         output_file: None,
         ice_file: None,
         file_loader: None,
-        locale_resources: vec![],
         lint_caps: Default::default(),
         psess_created: None,
-        hash_untracked_state: None,
+        track_state: None,
         register_lints: None,
         override_queries: None,
         extra_symbols: Vec::new(),
         make_codegen_backend: None,
-        registry: Registry::new(&[]),
         using_internal_features: &USING_INTERNAL_FEATURES,
     };
 

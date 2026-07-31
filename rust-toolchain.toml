@@ -1,4 +1,4 @@
 [toolchain]
-channel = "nightly-2026-01-22" # clippy_utils depends on this specific version
+channel = "nightly-2026-07-09"
 profile = "default"
-components = ["llvm-tools-preview", "rustc-dev", "rust-src"] # components are additive with profile
+components = ["llvm-tools", "rustc-dev", "rust-src"] # components are additive with profile

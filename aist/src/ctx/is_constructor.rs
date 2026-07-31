@@ -9,7 +9,11 @@ impl<'c> Ctx<'c> {
             return false;
         }
 
-        let self_ty = self.type_of(parent_def_id).instantiate_identity();
+        // Constructor detection inspects the declared type shape, so normalization is intentionally skipped.
+        let self_ty = self
+            .type_of(parent_def_id)
+            .instantiate_identity()
+            .skip_normalization();
         let output_ty = self
             .fn_sig(function_def_id)
             .instantiate_identity()

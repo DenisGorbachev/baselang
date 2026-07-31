@@ -16,7 +16,7 @@ use rustc_interface::interface::Compiler;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::{EarlyDiagCtxt, config::ErrorOutputType};
 use spec::{ReportGenerateError, SpecTestReport};
-use std::process::{ExitCode, exit};
+use std::process::ExitCode;
 use thiserror::Error;
 
 /// This executable must only be called as a `RUSTC_WORKSPACE_WRAPPER` with `cargo fix --package baselang --lib`
@@ -36,10 +36,9 @@ pub fn run() -> Result<ExitCode, RunError> {
     // catch_with_exit_code converts rustc fatal-error unwinds into the expected compiler exit code.
     let compiler_exit_code = catch_with_exit_code(|| run_compiler(compiler_args, &mut visitor));
     // TODO: Must stream errors as soon as they are detected
-    if compiler_exit_code != 0 {
-        exit(compiler_exit_code)
-    }
-    if let Some(report_result) = visitor.0 {
+    if compiler_exit_code == ExitCode::SUCCESS
+        && let Some(report_result) = visitor.0
+    {
         let report = handle!(report_result, ReportGenerateFailed);
         println!("{report:#?}")
         // let printer = PrettyPrinter::default()
@@ -48,7 +47,7 @@ pub fn run() -> Result<ExitCode, RunError> {
         // let display = report.pretty_with(printer);
         // println!("{display}");
     }
-    Ok(ExitCode::SUCCESS)
+    Ok(compiler_exit_code)
 }
 
 #[derive(Debug, Default)]

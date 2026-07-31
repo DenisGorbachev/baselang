@@ -20,13 +20,21 @@ impl<'c> Field<'c> {
     }
 
     pub fn ty(&self) -> ty::Ty<'c> {
-        self.tcx.type_of(self.def.did).instantiate_identity()
+        // This wrapper exposes the declared field type, so normalization is intentionally left to callers.
+        self.tcx
+            .type_of(self.def.did)
+            .instantiate_identity()
+            .skip_normalization()
     }
 
     pub fn ty_with_args<A>(&self, args: A) -> ty::Ty<'c>
     where
         A: SliceLike<Item = <TyCtxt<'c> as Interner>::GenericArg>,
     {
-        self.tcx.type_of(self.def.did).instantiate(self.tcx, args)
+        // This wrapper exposes the declared field type, so normalization is intentionally left to callers.
+        self.tcx
+            .type_of(self.def.did)
+            .instantiate(self.tcx, args)
+            .skip_normalization()
     }
 }

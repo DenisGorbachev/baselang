@@ -685,13 +685,12 @@ fn find_first_top_level_arrow(input: &str) -> Result<Option<usize>, PlainParserP
                     }
                 };
             }
-            '-' if depth == 0 => {
-                if input
+            '-' if depth == 0
+                && input
                     .get(index..)
-                    .is_some_and(|suffix| suffix.starts_with("->"))
-                {
-                    return Ok(Some(index));
-                }
+                    .is_some_and(|suffix| suffix.starts_with("->")) =>
+            {
+                return Ok(Some(index));
             }
             _ => {}
         }

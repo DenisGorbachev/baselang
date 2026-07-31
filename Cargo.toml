@@ -35,7 +35,7 @@ title = "Baselang"
 readme = { }
 
 [workspace.metadata.insert-docs]
-toolchain = "nightly-2026-01-22"
+toolchain = "nightly-2026-07-09"
 
 [workspace.lints.rust]
 redundant_imports = "deny"

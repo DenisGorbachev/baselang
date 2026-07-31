@@ -15,7 +15,7 @@ cargo-binstall = "1.10.15"
 "npm:@commitlint/config-conventional" = "19.6.0"
 "npm:@commitlint/cli" = "19.6.0"
 "npm:@commitlint/types" = "19.5.0"
-"cargo:cargo-insert-docs" = "1.6.0"
+"cargo:cargo-insert-docs" = "1.9.0"
 "cargo:cargo-hack" = "0.6.33"
 "cargo:cargo-nextest" = "0.9.102"
 "cargo:cargo-expand" = "1.0.114"
@@ -32,15 +32,6 @@ postinstall = { task = "git:install-hooks" }
 
 [tasks."build"]
 run = "cargo build --workspace"
-
-[tasks."lint"]
-depends = ["lint:code", "lint:docs"]
-
-[tasks."lint:code"]
-run = "cargo clippy --workspace --all-targets --all-features -- -D warnings"
-
-[tasks."lint:docs"]
-run = "rumdl check"
 
 [tasks."test"]
 depends = ["test:code", "test:docs"]
@@ -59,6 +50,7 @@ run = [{ task = "test:code", args = ["--ignore-default-filter", "--max-fail", "1
 run = [{ task = "test:code", args = ["--ignore-default-filter", "--max-fail", "1", "slow_tests::"] }]
 
 [tasks."test:docs"]
+env = { RUSTDOCFLAGS = "-D warnings" }
 run = "cargo test --workspace --doc --all-features --no-fail-fast --quiet"
 
 # "fix" may modify the files that are read by "test", so "test" may actually test an old version. This risk is small and acceptable, because the tests are re-run in CI.
@@ -150,7 +142,7 @@ run = [{ task = "test:code", args = ["--cargo-quiet", "--hide-progress-bar", "--
 # `--test-threads` is omitted because slow tests may be run in parallel
 run = [{ task = "test:code", args = ["--cargo-quiet", "--hide-progress-bar", "--status-level", "fail", "--final-status-level", "flaky", "--ignore-default-filter", "--max-fail", "1", "slow_tests::"] }]
 
-# This override is required because `mise current rust` returns "nightly-2026-01-22", and there's no "nightly-2026-01-22-trixie" image on DockerHub
+# This override is required because `mise current rust` returns "nightly-2026-07-09", and there's no "nightly-2026-07-09-trixie" image on DockerHub
 [tasks."yolobox:build"]
 run = "~/workspace/yolobox/scripts/build.sh"
 env.YOLOBOX_RUST_VERSION = "1.93.1"

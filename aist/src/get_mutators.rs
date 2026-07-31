@@ -74,10 +74,8 @@ impl<'tcx> FieldMutationVisitor<'tcx> {
 impl<'tcx> Visitor<'tcx> for FieldMutationVisitor<'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         match expr.kind {
-            ExprKind::Assign(lhs, _, _) | ExprKind::AssignOp(_, lhs, _) => {
-                if self.is_target_field_access(lhs) {
-                    self.found = true;
-                }
+            ExprKind::Assign(lhs, _, _) | ExprKind::AssignOp(_, lhs, _) if self.is_target_field_access(lhs) => {
+                self.found = true;
             }
             _ => {}
         }
