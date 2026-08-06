@@ -42,6 +42,32 @@ text = "Hello"
 
 After reading this file, the compiler outputs "Hello" twice.
 
+## Comments
+
+Sometimes, we need to write the notes for people who would read the Baselang files. These notes should not be executed by the compiler. We can use `//` for single-line comments:
+
+```baselang
+text = "Hello"   //   `text` becomes "Hello"
+@print(text)     //   prints "Hello"
+@print(text)     //   prints "Hello"
+```
+
+We can also use paired `/*` and `*/` for multi-line comments:
+
+```baselang
+text = "Hello"
+@print(text)
+@print(text)
+/*
+ 
+  These commands print two lines:
+ 
+  Hello
+  Hello
+ 
+*/ 
+```
+
 ## Forms
 
 Every compiler command has a general form. For example:
@@ -84,42 +110,9 @@ This defines `print_hello_twice` as a code block that contains two commands. It 
 
 This will actually print "Hello" twice.
 
-## Functions
-
-What if we want to print "Hello" any number of times (not exactly two)? We can use a parameter `n` to denote the number of times to print "Hello". The parameter `n` will be a natural number (for example: 0, 1, 2, 3, ...). We can write something like this:
-
-```baselang
-print_hello(0) = ```
-\`\`\`
-print_hello(1) = ```
-@print("Hello")
-\`\`\`
-print_hello(2) = ```
-@print("Hello")
-\`\`\`
-```
-
-## Comments
-
-Sometimes, we need to write the notes for people who would read the Baselang files. These notes should not be executed by the compiler. We can use `//` for single-line comments:
-
-```baselang
-Human : Type    //   Human is a type
-Alice : Human   //   Alice is a human 
-```
-
-We can also use paired `/*` and `*/` for multi-line comments:
-
-```baselang
-Human : Type
-Alice : Human
-/*
- * Human is a type
- * Alice is a human
- */ 
-```
-
 ## Natural numbers
+
+What if we want to print "Hello" any number of times (not exactly two)? For that, we need to define a new command `@print_many`. This command must take a parameter `n` to indicate how many times to print. `n` is a natural number. Thus, to define this parameter, we need to define the natural numbers first.
 
 We start with an observation that "natural number" is a type. We'll use a shorthand `Nat` to denote natural numbers:
 
@@ -142,8 +135,43 @@ The solution comes from another observation: that every next natural number is o
 - `3` is one step ahead of `2`
 - ...
 
-That means we could define `Step` as a link from a previous natural number to the next natural number:
+So `Step` definitely exists, but what type does it have?
 
 ```baselang
-Step : (prev : Nat) -> (next : Nat)   //   Step is a link from prev Nat to next Nat 
+Step : ?    //    Step is ... (what?)
 ```
+
+Notice that `Step` is not an object - it's a process. It transforms the previous natural number into the next natural number.
+
+Let's use the symbol `->` to denote a process. Its general form will be `$source -> $target` (alternatively: `$from -> $to`, `$origin -> destination`, `$start -> $finish`).
+
+For `Step`, this will be `(prev : Nat) -> (next : Nat)`. So the whole definition would be:
+
+```baselang
+Step : (prev : Nat) -> (next : Nat)   //   Step is a process that transforms prev Nat into next Nat 
+```
+
+Then we can define `1`, `2`, `3`, ... using only `0` and `Step`:
+
+```baselang
+1 = Step(0)    //    1 becomes Step(0)
+2 = Step(1)    //    2 becomes Step(1)
+3 = Step(2)    //    3 becomes Step(2)
+```
+
+Notice that `1`, `2`, `3` are just synonyms. The only fundamentally new names are `0` and `Step`.
+
+We could continue using `0` and `Step` directly. But it's not particularly elegant since `0` looks like a number, while `Step` looks like a word. To improve on elegance, we can use the word `Zero` instead of `0`. Then the full definition becomes:
+
+```baselang
+Nat : Type                            //   Nat is a type
+Zero : Nat                            //   Zero is a Nat
+Step : (prev : Nat) -> (next : Nat)   //   Step is a process that transforms prev Nat into next Nat
+
+0 = Zero
+1 = Step(0)
+2 = Step(1)
+3 = Step(2)
+```
+
+Elegant, simple, beautiful.

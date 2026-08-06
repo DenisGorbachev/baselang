@@ -27,3 +27,20 @@ Bob: Human
 ```
 
 Notice that `Alice` and `Bob` don't have definite values. This is logically correct because they are humans, and we don't know the exact values of humans.
+
+---
+
+## Functions
+
+What if we want to print "Hello" any number of times (not exactly two)? We can use a parameter `n` to denote the number of times to print "Hello". The parameter `n` will be a natural number (for example: 0, 1, 2, 3, ...). We can write something like this:
+
+```baselang
+print_hello(0) = ```
+\`\`\`
+print_hello(1) = ```
+@print("Hello")
+\`\`\`
+print_hello(2) = ```
+@print("Hello")
+\`\`\`
+```
