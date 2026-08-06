@@ -126,7 +126,7 @@ We continue with another observation that 0 is a natural number:
 0 : Nat   //   0 is Nat
 ```
 
-We could continue with `1 : Nat`, `2: Nat`, `3 : Nat` ... - but there is infinitely many natural numbers. That means we need to find a solution to a problem: how to define infinitely many values with finitely many lines of code?
+We could continue with `1 : Nat`, `2: Nat`, `3 : Nat` ... - but there are infinitely many natural numbers. That means we need to find a solution to a problem: how to define infinitely many values with finitely many lines of code?
 
 The solution comes from another observation: that every next natural number is one step ahead of the previous natural number. For example:
 
