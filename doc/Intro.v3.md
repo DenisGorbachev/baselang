@@ -44,7 +44,7 @@ After reading this file, the compiler outputs "Hello" twice.
 
 ## Comments
 
-Sometimes, we need to write the notes for people who would read the Baselang files. These notes should not be executed by the compiler. We can use `//` for single-line comments:
+Sometimes, we need to write the notes for people who will read the Baselang files. These notes should not be executed by the compiler. We can use `//` for single-line comments:
 
 ```baselang
 text = "Hello"   //   `text` becomes "Hello"
@@ -87,7 +87,7 @@ Invalid commands are rejected by the compiler because it doesn't know how to exe
 Thus, valid commands become "truths", and valid programs become "true". Notice how elegant this definition is:
 
 - An empty program is true: it doesn't contain any contradictory statements.
-- An empty compiler (imagine a compiler without any builtin commands) accepts an empty program but rejects every other program: it doesn't trust anything we tell him.
+- An empty compiler (imagine a compiler without any builtin commands) accepts an empty program but rejects every other program: it doesn't trust anything we tell it.
 - A compiler trust surface can be extended by defining more commands.
 - A compiler trust surface can be limited by restricting the list of commands to the bare minimum (for example: allowing `*` for numbers but disallowing it for strings).
 
@@ -126,7 +126,7 @@ We continue with another observation that 0 is a natural number:
 0 : Nat   //   0 is Nat
 ```
 
-We could continue with `1 : Nat`, `2: Nat`, `3 : Nat` ... - but there are infinitely many natural numbers. That means we need to find a solution to a problem: how to define infinitely many values with finitely many lines of code?
+We could continue with `1 : Nat`, `2: Nat`, `3 : Nat`, and so on, but there are infinitely many natural numbers. How do we define infinitely many values with finitely many lines of code?
 
 The solution comes from another observation: that every next natural number is one step ahead of the previous natural number. For example:
 
@@ -135,7 +135,7 @@ The solution comes from another observation: that every next natural number is o
 - `3` is one step ahead of `2`
 - ...
 
-So `Step` definitely exists, but what type does it have?
+Therefore, `Step` exists, but what type does it have?
 
 ```baselang
 Step : ?    //    Step is ... (what?)
@@ -161,7 +161,7 @@ Then we can define `1`, `2`, `3`, ... using only `0` and `Step`:
 
 Notice that `1`, `2`, `3` are just synonyms. The only fundamentally new names are `0` and `Step`.
 
-We could continue using `0` and `Step` directly. But it's not particularly elegant since `0` looks like a number, while `Step` looks like a word. To improve on elegance, we can use the word `Zero` instead of `0`. Then the full definition becomes:
+We could continue using `0` and `Step` directly. But it's not particularly elegant since `0` looks like a number, while `Step` looks like a word. To improve the symmetry, we can use the word `Zero` instead of `0`. Then the full definition becomes:
 
 ```baselang
 Nat : Type                            //   Nat is a type
