@@ -1234,7 +1234,7 @@ mod tests {
         let mut actual = String::new();
         let displayer = ErrorDisplayer(error);
         writeln!(actual, "{displayer}").unwrap();
-        eprintln!("{}", actual);
+        eprintln!("{}", &actual);
         assert_eq!(actual, expected)
     }
 
