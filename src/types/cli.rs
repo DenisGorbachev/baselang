@@ -7,7 +7,7 @@ use thiserror::Error;
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 pub struct Cli {
-    // #[arg(short, long, value_parser = value_parser!(PathBuf))]
+    // #[arg(short, long)]
     // root: Option<PathBuf>,
     #[command(subcommand)]
     command: Command,
