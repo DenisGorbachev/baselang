@@ -1,0 +1,4 @@
+Int : Type
+Start : Int
+Pos : (n : Nat) -> (j : Int)
+Neg : (n : Nat) -> (j : Int)
