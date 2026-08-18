@@ -1774,6 +1774,21 @@ macro_rules! map_err {
     };
 }
 
+/// Converts [`None`] into an error variant without returning early.
+///
+/// [`map_none`](crate::map_none) should be used only when the error variant doesn't capture any owned variables (which is very rare), or exactly at the end of the block (in the position of returned expression).
+#[macro_export]
+macro_rules! map_none {
+    ($option:expr, $variant:ident$(,)? $($arg:ident$(: $value:expr)?),*) => {
+        match $option {
+            Some(value) => Ok(value),
+            None => Err($variant {
+                $($arg: $crate::_into!($arg$(: $value)?)),*
+            })
+        }
+    };
+}
+
 /// Internal
 #[doc(hidden)]
 #[macro_export]
@@ -1806,7 +1821,6 @@ macro_rules! _index_err_async {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-
     use crate::{ErrVec, ItemError, PathBufDisplay};
     use futures::future::join_all;
     use serde::{Deserialize, Serialize};
@@ -1857,12 +1871,12 @@ mod tests {
         }
     }
 
-    /// This function tests the [`crate::handle_opt!`] macro
+    /// This function tests the [`crate::handle_opt!`] and [`crate::map_none!`] macros.
     #[allow(dead_code)]
-    fn find_even(numbers: Vec<u32>) -> Result<u32, FindEvenError> {
-        use FindEvenError::*;
-        let even = handle_opt!(numbers.iter().find(|x| *x % 2 == 0), NotFound);
-        Ok(*even)
+    fn first_word(lines: &[String]) -> Result<&str, FirstWordError> {
+        use FirstWordError::*;
+        let line = handle_opt!(lines.first(), LineNotFound);
+        map_none!(line.split_whitespace().next(), WordNotFound)
     }
 
     /// This function tests the [`crate::handle_iter!`] macro
@@ -1967,9 +1981,11 @@ mod tests {
     }
 
     #[derive(Error, Debug)]
-    enum FindEvenError {
-        #[error("even number not found")]
-        NotFound,
+    enum FirstWordError {
+        #[error("line not found")]
+        LineNotFound {},
+        #[error("word not found")]
+        WordNotFound {},
     }
 
     #[derive(Error, Debug)]
