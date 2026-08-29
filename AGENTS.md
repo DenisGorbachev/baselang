@@ -498,6 +498,39 @@ Notes:
 
 - Should match the thread topic
 
+#### Chat thread id heading
+
+A Markdown heading level 3 that contains only [chat thread id](#chat-thread-id).
+
+Examples:
+
+- `### RVC`
+- `### AKE`
+- `### LMY`
+
+#### findings.md
+
+- If it exists:
+  - Must contain a non-empty list of [findings](#finding)
+
+#### Finding
+
+- Must be formatted as `### {ctid}\n\n[{priority}] {title}. {body} ({references}). Proposed fixes: {fixes}`
+  - `ctid` must be a [chat thread id](#chat-thread-id)
+  - `priority` must be one of `P0`, `P1`, `P2`, `P3`.
+  - `references` must be a comma-separated list of `reference`
+  - `reference` must must be formatted as `{path}:{line}`
+  - `path` must be a file path relative to your working directory
+  - `line` must be the first line of the relevant code or text block
+  - `fixes` must be one of the following:
+    - If there is at least one proposed fix:
+      - Then: "\n\n" and a Markdown nested list of fixes where each fix must have a format `{number}. {description}` (the numbers should start from 1 for each list of fixes)
+      - Else: the exact text "none."
+
+#### Publishable package
+
+A package that has a remote whose name contains `public` or `pre-public` and ends with `template`.
+
 ### Guidelines for `clap`
 
 #### Requirements
@@ -551,6 +584,8 @@ fn verify_cli() {
 ##### File `src/command.rs`
 
 - Must define a [command-like struct](#command-like-struct) named `Command`
+  - Must have attributes:
+    - `#[command(author, version, about, propagate_version = true, flatten_help = true, disable_help_subcommand = true)]`
 - Must define a [subcommand-like enum](#subcommand-like-enum) named `Subcommand`
 
 Example:
@@ -562,7 +597,7 @@ use errgonomic::map_err;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
-#[command(author, version, about, propagate_version = true)]
+#[command(author, version, about, propagate_version = true, flatten_help = true, disable_help_subcommand = true)]
 pub struct Command {
     #[command(subcommand)]
     subcommand: Subcommand,
@@ -603,7 +638,13 @@ pub use print_command::*;
 A struct that contains fields for CLI arguments.
 
 - Must have a name that is a concatenation of all command names leading up to and including this command name, and ends with `Command` (see example above)
-- Must derive `clap::Parser`
+- Must have at least the following attributes:
+  - `derive`
+    - Must contain at least:
+      - `Parser` (`use clap::Parser`)
+  - `command`
+    - Must contain at least:
+      - `flatten_help = true`
 - Must be attached to a parent module: if it's a top-level command: `src/lib.rs`, else: `src/command.rs`
 - For each field:
   - If the field has a collection type (e.g. `Vec`), then it must have attribute `num_args = 1..`
@@ -623,7 +664,10 @@ Command example:
 An enum that contains variants for CLI subcommands.
 
 - Must have a name that is a concatenation of all command names leading up to and including this command name, and ends with `Subcommand` (see example above)
-- Must derive `clap::Subcommand`
+- Must have at least the following attributes:
+  - `derive`
+    - Must contain at least:
+      - `Subcommand` (`use clap::Subcommand`)
 - Must be located in the same file as its parent command struct
 - Each variant must be a tuple variant containing exactly one command
 
@@ -1000,10 +1044,7 @@ pub fn get_root_source(error: &dyn Error) -> &dyn Error {
 ````rust
 use alloc::vec::Vec;
 
-/// Collects `Ok` values unless at least one `Err` is encountered.
-///
-/// This is optimized for `handle_iter!`: once an error appears, previously
-/// collected `Ok` values are dropped and further `Ok` values are ignored.
+/// PRUNING: drops collected `Ok` values and ignores later `Ok` values after the first `Err`, because `handle_iter!` only returns errors when any item fails.
 #[doc(hidden)]
 pub fn partition_result<T, E>(results: impl IntoIterator<Item = Result<T, E>>) -> Result<Vec<T>, Vec<E>> {
     let iter = results.into_iter();
@@ -1032,10 +1073,13 @@ pub fn partition_result<T, E>(results: impl IntoIterator<Item = Result<T, E>>) -
 #### File: src/functions/render_command.rs
 
 ````rust
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::iter::once;
 use std::process::Command;
 
 pub fn render_command(command: &Command) -> String {
-    let parts = core::iter::once(command.get_program().to_string_lossy())
+    let parts = once(command.get_program().to_string_lossy())
         .chain(command.get_args().map(|arg| arg.to_string_lossy()))
         .collect::<Vec<_>>();
     let result = shlex::try_join(parts.iter().map(|x| x.as_ref()));
@@ -1088,12 +1132,13 @@ pub enum WriteToNamedTempFileError {
 use crate::{ErrorDisplayer, WriteToNamedTempFileError, map_err, write_to_named_temp_file};
 use alloc::format;
 use core::error::Error;
-use core::fmt::Formatter;
+use core::fmt::{self, Formatter};
+use std::eprintln;
 use std::io;
 use std::io::{Write, stderr};
 
 /// Writes a human-readable error trace to the provided formatter.
-pub fn writeln_error_to_formatter<E: Error + ?Sized>(error: &E, f: &mut Formatter<'_>) -> core::fmt::Result {
+pub fn writeln_error_to_formatter<E: Error + ?Sized>(error: &E, f: &mut Formatter<'_>) -> fmt::Result {
     use std::fmt::Write;
     write!(f, "- {error}")?;
     if let Some(source_new) = error.source() {
@@ -1178,6 +1223,7 @@ mod tests {
     use std::eprintln;
     use std::error::Error;
     use thiserror::Error;
+    use tokio::io::{Error as TokioIoError, ErrorKind as TokioIoErrorKind};
 
     #[test]
     fn must_write_error() {
@@ -1195,7 +1241,7 @@ mod tests {
                         },
                         I18nRequestFailed {
                             source: RequestSendFailed {
-                                source: tokio::io::Error::new(tokio::io::ErrorKind::AddrNotAvailable, "server at 239.143.73.1 did not respond"),
+                                source: TokioIoError::new(TokioIoErrorKind::AddrNotAvailable, "server at 239.143.73.1 did not respond"),
                             },
                             row: Row::new("Bar"),
                         },
@@ -1238,7 +1284,7 @@ mod tests {
         let mut actual = String::new();
         let displayer = ErrorDisplayer(error);
         writeln!(actual, "{displayer}").unwrap();
-        eprintln!("{}", &actual);
+        eprintln!("{actual}");
         assert_eq!(actual, expected)
     }
 
@@ -1271,7 +1317,7 @@ mod tests {
         #[error("failed to construct a JSON schema")]
         JsonSchemaNewFailed { source: JsonSchemaNewError },
         #[error("failed to send a request")]
-        RequestSendFailed { source: tokio::io::Error },
+        RequestSendFailed { source: TokioIoError },
     }
 
     #[derive(Error, Debug)]
@@ -1306,7 +1352,7 @@ mod tests {
 #### File: src/types/debug_as_display.rs
 
 ````rust
-use core::fmt::{Debug, Display, Formatter};
+use core::fmt::{self, Debug, Display, Formatter};
 
 /// A wrapper that renders `Debug` using the inner type's `Display` implementation.
 /// This wrapper is needed for types that have an easy-to-understand `Display` impl but hard-to-understand `Debug` impl.
@@ -1317,13 +1363,13 @@ pub struct DebugAsDisplay<T: Display>(
 );
 
 impl<T: Display> Debug for DebugAsDisplay<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.0, f)
     }
 }
 
 impl<T: Display> Display for DebugAsDisplay<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.0, f)
     }
 }
@@ -1338,7 +1384,7 @@ impl<T: Display> From<T> for DebugAsDisplay<T> {
 #### File: src/types/display_as_debug.rs
 
 ````rust
-use core::fmt::{Debug, Display, Formatter};
+use core::fmt::{self, Debug, Display, Formatter};
 
 /// A wrapper that renders `Display` using the inner type's `Debug` implementation.
 #[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone, Debug)]
@@ -1348,7 +1394,7 @@ pub struct DisplayAsDebug<T: Debug>(
 );
 
 impl<T: Debug> Display for DisplayAsDebug<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Debug::fmt(&self.0, f)
     }
 }
@@ -1367,8 +1413,7 @@ use crate::ErrorDisplayer;
 use alloc::format;
 use alloc::vec::Vec;
 use core::error::Error;
-use core::fmt::{Debug, Write};
-use core::fmt::{Display, Formatter};
+use core::fmt::{self, Debug, Display, Formatter, Write};
 use core::ops::{Deref, DerefMut};
 
 /// An owned collection of errors
@@ -1382,7 +1427,7 @@ impl<E: Error> ErrVec<E> {
 }
 
 impl<E: Error> Display for ErrVec<E> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "encountered {len} errors", len = self.len())?;
         self.0.iter().try_for_each(|error| {
             f.write_char('\n')?;
@@ -1444,13 +1489,13 @@ impl<E: Error + Clone> From<&[E]> for ErrVec<E> {
 
 ````rust
 use crate::writeln_error_to_formatter;
-use core::fmt::{Display, Formatter};
+use core::fmt::{self, Display, Formatter};
 use std::error::Error;
 
 pub struct ErrorDisplayer<'a, E: ?Sized>(pub &'a E);
 
-impl<'a, E: Error + ?Sized> Display for ErrorDisplayer<'a, E> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+impl<E: Error + ?Sized> Display for ErrorDisplayer<'_, E> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln_error_to_formatter(self.0, f)
     }
 }
@@ -1604,7 +1649,8 @@ cfg_if::cfg_if! {
 #![doc = "```"]
 //!
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(test), deny(unused_crate_dependencies))]
+#![no_std]
 
 extern crate alloc;
 extern crate core;
@@ -1898,7 +1944,12 @@ mod tests {
         let results = numbers.into_iter().map(|number| {
             use CheckEvenError::*;
             if number % 2 == 0 {
-                Ok(number * 10)
+                match number.checked_mul(10) {
+                    Some(product) => Ok(product),
+                    None => Err(NumberOverflowed {
+                        number,
+                    }),
+                }
             } else {
                 Err(NumberNotEven {
                     number,
@@ -2022,6 +2073,8 @@ mod tests {
     enum CheckEvenError {
         #[error("number is not even: {number}")]
         NumberNotEven { number: u32 },
+        #[error("number overflowed: {number}")]
+        NumberOverflowed { number: u32 },
     }
 
     async fn check_file(path: PathBuf) -> Result<String, CheckFileError> {
@@ -2191,9 +2244,202 @@ cfg_if::cfg_if! {
 
 ```shell
 origin
+repoconf-rust-pre-public-lib-template
 ```
 
 ### Project files
+
+#### mise.toml
+
+```toml
+min_version = "2026.7.13"
+
+[settings]
+idiomatic_version_file_enable_tools = ["rust"]
+task.output = "keep-order"
+
+[tools]
+node = "24.15.0"
+deno = "1.46.1"
+fnox = "1.33.1"
+cargo-binstall = "1.10.15"
+"npm:@commitlint/config-conventional" = "19.6.0"
+"npm:@commitlint/cli" = "19.6.0"
+"npm:@commitlint/types" = "19.5.0"
+"cargo:cargo-insert-docs" = "1.9.0"
+"cargo:cargo-hack" = "0.6.33"
+"cargo:cargo-nextest" = "0.9.102"
+"cargo:cargo-expand" = "1.0.114"
+"cargo:taplo-cli" = "0.10.0"
+"cargo:rumdl" = "0.1.0"
+"cargo:sd" = "1.0.0"
+
+[env]
+RUSTC_BOOTSTRAP = "spec"
+
+[hooks]
+postinstall = { task = "git:install-hooks" }
+
+[tasks."build"]
+run = "cargo build --workspace"
+
+[tasks."check"]
+depends = ["cargo:validate-config"]
+run = [{ tasks = ["lint", "test"] }]
+
+[tasks."test"]
+depends = ["test:code", "test:docs"]
+
+[tasks."lint"]
+depends = ["lint:name", "lint:configs", "lint:code", "lint:code:style", "lint:docs", "lint:reports"]
+
+[tasks."lint:name"]
+run = [{ task = "fix:name", args = ["--check"] }]
+
+[tasks."lint:configs"]
+depends = ["lint:configs:cargo", "lint:configs:fnox"]
+
+[tasks."lint:configs:cargo"]
+run = [{ task = "fix:cargo", args = ["--check"] }]
+
+[tasks."lint:configs:fnox"]
+run = [{ task = "fix:fnox" }]
+
+[tasks."lint:code"]
+run = "cargo clippy --locked --workspace --all-targets --all-features -- -D warnings"
+
+[tasks."lint:code:style"]
+run = "cargo fmt --all -- --check"
+
+[tasks."lint:docs"]
+run = "rumdl check"
+
+[tasks."test:code"]
+run = "fnox --profile test exec --replace -- cargo nextest run --locked --workspace --all-features --no-tests warn"
+
+[tasks."test:code:integration"]
+# see also: "agent:test:code:integration"
+# `--test-threads 1` because integration tests must be run sequentially
+run = [{ task = "test:code", args = ["--ignore-default-filter", "--max-fail", "1", "--test-threads", "1", "integration_tests::"] }]
+
+[tasks."test:code:slow"]
+# see also: "agent:test:code:slow"
+# `--test-threads` is omitted because slow tests may be run in parallel
+run = [{ task = "test:code", args = ["--ignore-default-filter", "--max-fail", "1", "slow_tests::"] }]
+
+[tasks."test:docs"]
+env = { RUSTDOCFLAGS = "-D warnings" }
+run = "cargo test --locked --workspace --doc --all-features --no-fail-fast --quiet"
+
+[tasks."pre-commit"]
+alias = "pre-merge-commit"
+run = [{ task = "git:validate-commit" }]
+
+# Compatibility for existing clones whose generated post-commit hook still invokes this task. The installer removes that hook during this one-time migration.
+[tasks."post-commit"]
+hide = true
+run = [{ task = "git:install-hooks" }]
+
+[tasks."commit-msg"]
+run = 'mise run --output interleave commitlint -- --edit "$@"'
+
+[tasks."fix"]
+depends = ["fix:code", "fix:aux"]
+
+[tasks."fix:aux"]
+depends = ["fix:configs", "fix:docs", "fix:agents", "fix:readme"]
+
+[tasks."fix:configs"]
+depends = ["fix:cargo", "fix:fnox"]
+
+[tasks."fix:code"]
+depends = ["fix:name", "fix:code:style"]
+
+[tasks."fix:code:warnings"]
+depends = ["fix:cargo"]
+# second pass is needed because "cargo clippy --fix" exits with 0 even if some warnings remain
+env = { __CARGO_FIX_YOLO = 'yeah' }
+run = [
+    "cargo clippy --workspace --all-targets --all-features --fix --allow-dirty --allow-staged",
+    { task = "lint:code" },
+]
+
+[tasks."fix:code:style"]
+# Run after `fix:code:warnings` because both tasks modify the same code files.
+depends = ["fix:code:warnings"]
+run = "cargo fmt --all"
+
+[tasks."fix:docs"]
+depends = ["fix:agents", "fix:readme"]
+# use `rumdl check --fix` instead of `rumdl fmt` because `rumdl check --fix` exits with 1 if errors remain (since v0.1.0)
+run = "rumdl check --fix"
+
+[tasks."fix:agents"]
+# "fix:agents" depends on "fix:code" because it reads the code files
+depends = ["fix:name", "fix:configs", "fix:code"]
+run = [{ task = "gen:agents" }]
+
+[tasks."gen:readme"]
+run = "./README.ts"
+
+[tasks."gen:agents"]
+run = "./AGENTS.ts"
+
+[tasks."commitlint"]
+run = "commitlint --extends \"$(mise where npm:@commitlint/config-conventional)/node_modules/@commitlint/config-conventional/lib/index.js\""
+
+[tasks."agent:docs:list"]
+run = "[ -d .agents/docs ] && find .agents/docs -type f -print || true"
+output = "interleave"
+quiet = true
+
+[tasks."agent:on:stop"]
+depends = ["cargo:validate-config"]
+run = [{ task = "fix" }, { task = "agent:test" }]
+
+[tasks."agent:test"]
+depends = ["agent:test:code", "agent:test:code:integration", "agent:test:code:slow", "test:docs"]
+
+[tasks."agent:test:code"]
+# don't include `--fail-fast` because it's better to let the agent see all failures
+# reduce output to save tokens
+run = [{ task = "test:code", args = ["--cargo-quiet", "--hide-progress-bar", "--status-level", "fail", "--final-status-level", "flaky"] }]
+
+[tasks."agent:test:code:integration"]
+# see also: "test:code:integration"
+# `--test-threads 1` because integration tests must be run sequentially
+run = [{ task = "test:code", args = ["--cargo-quiet", "--hide-progress-bar", "--status-level", "fail", "--final-status-level", "flaky", "--ignore-default-filter", "--max-fail", "1", "--test-threads", "1", "integration_tests::"] }]
+
+[tasks."agent:test:code:slow"]
+# see also: "test:code:slow"
+# `--test-threads` is omitted because slow tests may be run in parallel
+run = [{ task = "test:code", args = ["--cargo-quiet", "--hide-progress-bar", "--status-level", "fail", "--final-status-level", "flaky", "--ignore-default-filter", "--max-fail", "1", "slow_tests::"] }]
+
+# This override is required because `mise current rust` returns "nightly-2026-07-09", and there's no "nightly-2026-07-09-trixie" image on DockerHub
+[tasks."yolobox:build"]
+run = "~/workspace/yolobox/scripts/build.sh"
+env.YOLOBOX_RUST_VERSION = "1.93.1"
+raw = true
+quiet = true
+dir = "{{cwd}}"
+```
+
+#### fnox.toml
+
+```toml
+#:schema https://fnox.jdx.dev/schema.json
+
+if_missing = "error"
+env = "exec"
+
+[providers]
+keychain = { type = "keychain", service = "baselang" }
+pass = { type = "password-store", prefix = "baselang/" }
+age = { type = "age", recipients = [
+    "age1sf4r4amev2svqr6llwg8hgtz9n7p5qdh7hh0mavcshzfrmgfduksnq3hql",
+    "age1605gsnxpe536sprwccyumq74veg0g80u55n8ggems0t8deau6qdsfnq3m3"
+] }
+```
 
 #### aist/Cargo.toml
 
@@ -2338,18 +2584,6 @@ facet-pretty = "0.44.4"
 
 [lints]
 workspace = true
-```
-
-#### fnox.toml
-
-```toml
-#:schema https://fnox.jdx.dev/schema.json
-
-if_missing = "error"
-
-[providers]
-keychain = { type = "keychain", service = "baselang" }
-pass = { type = "password-store", prefix = "baselang/" }
 ```
 
 #### aist/src/lib.rs
