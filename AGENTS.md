@@ -95,6 +95,11 @@ Write code that minimizes losses:
 
 - When spawning a code review subagent: use fresh context (not inherited).
 
+#### Skills
+
+- When editing or reviewing files that contain shell code, use and follow the `shell-scripts` skill.
+- When choosing between identically named skills, prefer the repository-local copy.
+
 #### Messages from agent to user
 
 - Use `~` in paths.
@@ -452,17 +457,7 @@ A function marked with `#[test]` or `#[tokio::test]`.
 
 #### Shell
 
-- Don't use hard wraps to enforce max line length (I'll use soft wraps in my editor)
-- If a command is an argument of a tool call:
-  - Then:
-    - Prefer short options
-  - Else:
-    - If it's a common command (one of: set, cd, cp, mv, rm, mkdir, ls, ln, chmod, chown):
-      - Then:
-        - Prefer short options
-      - Else
-        - Prefer long options
-    - Prefer `echo` instead of `printf`
+- Prefer short options for commands used in tool calls.
 
 #### Cargo.toml
 
@@ -845,6 +840,8 @@ fnox = "1.33.1"
 "cargo:cargo-expand" = "1.0.114"
 "cargo:taplo-cli" = "0.10.0"
 "cargo:sd" = "1.0.0"
+fd = "10.4.2"
+shellcheck = "0.11.0"
 
 [env]
 RUSTC_BOOTSTRAP = "spec"
@@ -863,7 +860,7 @@ run = [{ tasks = ["lint", "test"] }]
 depends = ["test:code", "test:docs"]
 
 [tasks."lint"]
-depends = ["lint:name", "lint:configs", "lint:code", "lint:code:style", "lint:docs", "lint:reports"]
+depends = ["lint:name", "lint:configs", "lint:code", "lint:code:style", "lint:shell", "lint:docs", "lint:reports"]
 
 [tasks."lint:name"]
 run = [{ task = "fix:name", args = ["--check"] }]
@@ -882,6 +879,20 @@ run = "cargo clippy --locked --workspace --all-targets --all-features -- -D warn
 
 [tasks."lint:code:style"]
 run = "cargo fmt --all -- --check"
+
+[tasks."lint:shell"]
+run = """
+fd --type f --extension sh --extension bash --extension zsh . . .mise/tasks .agents/skills .repoconf/hooks --exec-batch shellcheck --shell bash
+for file in ./*; do
+  case "$file" in
+    *.sh)
+      if [ -f "$file" ]; then
+        shellcheck --shell bash "$file"
+      fi
+      ;;
+  esac
+done
+"""
 
 [tasks."lint:docs"]
 run = "rumdl check"
@@ -906,11 +917,6 @@ run = "cargo test --locked --workspace --doc --all-features --no-fail-fast --qui
 [tasks."pre-commit"]
 alias = "pre-merge-commit"
 run = [{ task = "git:validate-commit" }]
-
-# Compatibility for existing clones whose generated post-commit hook still invokes this task. The installer removes that hook during this one-time migration.
-[tasks."post-commit"]
-hide = true
-run = [{ task = "git:install-hooks" }]
 
 [tasks."commit-msg"]
 run = 'mise run --output interleave commitlint -- --edit "$@"'
@@ -966,7 +972,7 @@ output = "interleave"
 quiet = true
 
 [tasks."agent:on:stop"]
-depends = ["cargo:validate-config"]
+depends = ["cargo:validate-config", "lint:shell"]
 run = [{ task = "fix" }, { task = "agent:test" }]
 
 [tasks."agent:test"]
