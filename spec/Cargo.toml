@@ -8,6 +8,7 @@ description = "Specification for Baselang"
 
 [package.metadata.details]
 title = ""
+readme.generate = false
 
 [dependencies]
 aist = { path = "../aist" }

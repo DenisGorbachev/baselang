@@ -36,9 +36,6 @@ name = "baselang"
 title = "Baselang"
 readme = { }
 
-[workspace.metadata.insert-docs]
-toolchain = "nightly-2026-07-09"
-
 [workspace.lints.rust]
 redundant_imports = "deny"
 unused_import_braces = "deny"

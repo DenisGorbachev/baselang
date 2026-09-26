@@ -2271,7 +2271,7 @@ fd = "10.4.2"
 "npm:@commitlint/cli" = "19.6.0"
 "npm:@commitlint/types" = "19.5.0"
 "npm:skills" = "1.5.24"
-"cargo:cargo-insert-docs" = "1.9.0"
+"cargo:https://github.com/DenisGorbachev/cargo-insert-docs" = { version = "rev:9bccf15cc367a50d2652b0eaf5da7faf5929c666", crate = "cargo-insert-docs", locked = true }
 "cargo:cargo-hack" = "0.6.33"
 "cargo:cargo-nextest" = "0.9.145"
 "cargo:cargo-expand" = "1.0.114"
@@ -2419,15 +2419,7 @@ run = [{ task = "test:code", args = ["--cargo-quiet", "--show-progress", "none",
 [tasks."agent:test:code:slow"]
 # see also: "test:code:slow"
 # `--test-threads` is omitted because slow tests may be run in parallel
-run = [{ task = "test:code", args = ["--cargo-quiet", "--hide-progress-bar", "--status-level", "fail", "--final-status-level", "flaky", "--ignore-default-filter", "--max-fail", "1", "slow_tests::"] }]
-
-# This override is required because `mise current rust` returns "nightly-2026-07-09", and there's no "nightly-2026-07-09-trixie" image on DockerHub
-[tasks."yolobox:build"]
-run = "~/workspace/yolobox/scripts/build.sh"
-env.YOLOBOX_RUST_VERSION = "1.93.1"
-raw = true
-quiet = true
-dir = "{{cwd}}"
+run = [{ task = "test:code", args = ["--cargo-quiet", "--show-progress", "none", "--no-input-handler", "--status-level", "fail", "--final-status-level", "flaky", "--ignore-default-filter", "--max-fail", "1", "slow_tests::"] }]
 ```
 
 ### fnox.toml
@@ -2459,6 +2451,7 @@ description = "Compiler analysis helpers for Baselang specs"
 
 [package.metadata.details]
 title = ""
+readme.generate = false
 
 [dependencies]
 derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
@@ -2514,9 +2507,6 @@ exclude = [
 name = "baselang"
 title = "Baselang"
 readme = { }
-
-[workspace.metadata.insert-docs]
-toolchain = "nightly-2026-07-09"
 
 [workspace.lints.rust]
 redundant_imports = "deny"
@@ -2577,6 +2567,7 @@ description = "Specification for Baselang"
 
 [package.metadata.details]
 title = ""
+readme.generate = false
 
 [dependencies]
 aist = { path = "../aist" }
