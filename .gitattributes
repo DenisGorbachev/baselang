@@ -24,4 +24,5 @@ Cargo.lock merge=ours
 # Note that `diff.external` setting does not respect internal diff drivers
 README.md diff=hidden
 AGENTS.md diff=hidden
+samples/AGENTS.md diff
 Cargo.lock diff=hidden
