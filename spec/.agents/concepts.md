@@ -46,7 +46,7 @@ A program that runs the spec binary.
   - Must set flags:
     - `--manifest-path` to the manifest of the target crate
 
-### File `src/main.rs`
+### File `../../src/main.rs`
 
 - Must contain [fn main](#fn-main)
 - Must contain a `struct Visitor`
