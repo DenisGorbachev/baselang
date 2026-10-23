@@ -21,13 +21,13 @@ pub type BoolsTuple = (SymRc, SymRc, SymRc);
 impl Bools {
     pub fn new() -> Self {
         // Bool : Top
-        let bool = Sym::new_rc("bool", Typ::top(), None);
+        let bool = Sym::new_rc("bool", Typ::top());
 
         // Yes : Bool
-        let yes = Sym::new_rc("true", Typ::one(Exp::sol(&bool)), None);
+        let yes = Sym::new_rc("true", Typ::one(Exp::sol(&bool)));
 
         // No : Bool
-        let no = Sym::new_rc("false", Typ::one(Exp::sol(&bool)), None);
+        let no = Sym::new_rc("false", Typ::one(Exp::sol(&bool)));
 
         Self {
             bool,

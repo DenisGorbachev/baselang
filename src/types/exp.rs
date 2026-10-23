@@ -1,4 +1,4 @@
-use crate::{AlphaEq, Def, DefRc, InvalidApplicationError, Of, Sym, TypBox, alpha_eq_exp};
+use crate::{AlphaEq, Binding, Def, DefRc, InvalidApplicationError, Of, Sym, TypBox, alpha_eq_exp};
 use crate::{SymRc, Typ};
 use Exp::*;
 use Typ::*;
@@ -22,6 +22,16 @@ pub type ExpRc = Rc<Exp>;
 pub type ExpBox = Box<Exp>;
 
 impl Exp {
+    pub fn head(&self) -> &SymRc {
+        let mut exp = self;
+        loop {
+            match exp {
+                Sol(sym) => return sym,
+                App(fun, _, _) => exp = fun,
+            }
+        }
+    }
+
     /// This function accepts `sym: &SymRc` to avoid `sym.clone()` in the caller (which simplifies its code)
     /// If you want to create an [`Exp`] that takes ownership of the [`SymRc`], use [`Sol`] directly
     #[inline(always)]
@@ -157,6 +167,16 @@ impl<N> From<&DefRc<N>> for Exp {
 impl From<&Exp> for Exp {
     fn from(exp: &Exp) -> Self {
         exp.clone()
+    }
+}
+
+impl From<&Binding> for Exp {
+    fn from(binding: &Binding) -> Self {
+        use Binding::*;
+        match binding {
+            Sym(sym) => sym.into(),
+            Def(def) => def.into(),
+        }
     }
 }
 

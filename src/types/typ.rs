@@ -39,7 +39,18 @@ impl Typ {
 
     /// Returns output type of the function (or self if it's not a function)
     pub fn last(&self) -> &Self {
-        if let Fun(_, typ) = self { typ.as_ref() } else { self }
+        let mut typ = self;
+        while let Fun(_, output) = typ {
+            typ = output;
+        }
+        typ
+    }
+
+    pub fn head(&self) -> Option<&SymRc> {
+        match self {
+            One(exp) => Some(exp.head()),
+            Top | Fun(_, _) => None,
+        }
     }
 
     pub fn substitute(&self, sym: &SymRc, arg: &Exp) -> Self {

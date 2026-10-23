@@ -1,8 +1,9 @@
 use crate::{Adt, IntoSymbol};
 use derive_getters::Getters;
 use derive_more::Deref;
-use errgonomic::{handle, handle_bool};
+use errgonomic::{handle_bool, handle_opt};
 use rustc_hash::FxHashMap;
+use rustc_hir::def::DefKind;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::Symbol;
 use rustc_span::def_id::LocalDefId;
@@ -41,12 +42,19 @@ impl<'c> Ctx<'c> {
             .map(|local_def_id| Adt::new(self.tcx.adt_def(local_def_id), self.tcx))
     }
 
-    pub fn adt_struct(&self, name: impl IntoSymbol) -> Result<Adt<'c>, StructDefError> {
-        use StructDefError::*;
+    pub fn adt_struct(&self, name: impl IntoSymbol) -> Result<Adt<'c>, CtxAdtStructError> {
+        use CtxAdtStructError::*;
         let symbol = name.into_symbol();
-        let adt = handle!(self.adt(symbol), GetLocalDefIdFailed);
-        handle_bool!(!adt.is_struct(), NotStruct, symbol);
-        Ok(adt)
+        let mut ids = self
+            .map
+            .get(&symbol)
+            .into_iter()
+            .flatten()
+            .copied()
+            .filter(|id| self.tcx.def_kind(*id) == DefKind::Struct);
+        let id = handle_opt!(ids.next(), StructNotFound, symbol);
+        handle_bool!(ids.next().is_some(), StructInvalid, symbol);
+        Ok(Adt::new(self.tcx.adt_def(id), self.tcx))
     }
 
     pub fn tests_def_ids(&self) -> impl Iterator<Item = LocalDefId> {
@@ -93,12 +101,12 @@ pub enum GetLocalDefIdError {
     NotUnique { symbol: Symbol },
 }
 
-#[derive(Error, Debug)]
-pub enum StructDefError {
-    #[error("failed to get a unique LocalDefId")]
-    GetLocalDefIdFailed { source: GetLocalDefIdError },
-    #[error("item '{symbol}' is not a struct")]
-    NotStruct { symbol: Symbol },
+#[derive(Error, Copy, Clone, Debug)]
+pub enum CtxAdtStructError {
+    #[error("struct not found by symbol '{symbol}'")]
+    StructNotFound { symbol: Symbol },
+    #[error("multiple structs found by symbol '{symbol}'")]
+    StructInvalid { symbol: Symbol },
 }
 
 mod is_constructor;

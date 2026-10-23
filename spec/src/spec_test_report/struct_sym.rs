@@ -1,11 +1,11 @@
-use aist::{Ctx, GetLocalDefIdError, StructDefError};
+use aist::{Ctx, CtxAdtStructError};
 use errgonomic::handle;
 use facet::Facet;
 use thiserror::Error;
 
 #[derive(Facet, Debug)]
 pub struct StructSym {
-    pub fields: StructSymFields,
+    pub fields: Result<StructSymFields, StructSymFieldsNewError>,
     pub methods: StructSymMethods,
 }
 
@@ -32,51 +32,24 @@ pub enum StructSymNewError {
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
 pub enum StructSymAdtStructError {
-    #[error("failed to get a unique `Sym` item")]
-    GetLocalDefIdFailed { source: StructSymGetLocalDefIdError },
-    #[error("item '{symbol}' is not a struct")]
-    NotStruct { symbol: String },
+    #[error("struct not found by symbol '{symbol}'")]
+    StructNotFound { symbol: String },
+    #[error("multiple structs found by symbol '{symbol}'")]
+    StructInvalid { symbol: String },
 }
 
-#[derive(Error, Facet, Debug)]
-#[repr(u8)]
-pub enum StructSymGetLocalDefIdError {
-    #[error("item not found by symbol '{symbol}'")]
-    NotFound { symbol: String },
-    #[error("item not unique by symbol '{symbol}'")]
-    NotUnique { symbol: String },
-}
-
-impl From<StructDefError> for StructSymAdtStructError {
-    fn from(value: StructDefError) -> Self {
-        use StructDefError::*;
+impl From<CtxAdtStructError> for StructSymAdtStructError {
+    fn from(value: CtxAdtStructError) -> Self {
+        use CtxAdtStructError::*;
         match value {
-            GetLocalDefIdFailed {
-                source,
-            } => Self::GetLocalDefIdFailed {
-                source: source.into(),
-            },
-            NotStruct {
+            StructNotFound {
                 symbol,
-            } => Self::NotStruct {
+            } => Self::StructNotFound {
                 symbol: symbol.to_string(),
             },
-        }
-    }
-}
-
-impl From<GetLocalDefIdError> for StructSymGetLocalDefIdError {
-    fn from(value: GetLocalDefIdError) -> Self {
-        use GetLocalDefIdError::*;
-        match value {
-            NotFound {
+            StructInvalid {
                 symbol,
-            } => Self::NotFound {
-                symbol: symbol.to_string(),
-            },
-            NotUnique {
-                symbol,
-            } => Self::NotUnique {
+            } => Self::StructInvalid {
                 symbol: symbol.to_string(),
             },
         }

@@ -69,13 +69,6 @@ pub fn definitions_are_content_addressable() -> bool {
     true
 }
 
-pub fn sym_struct_must_have_field_constructors_of_option_vec() -> Option<bool> {
-    match (must_support_types_with_empty_set_of_constructors(), must_not_require_constructors_of_constructors(), every_type_must_be_static()) {
-        (true, true, Some(true)) => Some(true),
-        _ => None,
-    }
-}
-
 /// Must support a logical `False` that has a fixed empty set of constructors
 pub fn must_support_types_with_empty_set_of_constructors() -> bool {
     true

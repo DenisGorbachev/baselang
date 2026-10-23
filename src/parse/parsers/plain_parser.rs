@@ -1,4 +1,4 @@
-use crate::{Exp, InvalidApplicationError, Parse, Sym, SymRc, Typ};
+use crate::{Exp, InvalidApplicationError, Parse, Scope, ScopeNewSymError, Sym, SymRc, Typ};
 use core::iter::from_fn;
 use derive_new::new;
 use errgonomic::handle;
@@ -26,7 +26,7 @@ impl Parse for PlainParser {
     type Error = PlainParserParseError;
 
     fn parse(&mut self, input: &str) -> impl Iterator<Item = Result<SymRc, Self::Error>> {
-        let mut scope = Vec::new();
+        let mut scope = Scope::default();
         let mut failed = false;
         let top = self.top.clone();
         let single_line_comment = self.single_line_comment.clone();
@@ -65,11 +65,8 @@ impl Parse for PlainParser {
                             Some(line) => line,
                             None => continue,
                         };
-                        let result = match parse_line(line, &scope, top.as_ref().as_ref()) {
-                            Ok(sym) => {
-                                scope.push(sym.clone());
-                                Ok(sym)
-                            }
+                        let result = match parse_line(line, &mut scope, top.as_ref().as_ref()) {
+                            Ok(sym) => Ok(sym),
                             Err(source) => {
                                 failed = true;
                                 Err(PlainParserParseError::ParseLineFailed {
@@ -213,7 +210,7 @@ fn strip_prefix_checked<'a>(input: &'a str, prefix: &str) -> Result<&'a str, Pla
     }
 }
 
-fn parse_line(line: &str, scope: &[SymRc], top: &str) -> Result<SymRc, PlainParserParseError> {
+fn parse_line(line: &str, scope: &mut Scope, top: &str) -> Result<SymRc, PlainParserParseError> {
     use PlainParserParseError::*;
     let colon_index = match find_first_top_level_colon(line) {
         Ok(Some(colon_index)) => colon_index,
@@ -257,7 +254,7 @@ fn parse_line(line: &str, scope: &[SymRc], top: &str) -> Result<SymRc, PlainPars
             input: name.to_string(),
         });
     }
-    let typ = match parse_typ(typ, scope, top) {
+    let typ = match parse_typ(typ, scope, &[], top) {
         Ok(typ) => typ,
         Err(source) => {
             return Err(ParseTypeFailed {
@@ -266,10 +263,11 @@ fn parse_line(line: &str, scope: &[SymRc], top: &str) -> Result<SymRc, PlainPars
             });
         }
     };
-    Ok(Sym::new_rc(name.to_string(), typ, None))
+    let sym = handle!(scope.new_sym(name, typ), NewSymFailed, input: line);
+    Ok(sym)
 }
 
-fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParserParseError> {
+fn parse_typ(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Result<Typ, PlainParserParseError> {
     use PlainParserParseError::*;
     let input = input.trim();
     if input.is_empty() {
@@ -305,7 +303,7 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
             }
         };
         if inner_has_arrow.is_some() || inner_has_colon.is_none() {
-            return parse_typ(inner, scope, top);
+            return parse_typ(inner, scope, locals, top);
         }
         return Err(StandaloneBinderTypeInvalid {
             input: input.to_string(),
@@ -399,7 +397,7 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
                         input: names_text.to_string(),
                     });
                 }
-                let binder_typ = match parse_typ(binder_typ_text, scope, top) {
+                let binder_typ = match parse_typ(binder_typ_text, scope, locals, top) {
                     Ok(binder_typ) => binder_typ,
                     Err(source) => {
                         return Err(ParseBinderTypeFailed {
@@ -410,11 +408,11 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
                 };
                 let binders = names
                     .into_iter()
-                    .map(|name| Sym::new_rc(name.to_string(), binder_typ.clone(), None))
+                    .map(|name| Sym::new_rc(name.to_string(), binder_typ.clone()))
                     .collect::<Vec<_>>();
-                let mut inner_scope = scope.to_vec();
-                inner_scope.extend(binders.iter().cloned());
-                let codomain = match parse_typ(codomain, &inner_scope, top) {
+                let mut inner_locals = locals.to_vec();
+                inner_locals.extend(binders.iter().cloned());
+                let codomain = match parse_typ(codomain, scope, &inner_locals, top) {
                     Ok(codomain) => codomain,
                     Err(source) => {
                         return Err(ParseCodomainFailed {
@@ -429,7 +427,7 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
                     .fold(codomain, |acc, binder| Typ::fun(&binder, acc)));
             }
         }
-        let domain_typ = match parse_typ(wrapped_domain.unwrap_or(domain), scope, top) {
+        let domain_typ = match parse_typ(wrapped_domain.unwrap_or(domain), scope, locals, top) {
             Ok(domain_typ) => domain_typ,
             Err(source) => {
                 return Err(ParseDomainTypeFailed {
@@ -438,7 +436,7 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
                 });
             }
         };
-        let codomain = match parse_typ(codomain, scope, top) {
+        let codomain = match parse_typ(codomain, scope, locals, top) {
             Ok(codomain) => codomain,
             Err(source) => {
                 return Err(ParseCodomainFailed {
@@ -447,14 +445,14 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
                 });
             }
         };
-        let binder = Sym::new_rc("_", domain_typ, None);
+        let binder = Sym::new_rc("_", domain_typ);
         return Ok(Typ::fun(&binder, codomain));
     }
 
-    if input == top && find_sym(scope, input).is_none() {
+    if input == top && find_sym(scope, locals, input).is_none() {
         return Ok(Typ::top());
     }
-    let exp = match parse_exp(input, scope, top) {
+    let exp = match parse_exp(input, scope, locals, top) {
         Ok(exp) => exp,
         Err(source) => {
             return Err(ParseExpressionFailed {
@@ -466,7 +464,7 @@ fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParser
     Ok(Typ::one(exp))
 }
 
-fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParserParseError> {
+fn parse_exp(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Result<Exp, PlainParserParseError> {
     use PlainParserParseError::*;
     let input = input.trim();
     if input.is_empty() {
@@ -483,7 +481,7 @@ fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParser
             });
         }
     } {
-        return parse_exp(inner, scope, top);
+        return parse_exp(inner, scope, locals, top);
     }
     let terms = match split_application_terms(input) {
         Ok(terms) => terms,
@@ -503,7 +501,7 @@ fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParser
             });
         }
     };
-    let first = match parse_exp_atom(first, scope, top) {
+    let first = match parse_exp_atom(first, scope, locals, top) {
         Ok(first) => first,
         Err(source) => {
             return Err(ParseExpressionAtomFailed {
@@ -513,7 +511,7 @@ fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParser
         }
     };
     terms.try_fold(first, |fun, arg| {
-        let arg = match parse_exp_atom(arg, scope, top) {
+        let arg = match parse_exp_atom(arg, scope, locals, top) {
             Ok(arg) => arg,
             Err(source) => {
                 return Err(ParseExpressionAtomFailed {
@@ -527,7 +525,7 @@ fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParser
     })
 }
 
-fn parse_exp_atom(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParserParseError> {
+fn parse_exp_atom(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Result<Exp, PlainParserParseError> {
     use PlainParserParseError::*;
     let input = input.trim();
     if let Some(inner) = match strip_outer_parens(input) {
@@ -539,14 +537,14 @@ fn parse_exp_atom(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainP
             });
         }
     } {
-        return parse_exp(inner, scope, top);
+        return parse_exp(inner, scope, locals, top);
     }
-    if input == top && find_sym(scope, input).is_none() {
+    if input == top && find_sym(scope, locals, input).is_none() {
         return Err(TopTypeUsedAsExpression {
             input: input.to_string(),
         });
     }
-    match find_sym(scope, input) {
+    match find_sym(scope, locals, input) {
         Some(sym) => Ok(Exp::sol(&sym)),
         None => Err(UnknownIdentifier {
             name: input.to_string(),
@@ -555,11 +553,13 @@ fn parse_exp_atom(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainP
     }
 }
 
-fn find_sym(scope: &[SymRc], name: &str) -> Option<SymRc> {
-    scope.iter().rev().find_map(|sym| {
-        let candidate = sym.nym().short.en.singular.canonical.as_str();
-        if candidate == name { Some(sym.clone()) } else { None }
-    })
+fn find_sym(scope: &Scope, locals: &[SymRc], name: &str) -> Option<SymRc> {
+    locals
+        .iter()
+        .rev()
+        .find(|sym| sym.nym().identifier() == name)
+        .or_else(|| scope.sym(name))
+        .cloned()
 }
 
 fn strip_outer_parens(input: &str) -> Result<Option<&str>, PlainParserParseError> {
@@ -762,6 +762,8 @@ fn split_application_terms(input: &str) -> Result<Vec<&str>, PlainParserParseErr
 
 #[derive(Error, Debug)]
 pub enum PlainParserParseError {
+    #[error("failed to create a symbol from '{input}'")]
+    NewSymFailed { source: ScopeNewSymError, input: String },
     #[error("line number overflow at index {line_index}")]
     LineNumberOverflowFailed { line_index: usize },
     #[error("failed to parse line {line_number}: '{line}'")]

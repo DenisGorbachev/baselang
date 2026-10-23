@@ -11,6 +11,10 @@ pub struct Nym {
 }
 
 impl Nym {
+    pub fn identifier(&self) -> &str {
+        &self.short.en.singular.canonical
+    }
+
     pub fn get(&self, form: Form) -> Option<&NymLang> {
         match form {
             Form::Short => Some(&self.short),

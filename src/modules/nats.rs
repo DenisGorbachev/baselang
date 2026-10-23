@@ -23,7 +23,6 @@ impl Nats {
         // `sym!(nat: typ!());` expands to the following declaration:
         debug_assert!(nat.nym() == &Self::nat_nym());
         debug_assert!(nat.typ().alpha_eq(&Typ::top()));
-        debug_assert!(nat.constructors().is_none());
         // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
 
         // Zero : Nat

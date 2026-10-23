@@ -765,11 +765,13 @@ Alias: CSR.
 
 #### struct Sym
 
+- Must have generics:
+  - `N`, defaulting to `Nym`
+  - `T`, defaulting to `Typ`
 - Must have exactly these fields:
-  - `nym: Nym`
-  - `typ: Typ`
-  - `constructors: Constructors`
-- Must pass [CSR](#compiler-struct-requirements), except its field types must be the concrete types specified above instead of type parameters.
+  - `nym: N`
+  - `typ: T`
+- Must pass [CSR](#compiler-struct-requirements).
 - Must not implement `PartialEq`, `Eq`, or `Hash`.
   - Rationale: every symbol is unique, it is equal only to itself.
 
@@ -777,9 +779,9 @@ Alias: CSR.
 
 - Must pass [macro constructor requirements](#macro-constructor-requirements).
 - `name` must be a Rust identifier.
-- `sym!(name)` must expand to `let name = $crate::Sym::new_top_rc(stringify!(name), None);`.
-- `sym!(name: typ)` must expand to `let name = $crate::Sym::new_rc(stringify!(name), typ, None);`.
-- `sym!(name: typ; nym)` must expand to `let name = $crate::Sym::new_rc(nym, typ, None);`.
+- `sym!(name)` must expand to `let name = $crate::Sym::<$crate::Nym, $crate::Typ>::new_top_rc(stringify!(name));`.
+- `sym!(name: typ)` must expand to `let name = $crate::Sym::<$crate::Nym, $crate::Typ>::new_rc(stringify!(name), typ);`.
+- `sym!(name: typ; nym)` must expand to `let name = $crate::Sym::<$crate::Nym, $crate::Typ>::new_rc(nym, typ);`.
 - Each form must introduce an immutable Rust binding named `name` with type `SymRc` in the invocation's scope.
 - A supplied `typ` must implement `Into<Typ>`.
 - A supplied `nym` must implement `Into<Nym>`.
@@ -811,9 +813,64 @@ Alias: CSR.
 - A supplied `exp` must implement `Into<Exp>`.
 - A supplied `nym` must implement `Into<Nym>`.
 
+#### enum Binding
+
+- Must pass [CTR](#compiler-type-requirements).
+- Must have exactly these variants:
+  - `Sym(SymRc)`
+  - `Def(DefRc)`
+- `nym()` must return the enclosed symbol's or definition's `nym()`.
+
+#### struct Scope
+
+- Must pass [CSR](#compiler-struct-requirements).
+- Must have generics:
+  - `B`, defaulting to `HashMap<String, Binding>`
+  - `C`, defaulting to `Constructors`
+- Must have exactly these fields:
+  - `bindings: B`
+  - `constructors: C`
+- The default scope must be empty.
+- Invariants for the default generic arguments:
+  - Each binding key must equal `binding.nym().identifier()`.
+  - Symbols and definitions must share the same name namespace.
+  - `constructors_of(s)` must contain exactly the registered symbols satisfying [Constructor of sym S](#constructor-of-sym-s).
+  - Each symbol must occur at most once in each constructor list.
+- `Nym::identifier()` must return `&self.short.en.singular.canonical`.
+- Registration of an occupied identifier must return an error owning the rejected symbol or definition.
+- Failed registration must leave the scope unchanged.
+- Raw symbol construction must not register the symbol in a scope.
+
+##### pub fn new_sym
+
+- Must accept `&mut self`, `nym: impl Into<Nym>`, and `typ: impl Into<Typ>`.
+- Must return the newly registered symbol as `Result<SymRc, ScopeNewSymError>`.
+
+##### pub fn insert_sym
+
+- Must accept `&mut self` and `sym: SymRc`.
+- Must register and return that same symbol as `Result<SymRc, ScopeInsertSymError>`.
+
+##### pub fn new_def
+
+- Must accept `&mut self`, `nym: impl Into<Nym>`, and `exp: impl Into<Exp>`.
+- Must return the newly registered definition as `Result<DefRc, ScopeNewDefError>`.
+
+##### pub fn insert_def
+
+- Must accept `&mut self` and `def: DefRc`.
+- Must register and return that same definition as `Result<DefRc, ScopeInsertDefError>`.
+
+##### pub fn constructors_of
+
+- Must accept `&self` and `sym: &SymRc`.
+- Must return the matching registered symbols as `&[SymRc]`.
+- Must return an empty slice when no registered symbol matches.
+
 #### type Constructors
 
-- Must be an alias for `Option<Vec<SymRc>>`.
+- Must be an alias for `HashMap<NonNull<Sym>, Vec<SymRc>>`.
+- Keys must use symbol allocation identity.
 
 #### enum Typ
 
@@ -824,6 +881,7 @@ Alias: CSR.
   - `Fun(DuoVec<SymRc>)`
 - Must have methods:
   - `pub fn last(&self) -> &Self`
+- `last()` must return the final codomain after all function parameters, or `self` for a non-function type.
 
 ##### macro typ
 
