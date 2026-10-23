@@ -123,6 +123,43 @@ List : (T : Type) -> Type
 Eq : (T : Type) -> (a : T) -> (b : T) -> Type
 ```
 
+## Constructors
+
+- The terminal type of `(x : A) -> B` is the terminal type of `B`.
+- The terminal type of a non-function type is that type itself.
+- The head of a symbol is that symbol.
+- The head of an application `f a` is the head of `f`.
+- The head of a function reference is that function.
+- A declared `Sym` is a constructor of its terminal type if that terminal type is a term.
+- It is a constructor of a `Sym` `S` if that terminal type's head is `S`.
+- `Type` has no head.
+- A symbol whose terminal type is `Type` is not a constructor.
+- A scope's constructor sets contain exactly its registered symbols satisfying this definition.
+- Parameter binders do not enter the enclosing scope's constructor sets.
+- Alias bindings do not add constructors.
+- A `Sym` cannot have defining rewrite rules.
+
+### Addition as a relation
+
+```baselang
+Nat : Type
+Zero : Nat
+Step : (n : Nat) -> Nat
+
+Add : (x : Nat) -> (y : Nat) -> (sum : Nat) -> Type
+Add.Zero : (n : Nat) -> Add Zero n n
+Add.Step : (m : Nat) -> (n : Nat) -> (sum : Nat) -> (proof : Add m n sum) -> Add (Step m) n (Step sum)
+```
+
+`Add.Zero` and `Add.Step` are constructors of `Add`.
+
+## Functions
+
+- Functions defined by rewrite rules must use [struct `Fun`](project.md#struct-fun).
+- A `Fun` must not be a `Sym`.
+- A `Fun` must not enter any constructor set.
+- Symbols, functions, and aliases must share the scope's name namespace.
+
 ## Rewrite rules
 
 ```baselang
@@ -135,30 +172,32 @@ Add Zero n => n
 Add (Step m) n => Step (Add m n)
 ```
 
+Here `Add` is a `Fun`; `Nat`, `Zero`, and `Step` are `Sym`s.
+
 ### Binding and matching
 
-- A rewrite rule has a declared function as its head.
+- A rewrite rule has its owning `Fun` as its head.
 - The left-hand side supplies every parameter of that function.
-- Argument patterns consist of constructor applications and pattern variables.
-- Constructor aliases resolve to the underlying constructors.
+- Argument patterns consist of `Sym` applications and pattern variables.
+- A `Fun` must not occur in an argument pattern.
+- Aliases in patterns resolve to their underlying expressions.
 - An argument-pattern identifier that does not resolve to a declared constant introduces a rule-local variable.
-- A pattern variable's type is inferred from the function signature and enclosing constructor patterns.
+- A pattern variable's type is inferred from the function signature and enclosing symbol applications.
 - Ambiguous pattern-variable types are rejected.
 - Each pattern variable occurs exactly once on the left-hand side.
 - Pattern variables are bound throughout the right-hand side.
-- Constructor patterns match constructor structure.
-- An argument that does not expose the required constructor leaves the application unreduced.
+- Patterns match symbol identity and application structure after argument normalization.
+- An argument that does not expose the required symbol leaves the application unreduced.
 
 ### Admissibility
 
 - Both sides of a rewrite must have the same type under the pattern context.
 - Rules for the same function must not overlap.
-- Constructors cannot receive defining rewrite rules.
 - Logical reduction must terminate.
 - Logical reduction must be confluent.
 - Recursive calls must decrease under a well-founded relation.
 - The entire right-hand side need not be syntactically smaller than the left-hand side.
-- A total function must cover every constructor case of its domain in the finalized theory.
+- A total function defined by rewrite rules must have an applicable rule for every well-typed closed tuple of arguments after normalization in the finalized theory.
 
 ```baselang
 Bool : Type

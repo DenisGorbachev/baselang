@@ -17,8 +17,8 @@ True : Bool
 Neg : (T : ^_^) -> (x : T) -> (_ : T)
 
 // Negation of booleans
-Neg.Bool.True : Neg Bool True -> False
-Neg.Bool.False : Neg Bool False -> True
+Neg Bool True => False
+Neg Bool False => True
 
 // Equality
 Eq : (T : ^_^) -> (left : T) -> (right : T) -> ^_^
@@ -45,8 +45,8 @@ Succ : Nat -> Nat
 Add : (T : ^_^) -> (x : T) -> (y : T) -> (_ : T)
 
 // Addition of natural numbers
-Add.Nat.Zero : (b : Nat) -> (Add Nat Zero b -> b)
-Add.Nat.Succ : (a : Nat) -> (b : Nat) -> (Add Nat (Succ a) b -> Succ (Add Nat a b))
+Add Nat Zero b => b
+Add Nat (Succ a) b => Succ (Add Nat a b)
 
 // Lists
 List : (T : ^_^) -> ^_^
@@ -64,14 +64,14 @@ Vector.Append :
   (len_b : Nat) ->
   (a : Vector T len_a) ->
   (b : Vector T len_b) ->
-  Vector T (Add len_a len_b) // append preserves lengths
+  (result : Vector T (Add len_a len_b)) -> // append preserves lengths
+  ^_^
 
 Vector.Append.Nil :
   (T : ^_^) ->
   (len_b : Nat) ->
   (b : Vector T len_b) ->
-  Vector.Append T Zero len_b (Vector.Nil T) b ->
-  b
+  Vector.Append T Zero len_b (Vector.Nil T) b b
 
 Vector.Append.Cons :
   (T : ^_^) ->
@@ -80,10 +80,11 @@ Vector.Append.Cons :
   (head : T) ->
   (tail : Vector T len_a) ->
   (b : Vector T len_b) ->
-  Vector.Append T (Succ len_a) len_b (Vector.Cons T len_a head tail) b ->
-  Vector.Cons T (Add len_a len_b) head (Vector.Append T len_a len_b tail b)
+  (result : Vector T (Add len_a len_b)) ->
+  (proof : Vector.Append T len_a len_b tail b result) ->
+  Vector.Append T (Succ len_a) len_b (Vector.Cons T len_a head tail) b (Vector.Cons T (Add len_a len_b) head result)
 
 // Notice that Double uses Add, which is not total in all types, but is total in Nat
 // Double itself is total in Nat
 Double : (T : ^_^) -> (x : T) -> (_ : T)
-Double.Nat : (x : Nat) -> Double Nat x -> Add Nat x x
+Double Nat x => Add Nat x x

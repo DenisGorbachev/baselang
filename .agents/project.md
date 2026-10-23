@@ -98,6 +98,7 @@ Alias: CSR.
 - Must pass [CSR](#compiler-struct-requirements).
 - Must not implement `PartialEq`, `Eq`, or `Hash`.
   - Rationale: every symbol is unique, it is equal only to itself.
+- Must not have defining rewrite rules.
 
 ### macro sym
 
@@ -137,6 +138,21 @@ Alias: CSR.
 - A supplied `exp` must implement `Into<Exp>`.
 - A supplied `nym` must implement `Into<Nym>`.
 
+## struct Fun
+
+- Must pass [CSR](#compiler-struct-requirements).
+- Must have generics:
+  - `N`
+  - `T`
+  - `R`
+- Must have exactly these fields:
+  - `nym: N`
+  - `typ: T`
+  - `rules: R`
+- `rules` must contain this function's defining rewrite rules.
+- Must not implement a conversion into `Sym` or `SymRc`.
+- Registration in a scope must not insert the function into any constructor set.
+
 ## enum Binding
 
 - Must pass [CTR](#compiler-type-requirements).
@@ -164,6 +180,7 @@ Alias: CSR.
 - Registration of an occupied identifier must return an error owning the rejected symbol or definition.
 - Failed registration must leave the scope unchanged.
 - Raw symbol construction must not register the symbol in a scope.
+- Binding a function parameter must not register it in the enclosing scope.
 
 ### pub fn new_sym
 
@@ -276,6 +293,7 @@ Alias: CSR.
 ## Constructor of type X
 
 - Must be a [sym](#struct-sym).
+- `sym.typ().last()` must be `Typ::One(_)`.
 - For `X: &Typ`, must satisfy `sym.typ().last().alpha_eq(X)`.
 
 Examples:
@@ -297,6 +315,7 @@ Examples:
 - `Zero : Nat` is a constructor of sym `Nat`
 - `Succ : Nat -> Nat` is a constructor of sym `Nat`
 - `Nil : (T : ^_^) -> List T` a constructor of sym `List` (because `List` is the head sym of `List T`) (note that `List T` is a type, not a sym)
+- `List : Type -> Type` is not a constructor of any sym.
 
 ## Smart application
 

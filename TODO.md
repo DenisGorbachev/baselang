@@ -12,6 +12,7 @@
 
 * Maintain the canonical specification in [.agents/spec.md](.agents/spec.md).
 * FUN: Specify functions as mathematical objects.
+  * Integrate `Fun` into expressions and scope bindings.
   * Define dependent function introduction.
   * Define function abstraction.
   * Define function application.
@@ -22,6 +23,7 @@
   * Specify inductive type declarations.
   * Specify constructor declarations.
   * Specify function declarations.
+  * Define source syntax that distinguishes `Sym` declarations from `Fun` declarations when their names are introduced.
   * Specify postulates.
   * Specify proved theorems.
   * Specify opaque definitions.
