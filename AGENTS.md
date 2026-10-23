@@ -686,8 +686,15 @@ Proxy command example:
 
 #### Compiler type requirements
 
-- Every field must have a distinct generic type.
-- Must have a `Getters` derive
+- Applies to `App`, `Sym`, `Def`, `Exp`, and `Typ`.
+- Every struct field must have a distinct generic type.
+- Recursive structs may use concrete field types when generic defaults would create recursive type aliases.
+- Structs must derive `Getters`.
+- Must not expose mutable access to fields that determine their type.
+- Must keep cached type information immutable after construction.
+- Must provide a `<Type>Rc` alias for `Rc<Type>`.
+- Generic parameters must be preserved by the `<Type>Rc` alias.
+- Shared references must clone the `Rc` instead of the underlying value.
 
 Alias: CTR.
 
@@ -725,50 +732,45 @@ Alias: CTR.
 
 #### struct Sym
 
-A struct that introduces an identity with a type and no defining expression.
-
 - Must have fields:
   - `nym: Nym`
   - `typ: Typ`
   - `constructors: Constructors`
-- Must derive `Getters`.
-- Must keep its type immutable after construction.
-- Must be shared through `SymRc`, an alias for `Rc<Sym>`.
+- Must pass [CTR](#compiler-type-requirements).
 - Must compare symbol occurrences by identity using `Rc::ptr_eq`, with bound symbols compared through alpha-equivalence.
 - Symbols with the same name and type may still have different identities.
-- Includes constructors such as `Nat`, `Zero`, and `Succ`.
-- Includes function parameters that may be bound and substituted.
+- Must represent constructors such as `Nat`, `Zero`, and `Succ`.
+- Must represent function parameters that may be bound and substituted.
 - The `sym!` macro must construct symbols.
 
 #### struct Def
 
-A struct that names an expression without introducing a new symbol identity.
-
+- Must have generics:
+  - `N`, defaulting to `Nym`
+  - `E`, defaulting to `Exp`
 - Must have fields:
-  - `nym: Nym`
-  - `exp: Exp`
-- Must derive `Getters`.
-- Must have `pub fn typ(&self) -> &Typ` that returns `self.exp.typ()`.
-- Must derive its type from the expression instead of storing a separate type.
-- Must convert into `Exp` by returning its defining expression.
-- Converting `&Def` into `Exp` must clone the expression while preserving the identities of its symbols.
-- Must convert into `Typ` as `Typ::One` of its defining expression.
-- Application must use the defining expression as the function or argument.
+  - `nym: N`
+  - `exp: E`
+- Must pass [CTR](#compiler-type-requirements).
+- `Def<N, Exp>` must have `pub fn typ(&self) -> &Typ` that returns `self.exp.typ()`.
+- `Def<N, Exp>` must derive its type from the expression instead of storing a separate type.
+- `Def<N, Exp>` must convert into `Exp` by returning its defining expression.
+- Converting `&Def<N, Exp>` into `Exp` must clone the expression while preserving the identities of its symbols.
+- `Def<N, Exp>` must convert into `Typ` as `Typ::One` of its defining expression.
+- Application of `Def<N, Exp>` must use the defining expression as the function or argument.
 - Definitions must not introduce function parameters or independent constructors.
-- Includes aliases such as `One = Succ Zero`.
-- The `def!` macro must construct definitions.
+- Must represent aliases such as `One = Succ Zero`.
+- The `def!` macro must construct `Def<Nym, Exp>`.
 - Renderers must distinguish symbol declarations (`Zero : Nat`) from definitions (`One = Succ Zero`).
 
 #### type Constructors
 
-An alias for `Option<Vec<Sym>>`.
-
+- Must be an alias for `Option<Vec<SymRc>>`.
+- Constructor references must preserve the identities of the symbols used in expressions.
 - `None` means that the symbol does not need constructors.
 - `Some(vec![])` means that the symbol has no constructors.
 
 #### enum Typ
-
-An enum that represents a type of a symbol or expression.
 
 - Must have exactly the following variants:
   - `Top`,
@@ -779,8 +781,6 @@ An enum that represents a type of a symbol or expression.
 
 #### enum Exp
 
-An enum that represents an expression.
-
 - Must have exactly the following variants:
   - `Sol(SymRc)`
   - `App(ExpBox, ExpBox, TypBox)`
@@ -789,8 +789,7 @@ An enum that represents an expression.
 
 #### struct DuoVec
 
-A newtype for `Vec` that has at least two elements.
-
+- Must wrap a `Vec<T>` containing at least two elements.
 - Must have methods:
   - `pub fn first(&self) -> &T`
   - `pub fn last(&self) -> &T`
@@ -804,7 +803,8 @@ A newtype for `Vec` that has at least two elements.
 
 #### Constructor of type X
 
-A [sym](#struct-sym) whose `sym.typ().last()` is `X`.
+- Must be a [sym](#struct-sym).
+- Must satisfy `sym.typ().last() == X`.
 
 Examples:
 
@@ -812,9 +812,10 @@ Examples:
 - `Succ : Nat -> Nat` is a constructor of type `Nat`
 - `Nil : (T : ^_^) -> List T` a constructor of type `List T`
 
-#### Constructor of sym V
+#### Constructor of sym S
 
-A [sym](#struct-sym) whose `sym.typ().last().head()` is `V`.
+- Must be a [sym](#struct-sym).
+- Must satisfy `sym.typ().last().head() == S`.
 
 Examples:
 
@@ -822,23 +823,7 @@ Examples:
 - `Succ : Nat -> Nat` is a constructor of sym `Nat`
 - `Nil : (T : ^_^) -> List T` a constructor of sym `List` (because `List` is the head sym of `List T`) (note that `List T` is a type, not a sym)
 
-#### Reducer of sym V
-
-A [sym](#struct-sym) that satisfies the following requirements:
-
-- `sym.typ().prelast().head() == V`
-- `sym.typ().prelast() == sym.typ().last()`
-- The output must be strictly smaller than input (the recursion must be well-founded)
-  - TODO: Specify this requirement more precisely (the current phrase conveys the intent, but is not technically correct)
-
-Examples:
-
-- `Add.Zero : (b : Nat) -> Add Zero b -> b` is a reducer of sym `Add`
-- `Add.Succ : (a : Nat) -> (b : Nat) -> Add (Succ a) b -> Succ (Add a b)` is a reducer of sym `Add`
-
 #### Smart application
-
-An algorithm for applying a function to an argument that fills some parameters automatically.
 
 Algorithm:
 

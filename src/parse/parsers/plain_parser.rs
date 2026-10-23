@@ -1,6 +1,7 @@
 use crate::{Exp, InvalidApplicationError, Parse, Sym, SymRc, Typ};
 use core::iter::from_fn;
 use derive_new::new;
+use errgonomic::handle;
 use non_empty_str::cow::NonEmptyCowStr;
 use std::borrow::Cow;
 use thiserror::Error;
@@ -521,10 +522,8 @@ fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParser
                 });
             }
         };
-        parse_application(fun, arg).map_err(|source| InvalidApplicationFailed {
-            source,
-            input: input.to_string(),
-        })
+        let exp = handle!(Exp::app(fun, arg), InvalidApplicationFailed, input);
+        Ok(exp)
     })
 }
 
@@ -553,19 +552,6 @@ fn parse_exp_atom(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainP
             name: input.to_string(),
             input: input.to_string(),
         }),
-    }
-}
-
-fn parse_application(fun: Exp, arg: Exp) -> Result<Exp, InvalidApplicationError> {
-    match Exp::app(fun.clone(), arg.clone()) {
-        Ok(exp) => Ok(exp),
-        Err(source) => {
-            let typ = fun.typ().clone();
-            match typ {
-                Typ::Fun(_, typ) => Ok(Exp::App(Box::new(fun), Box::new(arg), typ)),
-                _ => Err(source),
-            }
-        }
     }
 }
 

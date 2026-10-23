@@ -1,4 +1,4 @@
-use crate::{AlphaEq, Def, Exp, Sym, SymRc, alpha_eq_typ};
+use crate::{AlphaEq, Def, DefRc, Exp, Sym, SymRc, alpha_eq_typ};
 use Exp::Sol;
 use Typ::*;
 use std::rc::Rc;
@@ -52,7 +52,7 @@ impl Typ {
                 if Rc::ptr_eq(param, sym) {
                     self.clone()
                 } else {
-                    let substituted_param = substitute_sym_rc(param, sym, arg);
+                    let substituted_param = param.substitute_rc(sym, arg);
                     let substituted_typ = typ.substitute(sym, arg);
                     let substituted_typ = if Rc::ptr_eq(&substituted_param, param) {
                         substituted_typ
@@ -78,25 +78,11 @@ impl Typ {
             Top => Top,
             One(exp) => One(exp.replace(from, to)),
             Fun(param, typ) => {
-                let replaced_param = replace_sym_rc(param, from, to);
+                let replaced_param = param.replace_rc(from, to);
                 let replaced_typ = typ.replace(from, to);
                 Fun(replaced_param, Box::new(replaced_typ))
             }
         }
-    }
-}
-
-fn substitute_sym_rc(fun: &SymRc, sym: &SymRc, arg: &Exp) -> SymRc {
-    if fun.contains_sym(sym) { Rc::new(fun.substitute(sym, arg)) } else { fun.clone() }
-}
-
-fn replace_sym_rc(fun: &SymRc, from: &SymRc, to: &SymRc) -> SymRc {
-    if Rc::ptr_eq(fun, from) {
-        to.clone()
-    } else if fun.contains_sym(from) {
-        Rc::new(fun.replace_sym(from, to))
-    } else {
-        fun.clone()
     }
 }
 
@@ -128,14 +114,26 @@ impl From<Exp> for Typ {
     }
 }
 
-impl From<Def> for Typ {
-    fn from(def: Def) -> Self {
+impl<N> From<Def<N>> for Typ {
+    fn from(def: Def<N>) -> Self {
         Self::one(def)
     }
 }
 
-impl From<&Def> for Typ {
-    fn from(def: &Def) -> Self {
+impl<N> From<&Def<N>> for Typ {
+    fn from(def: &Def<N>) -> Self {
+        Self::one(def)
+    }
+}
+
+impl<N> From<DefRc<N>> for Typ {
+    fn from(def: DefRc<N>) -> Self {
+        Self::one(def)
+    }
+}
+
+impl<N> From<&DefRc<N>> for Typ {
+    fn from(def: &DefRc<N>) -> Self {
         Self::one(def)
     }
 }

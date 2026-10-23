@@ -56,7 +56,7 @@ impl Sym {
         self.nym = nym.into()
     }
 
-    pub fn set_constructors(&mut self, constructors: impl Into<Option<Vec<Self>>>) {
+    pub fn set_constructors(&mut self, constructors: impl Into<Constructors>) {
         self.constructors = constructors.into();
     }
 
@@ -69,10 +69,14 @@ impl Sym {
         let constructors = self.constructors.as_ref().map(|constructors| {
             constructors
                 .iter()
-                .map(|constructor| constructor.substitute(sym, arg))
+                .map(|constructor| constructor.substitute_rc(sym, arg))
                 .collect::<Vec<_>>()
         });
         Self::new(self.nym.clone(), typ, constructors)
+    }
+
+    pub fn substitute_rc(self: &Rc<Self>, sym: &SymRc, arg: &Exp) -> Rc<Self> {
+        if self.contains_sym(sym) { Rc::new(self.substitute(sym, arg)) } else { self.clone() }
     }
 
     pub fn replace_sym(&self, from: &SymRc, to: &SymRc) -> Self {
@@ -80,10 +84,20 @@ impl Sym {
         let constructors = self.constructors.as_ref().map(|constructors| {
             constructors
                 .iter()
-                .map(|constructor| constructor.replace_sym(from, to))
+                .map(|constructor| constructor.replace_rc(from, to))
                 .collect::<Vec<_>>()
         });
         Self::new(self.nym.clone(), typ, constructors)
+    }
+
+    pub fn replace_rc(self: &Rc<Self>, from: &SymRc, to: &SymRc) -> Rc<Self> {
+        if Rc::ptr_eq(self, from) {
+            to.clone()
+        } else if self.contains_sym(from) {
+            Rc::new(self.replace_sym(from, to))
+        } else {
+            self.clone()
+        }
     }
 
     /// Returns `true` if this symbol's type or constructors mention `target` by identity.
@@ -92,7 +106,7 @@ impl Sym {
             || self.constructors.as_ref().is_some_and(|constructors| {
                 constructors
                     .iter()
-                    .any(|constructor| constructor.contains_sym(target))
+                    .any(|constructor| Rc::ptr_eq(constructor, target) || constructor.contains_sym(target))
             })
     }
 

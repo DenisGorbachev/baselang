@@ -1,4 +1,4 @@
-use crate::{AlphaEq, Def, InvalidApplicationError, Of, Sym, TypBox, alpha_eq_exp};
+use crate::{AlphaEq, Def, DefRc, InvalidApplicationError, Of, Sym, TypBox, alpha_eq_exp};
 use crate::{SymRc, Typ};
 use Exp::*;
 use Typ::*;
@@ -127,15 +127,31 @@ impl From<&SymRc> for Exp {
     }
 }
 
-impl From<Def> for Exp {
-    fn from(def: Def) -> Self {
-        def.exp
+impl<N> From<Def<N>> for Exp {
+    fn from(def: Def<N>) -> Self {
+        let (_, exp) = def.into();
+        exp
     }
 }
 
-impl From<&Def> for Exp {
-    fn from(def: &Def) -> Self {
-        def.exp.clone()
+impl<N> From<&Def<N>> for Exp {
+    fn from(def: &Def<N>) -> Self {
+        def.exp().clone()
+    }
+}
+
+impl<N> From<DefRc<N>> for Exp {
+    fn from(def: DefRc<N>) -> Self {
+        match Rc::try_unwrap(def) {
+            Ok(def) => def.into(),
+            Err(def) => def.as_ref().into(),
+        }
+    }
+}
+
+impl<N> From<&DefRc<N>> for Exp {
+    fn from(def: &DefRc<N>) -> Self {
+        def.as_ref().into()
     }
 }
 

@@ -1,3 +1,3 @@
-use crate::Sym;
+use crate::SymRc;
 
-pub type Constructors = Option<Vec<Sym>>;
+pub type Constructors = Option<Vec<SymRc>>;

@@ -1,5 +1,6 @@
 use crate::Apply;
 use derive_getters::Getters;
+use std::rc::Rc;
 
 #[derive(Getters, Clone, Debug)]
 pub struct App<F, A, T> {
@@ -7,6 +8,8 @@ pub struct App<F, A, T> {
     arg: A,
     typ: T,
 }
+
+pub type AppRc<F, A, T> = Rc<App<F, A, T>>;
 
 impl<F, A, T> App<F, A, T>
 where
