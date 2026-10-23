@@ -10,9 +10,7 @@
 
 ## Compiler type requirements
 
-- For a type named `X`, must declare a public type alias named `XRc` whose target is `Rc<X>`.
-- `XRc` must declare the same generic parameters, in the same order and with the same defaults, as `X`.
-- Each generic argument supplied to `XRc` must be forwarded to the corresponding parameter of `X`.
+- Must have an [Rc alias](#rc-alias-of-type-t).
 - Must state each invariant as a predicate over its fields or the results of specified methods.
 - Every constructor, conversion, and deserializer that returns a value of the type must establish all declared invariants before returning that value.
 - Every public mutator must preserve all declared invariants when called on a value satisfying them.
@@ -20,6 +18,12 @@
 - A public field or an API exposing mutable access to a field is permitted only if every assignment or mutation available through that access preserves all declared invariants.
 
 Alias: CTR.
+
+## Rc alias of type T
+
+- Must be a public type alias whose name is `T`'s name followed by `Rc`.
+- Must declare the same generic parameters, in the same order and with the same defaults, as `T`.
+- Must alias `Rc<T>` with each generic argument forwarded to the corresponding parameter of `T`.
 
 ## Compiler struct requirements
 
@@ -31,7 +35,7 @@ Alias: CTR.
 
 Alias: CSR.
 
-## Macro constructor
+## Macro constructor requirements
 
 - Must be declared with `macro_rules!`.
 - Must have `#[macro_export]`.
@@ -92,10 +96,10 @@ Alias: CSR.
 - Must pass [CSR](#compiler-struct-requirements), except its field types must be the concrete types specified above instead of type parameters.
 - Must not implement `PartialEq`, `Eq`, or `Hash`.
   - Rationale: every symbol is unique, it is equal only to itself.
-- Must have [sym! macro constructor](#macro-constructor).
 
 ### macro sym
 
+- Must pass [macro constructor requirements](#macro-constructor-requirements).
 - `name` must be a Rust identifier.
 - `sym!(name)` must expand to `let name = $crate::Sym::new_top_rc(stringify!(name), None);`.
 - `sym!(name: typ)` must expand to `let name = $crate::Sym::new_rc(stringify!(name), typ, None);`.
@@ -120,10 +124,10 @@ Alias: CSR.
 - `From<&Def<N, Exp>> for Typ` must return `Typ::One(Exp::from(def))`.
 - For `A: Into<Exp>`, `<Def<N, Exp> as Of<A>>::of(&self, arg)` must return the result of `self.exp.of(arg)`.
 - Must not implement a conversion from `Def<N, Exp>` into `Sym` or `SymRc`.
-- Must have [def! macro constructor](#macro-constructor).
 
 ### macro def
 
+- Must pass [macro constructor requirements](#macro-constructor-requirements).
 - `name` must be a Rust identifier.
 - `def!(name = exp)` must expand to `let name = $crate::Def::<$crate::Nym, $crate::Exp>::new(stringify!(name), exp);`.
 - `def!(name = exp; nym)` must expand to `let name = $crate::Def::<$crate::Nym, $crate::Exp>::new(nym, exp);`.
@@ -144,11 +148,10 @@ Alias: CSR.
   - `Fun(DuoVec<SymRc>)`
 - Must have methods:
   - `pub fn last(&self) -> &Self`
-- Must have [typ! macro constructor](#macro-constructor).
-- Must have [top! macro constructor](#macro-constructor).
 
 ### macro typ
 
+- Must pass [macro constructor requirements](#macro-constructor-requirements).
 - `typ!()` must expand to `$crate::Typ::top()`.
 - `typ!(exp)` must expand to `$crate::Typ::one(exp)`.
 - `typ!(param => typ)` must expand to `$crate::Typ::fun(&param, typ)`.
@@ -159,6 +162,7 @@ Alias: CSR.
 
 ### macro top
 
+- Must pass [macro constructor requirements](#macro-constructor-requirements).
 - Must accept only the empty operand list.
 - `top!()` must expand to `$crate::Typ::top()`.
 - Its expansion must be an expression with result type `Typ`.
@@ -171,10 +175,10 @@ Alias: CSR.
   - `App(ExpBox, ExpBox, TypBox)`
 - Must have methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
-- Must have [exp! macro constructor](#macro-constructor).
 
 ### macro exp
 
+- Must pass [macro constructor requirements](#macro-constructor-requirements).
 - Must accept at least one expression operand.
 - `exp!(value)` must expand to `$crate::Exp::from(value.clone())`.
 - For the one-operand form, `value.clone()` must be a valid expression whose result implements `Into<Exp>`.
@@ -205,11 +209,11 @@ Alias: CSR.
 
 ## .mise/tasks/spec/fix.sh
 
-- Must execute `cargo build --release --manifest-path spec/Cargo.toml` with the repository root as its working directory.
-- Must execute `cargo fix --package baselang --lib` with the repository root as its working directory after the build command succeeds.
-- Must set `RUSTC_WORKSPACE_WRAPPER` for the `cargo fix` process to the absolute path of the `spec` executable produced by the build command.
-- Must not execute `cargo fix` if the build command fails.
-- If either command fails, must exit with a nonzero status.
+- Must run sequentially from the repository root:
+  1. `cargo build --release --manifest-path spec/Cargo.toml`
+  2. `cargo fix --package baselang --lib`
+     - Environment:
+       - `RUSTC_WORKSPACE_WRAPPER`: absolute path to the built `spec` executable.
 
 ## Constructor of type X
 
@@ -238,18 +242,10 @@ Examples:
 
 ## Smart application
 
-- Must accept an ordered parameter sequence, an argument expression, a unification operation, and a lookup operation for canonical values indexed by type.
-- The unification operation must return either a substitution satisfying its input constraints or a failure.
-- Must select the lowest parameter index whose type unifies with the argument's type.
-- Must assign the argument to the selected parameter.
-- Must apply the resulting substitution to the types of all remaining parameters.
-- Must process parameters preceding the selected parameter in decreasing index order.
-- If the current substitution assigns an expression to a preceding parameter, must use that expression.
-- If a preceding parameter has type `Typ::Top` and the substitution does not assign it an expression, must report failure.
-- If a preceding parameter has a type other than `Typ::Top` and the substitution does not assign it an expression, must request a canonical value for that substituted type.
-- Must report failure if the canonical-value lookup returns no value.
-- Must validate every inserted argument using the same application check as an explicitly supplied argument.
-- Must report failure if no parameter type unifies with the supplied argument's type.
+- Must match the supplied argument to the first parameter whose type unifies with the argument's type.
+- Omitted preceding arguments:
+  - Type `Typ::Top`: must be inferred by unification.
+  - Other types: must be inferred by unification, falling back to canonical values of their inferred types.
 
 Examples:
 
