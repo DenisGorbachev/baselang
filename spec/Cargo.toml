@@ -11,15 +11,15 @@ title = ""
 readme.generate = false
 
 [dependencies]
-aist = { path = "../aist" }
-errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-futures = "0.3.32"
-tempfile = "3.27.0"
-thiserror = "2.0.18"
-tokio = { version = "1.50.0", features = ["fs", "rt"] }
-stub-macro = "0.2.1"
-facet = { version = "0.44.3", features = ["reflect"] }
-facet-pretty = "0.44.4"
+aist.workspace = true
+errgonomic.workspace = true
+futures.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["fs", "rt"] }
+stub_macro_0_2.workspace = true
+facet.workspace = true
+facet-pretty.workspace = true
 
 [lints]
 workspace = true

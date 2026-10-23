@@ -1,30 +1,33 @@
 # Baselang concepts
 
-## `Cargo.toml`
+## Cargo.toml
 
+- All dependency versions and sources must be declared in `workspace.dependencies`.
+- Package dependency declarations must use `workspace = true`.
+- Package-specific features may be selected in package dependency declarations.
 - `workspace.dependencies` must contain:
   - `derive_getters`
 
 ## Compiler type requirements
 
 - Every field must have a distinct generic type.
-- Must have a getter for every field (prefer deriving via `Getters`).
+- Must have a `Getters` derive
 
 Alias: CTR.
 
-## Trait `Apply`
+## trait Apply
 
 - Must have associated types:
   - `Arg`
   - `Typ`
-  - `Error: std::error::Error + 'static`
-- Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Error>`.
+  - `Err: std::error::Error`
+- Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Err>`.
 - `apply` must validate the argument and return the application's resulting type.
 
-## Struct `App`
+## struct App
 
 - Must have generics:
-  - `F: Apply`
+  - `F`
   - `A`
   - `T`
 - Must have fields:
@@ -33,19 +36,19 @@ Alias: CTR.
   - `typ: T`
 - Must pass [CTR](#compiler-type-requirements).
 
-### `impl App`
+### impl<F, A, T> App<F, A, T>
 
-#### `pub fn new`
+#### pub fn new
 
 - Must have args:
   - `fun`
   - `arg`
 - Must require `F: Apply<Arg = A, Typ = T>`.
 - Must compute `typ` by calling `fun.apply(&arg)`.
-- Must return an error containing the source error, `fun`, and `arg` if application fails.
+- Must return `Result<Self, F::Err>`, propagating application errors directly.
 - Must preserve the validated fields behind getters.
 
-## `Var`
+## struct Var
 
 A struct that represents a variable.
 
@@ -60,7 +63,7 @@ Notes:
 
 - Vars with a known value don't participate in application (because they already have a value)
 
-## `Value`
+## enum Value
 
 An enum that represents a value of the variable.
 
@@ -68,7 +71,7 @@ An enum that represents a value of the variable.
   - `Known(Exp)`
   - `Unknown(Typ)`
 
-## `Typ`
+## enum Typ
 
 An enum that represents a type of the variable.
 
@@ -79,7 +82,7 @@ An enum that represents a type of the variable.
 - Must have at least the following methods:
   - `pub fn last(&self) -> &Self`
 
-## `Exp`
+## enum Exp
 
 An enum that represents an expression.
 
@@ -89,7 +92,7 @@ An enum that represents an expression.
 - Must have at least the following methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
 
-## `DuoVec`
+## struct DuoVec
 
 A newtype for `Vec` that has at least two elements.
 
@@ -97,7 +100,7 @@ A newtype for `Vec` that has at least two elements.
   - `pub fn first(&self) -> &T`
   - `pub fn last(&self) -> &T`
 
-## `.mise/tasks/spec/fix.sh`
+## .mise/tasks/spec/fix.sh
 
 - Must run `cargo build --release --manifest-path spec/Cargo.toml` to build the `spec` package
 - Must run `cargo fix` to check the primary package using the rustc wrapper from the `spec` package
@@ -106,7 +109,7 @@ A newtype for `Vec` that has at least two elements.
 
 ## Constructor of type X
 
-A [var](#var) whose `var.typ().last()` is `X`.
+A [var](#struct-var) whose `var.typ().last()` is `X`.
 
 Examples:
 
@@ -116,7 +119,7 @@ Examples:
 
 ## Constructor of var V
 
-A [var](#var) whose `var.typ().last().head()` is `V`.
+A [var](#struct-var) whose `var.typ().last().head()` is `V`.
 
 Examples:
 
@@ -126,7 +129,7 @@ Examples:
 
 ## Reducer of var V
 
-A [var](#var) that satisfies the following requirements:
+A [var](#struct-var) that satisfies the following requirements:
 
 - `var.typ().prelast().head() == V`
 - `var.typ().prelast() == var.typ().last()`

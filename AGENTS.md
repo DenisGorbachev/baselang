@@ -676,31 +676,34 @@ Proxy command example:
 
 ### Baselang concepts
 
-#### `Cargo.toml`
+#### Cargo.toml
 
+- All dependency versions and sources must be declared in `workspace.dependencies`.
+- Package dependency declarations must use `workspace = true`.
+- Package-specific features may be selected in package dependency declarations.
 - `workspace.dependencies` must contain:
   - `derive_getters`
 
 #### Compiler type requirements
 
 - Every field must have a distinct generic type.
-- Must have a getter for every field (prefer deriving via `Getters`).
+- Must have a `Getters` derive
 
 Alias: CTR.
 
-#### Trait `Apply`
+#### trait Apply
 
 - Must have associated types:
   - `Arg`
   - `Typ`
-  - `Error: std::error::Error + 'static`
-- Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Error>`.
+  - `Err: std::error::Error`
+- Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Err>`.
 - `apply` must validate the argument and return the application's resulting type.
 
-#### Struct `App`
+#### struct App
 
 - Must have generics:
-  - `F: Apply`
+  - `F`
   - `A`
   - `T`
 - Must have fields:
@@ -709,19 +712,19 @@ Alias: CTR.
   - `typ: T`
 - Must pass [CTR](#compiler-type-requirements).
 
-##### `impl App`
+##### impl<F, A, T> App<F, A, T>
 
-###### `pub fn new`
+###### pub fn new
 
 - Must have args:
   - `fun`
   - `arg`
 - Must require `F: Apply<Arg = A, Typ = T>`.
 - Must compute `typ` by calling `fun.apply(&arg)`.
-- Must return an error containing the source error, `fun`, and `arg` if application fails.
+- Must return `Result<Self, F::Err>`, propagating application errors directly.
 - Must preserve the validated fields behind getters.
 
-#### `Var`
+#### struct Var
 
 A struct that represents a variable.
 
@@ -736,7 +739,7 @@ Notes:
 
 - Vars with a known value don't participate in application (because they already have a value)
 
-#### `Value`
+#### enum Value
 
 An enum that represents a value of the variable.
 
@@ -744,7 +747,7 @@ An enum that represents a value of the variable.
   - `Known(Exp)`
   - `Unknown(Typ)`
 
-#### `Typ`
+#### enum Typ
 
 An enum that represents a type of the variable.
 
@@ -755,7 +758,7 @@ An enum that represents a type of the variable.
 - Must have at least the following methods:
   - `pub fn last(&self) -> &Self`
 
-#### `Exp`
+#### enum Exp
 
 An enum that represents an expression.
 
@@ -765,7 +768,7 @@ An enum that represents an expression.
 - Must have at least the following methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
 
-#### `DuoVec`
+#### struct DuoVec
 
 A newtype for `Vec` that has at least two elements.
 
@@ -773,7 +776,7 @@ A newtype for `Vec` that has at least two elements.
   - `pub fn first(&self) -> &T`
   - `pub fn last(&self) -> &T`
 
-#### `.mise/tasks/spec/fix.sh`
+#### .mise/tasks/spec/fix.sh
 
 - Must run `cargo build --release --manifest-path spec/Cargo.toml` to build the `spec` package
 - Must run `cargo fix` to check the primary package using the rustc wrapper from the `spec` package
@@ -782,7 +785,7 @@ A newtype for `Vec` that has at least two elements.
 
 #### Constructor of type X
 
-A [var](#var) whose `var.typ().last()` is `X`.
+A [var](#struct-var) whose `var.typ().last()` is `X`.
 
 Examples:
 
@@ -792,7 +795,7 @@ Examples:
 
 #### Constructor of var V
 
-A [var](#var) whose `var.typ().last().head()` is `V`.
+A [var](#struct-var) whose `var.typ().last().head()` is `V`.
 
 Examples:
 
@@ -802,7 +805,7 @@ Examples:
 
 #### Reducer of var V
 
-A [var](#var) that satisfies the following requirements:
+A [var](#struct-var) that satisfies the following requirements:
 
 - `var.typ().prelast().head() == V`
 - `var.typ().prelast() == var.typ().last()`
@@ -2486,14 +2489,14 @@ title = ""
 readme.generate = false
 
 [dependencies]
-derive_more = { version = "2.1.1", features = ["deref"] }
-errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-facet = { version = "0.44.3", features = ["reflect"] }
-rustc-hash = { version = "2.1.2" }
-smallvec = "1.15.1"
-thiserror = "2.0.18"
-stub-macro = "0.3.0"
 derive_getters.workspace = true
+derive_more = { workspace = true, features = ["deref"] }
+errgonomic.workspace = true
+facet.workspace = true
+rustc-hash.workspace = true
+smallvec.workspace = true
+thiserror.workspace = true
+stub-macro.workspace = true
 
 [lints]
 workspace = true
@@ -2505,9 +2508,6 @@ workspace = true
 [workspace]
 members = ["aist", "spec"]
 resolver = "3"
-
-[workspace.dependencies]
-derive_getters = { package = "derive-getters", version = "0.5.0", features = ["auto_copy_getters"] }
 
 [workspace.package]
 version = "0.1.0"
@@ -2544,6 +2544,30 @@ name = "baselang"
 title = "Baselang"
 readme = { }
 
+[workspace.dependencies]
+aist = { path = "aist" }
+clap = { version = "4.5.11", features = ["derive"] }
+derive-new = "0.7.0"
+derive_getters = { package = "derive-getters", version = "0.5.0", features = ["auto_copy_getters"] }
+derive_more = "2.1.1"
+errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
+facet = { version = "0.44.3", features = ["reflect"] }
+facet-pretty = "0.44.4"
+futures = "0.3.32"
+itertools = "0.15.0"
+non-empty-str = "0.13.0"
+pretty_assertions = { version = "1.4.1", features = ["unstable"] }
+rustc-hash = "2.1.2"
+smallvec = "1.15.1"
+#standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
+strum = { version = "0.28.0", features = ["derive"] }
+stub-macro = "0.3.0"
+stub_macro_0_2 = { package = "stub-macro", version = "0.2.1" }
+#subtype = { git = "https://github.com/DenisGorbachev/subtype" }
+tempfile = "3.27.0"
+thiserror = "2.0.18"
+tokio = "1.50.0"
+
 [workspace.lints.rust]
 redundant_imports = "deny"
 unused_import_braces = "deny"
@@ -2572,21 +2596,19 @@ title = "Baselang"
 workspace = true
 
 [dependencies]
-clap = { version = "4.5.11", features = ["derive"] }
-derive-new = "0.7.0"
+clap.workspace = true
+derive-new.workspace = true
 derive_getters.workspace = true
-derive_more = { version = "2.1.1", features = ["full"] }
-errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-itertools = "0.14.0"
-non-empty-str = "0.11.3"
-#standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
-strum = { version = "0.27.2", features = ["derive"] }
-#subtype = { git = "https://github.com/DenisGorbachev/subtype" }
-thiserror = "2.0.17"
-tokio = { version = "1.50.0", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
+derive_more = { workspace = true, features = ["full"] }
+errgonomic.workspace = true
+itertools.workspace = true
+non-empty-str.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [dev-dependencies]
-pretty_assertions = { version = "1.4.1", features = ["unstable"] }
+pretty_assertions.workspace = true
 ```
 
 ### spec/Cargo.toml
@@ -2605,15 +2627,15 @@ title = ""
 readme.generate = false
 
 [dependencies]
-aist = { path = "../aist" }
-errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-futures = "0.3.32"
-tempfile = "3.27.0"
-thiserror = "2.0.18"
-tokio = { version = "1.50.0", features = ["fs", "rt"] }
-stub-macro = "0.2.1"
-facet = { version = "0.44.3", features = ["reflect"] }
-facet-pretty = "0.44.4"
+aist.workspace = true
+errgonomic.workspace = true
+futures.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["fs", "rt"] }
+stub_macro_0_2.workspace = true
+facet.workspace = true
+facet-pretty.workspace = true
 
 [lints]
 workspace = true
