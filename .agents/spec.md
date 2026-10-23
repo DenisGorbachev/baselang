@@ -54,7 +54,9 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
 - Names are case-sensitive.
 - Qualified names such as `Bool.True` identify declarations within namespaces.
 - Redeclaring a name in the same scope is rejected.
+- A named declaration must use `Sym`.
 - Adding a defining rule does not change the owning declaration's identity or type.
+- A type declaration and its defining rules may occur on separate lines.
 - A declaration's name must be an identifier.
   - `2 => "Hello"` is invalid.
   - `"H" => "Hello"` is invalid.
@@ -131,15 +133,15 @@ Eq : (T : Type) -> (a : T) -> (b : T) -> Type
 - The terminal type of a non-function type is that type itself.
 - The head of a symbol is that symbol.
 - The head of an application `f a` is the head of `f`.
-- The head of a function reference is that function.
 - Constructor membership must use the normal form of the terminal type.
-- A declared `Sym` is a constructor of that normal form if it is a term.
+- A declared `Sym` is a constructor of that normal form if the normal form is a term and the symbol has no defining rules in the scope under consideration.
 - It is a constructor of a `Sym` `S` if that normal form's head is `S`.
 - `Type` has no head.
 - A symbol whose terminal type is `Type` is not a constructor.
 - A scope's constructor sets contain exactly its registered symbols satisfying this definition.
 - Parameter binders do not enter the enclosing scope's constructor sets.
-- A `Sym` cannot have defining rewrite rules.
+- Adding a symbol's first defining rule removes that symbol from all constructor sets in that scope.
+- Constructor membership must be recomputed when changes to defining rules change a registered symbol's terminal type's normal form.
 
 ### Addition as a relation
 
@@ -155,21 +157,21 @@ Add.Step : (m : Nat) -> (n : Nat) -> (sum : Nat) -> (proof : Add m n sum) -> Add
 
 `Add.Zero` and `Add.Step` are constructors of `Add`.
 
-## Functions
+## Defined symbols
 
-- Functions defined by rewrite rules must use [struct `Fun`](project.md#struct-fun).
-- A `Fun` must not be a `Sym`.
-- A `Fun` must not enter any constructor set.
-- Symbols and functions must share the scope's name namespace.
-- Simple definitions and definitions by cases must use the same `Fun` representation.
+- A defined symbol is a `Sym` with at least one defining rewrite rule in the scope under consideration.
+- The scope must store defining rules indexed by their head symbol's allocation identity.
+- Simple definitions and definitions by cases must use the same symbol and rule representations.
+- A symbol with defining rules must not enter any constructor set in that scope.
 
 ### Simple definitions
 
-- `name => rhs` must introduce a `Fun` if `name` is not already declared.
+- `name => rhs` must introduce a `Sym` with a zero-argument rule if `name` is not already declared.
 - Its type must be inferred from `rhs` when no type signature is supplied.
 - If the type cannot be inferred, an explicit type signature is required.
 - References in `rhs` retain their bindings from the definition's lexical scope.
-- If `name` is already declared, it must be a `Fun`.
+- If `name` is already declared, its existing symbol must be the rule's head.
+- Introducing a symbol through a simple definition must register the symbol and its rule atomically.
 - An explicit type signature must agree with the type of `rhs` under definitional conversion.
 - A recursive definition requires its type signature before its defining rules.
 - A simple definition may have a function type.
@@ -186,7 +188,7 @@ Add Zero n => n
 Add (Step m) n => Step (Add m n)
 ```
 
-Here `Add` is a `Fun`; `Nat`, `Zero`, and `Step` are `Sym`s.
+`Nat`, `Zero`, `Step`, and `Add` are `Sym`s. The scope associates both rules with `Add`. `Zero` and `Step` are constructors of `Nat`; `Add` is a defined symbol.
 
 ```baselang
 One => Step Zero
@@ -198,7 +200,7 @@ Increment => Add One
 ### Rule arity
 
 - A rule's arity is the number of argument patterns following its head on the left-hand side.
-- All rules belonging to one `Fun` must have the same arity.
+- All rules associated with one symbol in a scope must have the same arity.
 - Rule arity may be zero even when the declared type is a function type.
 - With fewer arguments than the rule arity, an application must remain unreduced at its head.
 - A matching rule consumes exactly its arity's worth of arguments.
@@ -206,11 +208,11 @@ Increment => Add One
 
 ### Binding and matching
 
-- A rewrite rule has its owning `Fun` as its head.
+- A rewrite rule has its associated `Sym` as its head.
 - Zero-argument definitions occurring inside argument patterns must be unfolded recursively before pattern validation.
 - Unfolding must preserve the definition's lexical bindings.
-- Expanded argument patterns must consist of `Sym` applications and pattern variables.
-- Any `Fun` reference remaining in an expanded argument pattern is rejected.
+- Expanded argument patterns must consist of applications of symbols without defining rules and pattern variables.
+- Any symbol with defining rules remaining in an expanded argument pattern is rejected.
 - An argument-pattern identifier that does not resolve to a declared constant introduces a rule-local variable.
 - A pattern variable's type is inferred from the function signature and enclosing symbol applications.
 - Ambiguous pattern-variable types are rejected.
@@ -253,7 +255,11 @@ Neg Bool.False => Bool.True
 
 - The constructor set remains editable until the theory is finalized.
 - The rewrite-rule set remains editable until the theory is finalized.
+- Constructor classification and argument-pattern validity must use the finalized rewrite-rule set.
+- A later defining rule must trigger revalidation of earlier patterns containing its head symbol.
 - Theory checks run at the end of the single pass:
+  - Typing under the finalized rewrite-rule set.
+  - Argument-pattern validity after unfolding zero-argument definitions.
   - Totality.
   - Strict positivity.
   - Termination.

@@ -98,7 +98,8 @@ Alias: CSR.
 - Must pass [CSR](#compiler-struct-requirements).
 - Must not implement `PartialEq`, `Eq`, or `Hash`.
   - Rationale: every symbol is unique, it is equal only to itself.
-- Must not have defining rewrite rules.
+- Defining rewrite rules must be stored in the owning scope.
+- Adding a defining rewrite rule must preserve the symbol's allocation identity and type.
 
 ### macro sym
 
@@ -111,49 +112,42 @@ Alias: CSR.
 - A supplied `typ` must implement `Into<Typ>`.
 - A supplied `nym` must implement `Into<Nym>`.
 
-## struct Fun
+## struct Rewrite
 
 - Must pass [CSR](#compiler-struct-requirements).
 - Must have generics:
-  - `N`
-  - `T`
-  - `R`
+  - `P`, defaulting to `Vec<Exp>`
+  - `E`, defaulting to `Exp`
 - Must have exactly these fields:
-  - `nym: N`
-  - `typ: T`
-  - `rules: R`
-- `rules` must contain this function's defining rewrite rules.
-- Must support zero-argument rules whose bodies have either function or non-function types.
-- All rules must have the same number of argument patterns.
-- Must not implement a conversion into `Sym` or `SymRc`.
-- Registration in a scope must not insert the function into any constructor set.
-
-## enum Binding
-
-- Must pass [CTR](#compiler-type-requirements).
-- Must have exactly these variants:
-  - `Sym(SymRc)`
-  - `Fun(FunRc)`
-- `nym()` must return the enclosed symbol's or function's `nym()`.
+  - `patterns: P`
+  - `body: E`
+- For the default generic arguments, `patterns` must contain the ordered argument patterns after the rule's head.
+- An empty `patterns` must specify a zero-argument rule.
+- A zero-argument rule's body may have a function or non-function type.
 
 ## struct Scope
 
 - Must pass [CSR](#compiler-struct-requirements).
 - Must have generics:
-  - `B`, defaulting to `HashMap<String, Binding>`
+  - `B`, defaulting to `HashMap<String, SymRc>`
+  - `R`, defaulting to `Rewrites`
   - `C`, defaulting to `Constructors`
 - Must have exactly these fields:
   - `bindings: B`
+  - `rewrites: R`
   - `constructors: C`
 - The default scope must be empty.
 - Invariants for the default generic arguments:
-  - Each binding key must equal `binding.nym().identifier()`.
-  - Symbols and functions must share the same name namespace.
-  - `constructors_of(s)` must contain exactly the registered symbols satisfying [Constructor of sym S](#constructor-of-sym-s).
+  - Each binding key must equal its symbol's `nym().identifier()`.
+  - Every rewrite-map key must identify a registered symbol.
+  - All rules associated with one symbol must have the same number of argument patterns.
+  - Each rule's body must have the type of its head applied to its argument patterns under the rule's pattern context and definitional conversion.
+  - `constructors_of(s)` must contain exactly the registered symbols satisfying [Constructor of sym S](#constructor-of-sym-s) in this scope.
   - Each symbol must occur at most once in each constructor list.
 - `Nym::identifier()` must return `&self.short.en.singular.canonical`.
-- Registration of an occupied identifier must return an error owning the rejected symbol or function.
-- Failed registration must leave the scope unchanged.
+- Registration of an occupied identifier must return an error owning the rejected symbol.
+- Failed symbol registration or rule insertion must leave the scope unchanged.
+- Constructor indexes must reflect changes to defining rules and to the normal forms of registered symbols' terminal types.
 - Raw symbol construction must not register the symbol in a scope.
 - Binding a function parameter must not register it in the enclosing scope.
 
@@ -167,16 +161,30 @@ Alias: CSR.
 - Must accept `&mut self` and `sym: SymRc`.
 - Must register and return that same symbol as `Result<SymRc, ScopeInsertSymError>`.
 
-### pub fn insert_fun
+### pub fn insert_rewrite
 
-- Must accept `&mut self` and `fun: FunRc`.
-- Must register and return that same function as `Result<FunRc, ScopeInsertFunError>`.
+- Must accept `&mut self`, `sym: SymRc`, and `rewrite: Rewrite`.
+- Must return `Result<(), ScopeInsertRewriteError>`.
+- Must reject a `sym` whose allocation identity does not match a registered symbol.
+- On success, must append `rewrite` to the rules associated with `sym`.
+- On error, the returned error must own the rejected `sym` and `rewrite`.
+
+### pub fn rewrites_of
+
+- Must accept `&self` and `sym: &SymRc`.
+- Must return the rules associated with that symbol's allocation identity as `&[Rewrite]`.
+- Must return an empty slice when no rules are associated with that identity.
 
 ### pub fn constructors_of
 
 - Must accept `&self` and `sym: &SymRc`.
 - Must return the matching registered symbols as `&[SymRc]`.
 - Must return an empty slice when no registered symbol matches.
+
+## type Rewrites
+
+- Must be an alias for `HashMap<NonNull<Sym>, Vec<Rewrite>>`.
+- Keys must use symbol allocation identity.
 
 ## type Constructors
 
@@ -217,7 +225,6 @@ Alias: CSR.
 - Must pass [CTR](#compiler-type-requirements).
 - Must have exactly the following variants:
   - `Sol(SymRc)`
-  - `Fun(FunRc)`
   - `App(ExpBox, ExpBox, TypBox)`
 - Must have methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
@@ -263,7 +270,8 @@ Alias: CSR.
 ## Constructor of type X
 
 - Must be a [sym](#struct-sym).
-- Let `result` be the normal form of `sym.typ().last()` under the theory's rewrite rules.
+- Must have no defining rewrite rules in the scope under consideration.
+- Let `result` be the normal form of `sym.typ().last()` under that scope's rewrite rules.
 - `result` must be `Typ::One(_)`.
 - For `X: &Typ`, `result` must be alpha-equivalent to the normal form of `X`.
 
@@ -276,10 +284,11 @@ Examples:
 ## Constructor of sym S
 
 - Must be a [sym](#struct-sym).
-- The normal form of `sym.typ().last()` must be `Typ::One(exp)`.
+- Must have no defining rewrite rules in the scope under consideration.
+- The normal form of `sym.typ().last()` under that scope's rewrite rules must be `Typ::One(exp)`.
 - Define `head(Exp::App(fun, _, _)) = head(fun)`.
-- Define `head(exp) = exp` for `Exp::Sol(_)` and `Exp::Fun(_)`.
-- For `S: &SymRc`, `head(exp)` must be `Exp::Sol(s)` with `Rc::ptr_eq(s, S)`.
+- Define `head(Exp::Sol(s)) = s`.
+- For `S: &SymRc`, `Rc::ptr_eq(head(exp), S)` must hold.
 
 Examples:
 

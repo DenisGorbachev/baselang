@@ -10,11 +10,13 @@
 
 * Maintain the canonical specification in [.agents/spec.md](.agents/spec.md).
 * FUN: Specify functions as mathematical objects.
-  * Integrate `Fun` into expressions and scope bindings.
-  * Replace the Rust `Def`, `def!`, scope-definition APIs, and definition renderers with zero-argument rewrites owned by `Fun`.
+  * Implement `Rewrite` and scope-owned rules indexed by `Sym` identity.
+  * Replace the Rust `Def`, `def!`, scope-definition APIs, and definition renderers with symbols and zero-argument rewrites.
   * Migrate the legacy terminal reductions in `Nats` and `Vectors`.
   * Implement rewrite parsing, evaluation, and type inference for simple definitions.
-  * Keep constructor indexes consistent with type normalization through `Fun` definitions.
+  * Pass the scope's rewrite context through application checking, definitional conversion, and normalization.
+  * Keep constructor indexes consistent with defining rules and normalized terminal types.
+  * Validate earlier declarations and patterns against the finalized rewrite-rule set.
   * Define dependent function introduction.
   * Define function abstraction.
   * Define function application.
@@ -25,7 +27,6 @@
   * Specify inductive type declarations.
   * Specify constructor declarations.
   * Specify function declarations.
-  * Define source syntax that distinguishes `Sym` declarations from `Fun` declarations when their names are introduced.
   * Specify postulates.
   * Specify proved theorems.
   * Specify opaque definitions.
