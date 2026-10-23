@@ -1,55 +1,55 @@
 use crate::Typ;
-use crate::{AlphaEq, Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple6, VarRc, exp, impl_vars_vec, typ, var};
+use crate::{AlphaEq, Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple6, SymRc, exp, impl_syms_vec, sym, typ};
 use derive_more::Into;
 
 #[derive(Into, Clone, Debug)]
 pub struct Nats {
-    pub nat: VarRc,
-    pub zero: VarRc,
+    pub nat: SymRc,
+    pub zero: SymRc,
     /// Let's use `next` instead of `succ` because it's more understandable
-    pub next: VarRc,
-    pub add: VarRc,
-    pub add_zero: VarRc,
-    pub add_next: VarRc,
+    pub next: SymRc,
+    pub add: SymRc,
+    pub add_zero: SymRc,
+    pub add_next: SymRc,
 }
 
-pub type NatsTuple = (VarRc, VarRc, VarRc, VarRc, VarRc, VarRc);
+pub type NatsTuple = (SymRc, SymRc, SymRc, SymRc, SymRc, SymRc);
 
 impl Nats {
     pub fn new() -> Self {
         // Nat : Top
-        var!(nat: typ!(); Self::nat_nym());
+        sym!(nat: typ!(); Self::nat_nym());
 
-        // `var!(nat: typ!());` expands to the following declaration:
+        // `sym!(nat: typ!());` expands to the following declaration:
         debug_assert!(nat.nym() == &Self::nat_nym());
         debug_assert!(nat.typ().alpha_eq(&Typ::top()));
         debug_assert!(nat.constructors().is_none());
         // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
 
         // Zero : Nat
-        var!(zero: typ!(exp!(nat)));
+        sym!(zero: typ!(exp!(nat)));
 
         // Succ : (n : Nat) -> Nat
-        var!(n: typ!(exp!(nat)));
-        var!(next: typ!(n => typ!(exp!(nat))));
+        sym!(n: typ!(exp!(nat)));
+        sym!(next: typ!(n => typ!(exp!(nat))));
 
         // Add : (a : Nat) -> (b : Nat) -> Nat
-        var!(a: typ!(exp!(nat)));
-        var!(b: typ!(exp!(nat)));
-        var!(add: typ!(a => typ!(b => typ!(exp!(nat)))));
+        sym!(a: typ!(exp!(nat)));
+        sym!(b: typ!(exp!(nat)));
+        sym!(add: typ!(a => typ!(b => typ!(exp!(nat)))));
 
         // Add.Zero : (b : Nat) -> (Add Zero b -> b)
         let add_zero_b_exp = exp!(&add, &zero, &b);
-        var!(add_zero_b: typ!(add_zero_b_exp));
-        var!(add_zero: typ!(b => typ!(add_zero_b => typ!(&b))));
+        sym!(add_zero_b: typ!(add_zero_b_exp));
+        sym!(add_zero: typ!(b => typ!(add_zero_b => typ!(&b))));
 
         // Add.Next : (a : Nat) -> (b : Nat) -> (Add (Next a) b -> Next (Add a b))
         let next_a = exp!(&next, &a);
         let add_next_a_b_exp = exp!(&add, next_a, &b);
-        var!(add_next_a_b: typ!(add_next_a_b_exp));
+        sym!(add_next_a_b: typ!(add_next_a_b_exp));
         let add_a_b_exp = exp!(&add, &a, &b);
         let next_add_a_b_exp = exp!(&next, add_a_b_exp);
-        var!(add_next: typ!(a => typ!(b => typ!(add_next_a_b => typ!(next_add_a_b_exp)))));
+        sym!(add_next: typ!(a => typ!(b => typ!(add_next_a_b => typ!(next_add_a_b_exp)))));
 
         Self {
             nat,
@@ -90,7 +90,7 @@ impl Default for Nats {
     }
 }
 
-impl_vars_vec!(Nats, nat, zero, next, add, add_zero, add_next);
+impl_syms_vec!(Nats, nat, zero, next, add, add_zero, add_next);
 
 impl Module for Nats {
     type RefsTuple<'a> = RefsTuple6<'a>;

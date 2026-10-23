@@ -10,9 +10,9 @@ mod module;
 
 pub use module::*;
 
-mod vars_vec;
+mod syms_vec;
 
-pub use vars_vec::*;
+pub use syms_vec::*;
 
 mod apply;
 pub use apply::*;

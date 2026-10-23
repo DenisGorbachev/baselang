@@ -14,9 +14,9 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 ## Core Concepts
 
 * **Types**: Represented by [`Typ`], which can be top-level types [`Top`](https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Top), expression types [`One`](https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.One), function types [`Fun`](https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Fun).
-* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.Sol) or applications [`App`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.App).
-* **Variables**: Represented by [`Var`], which have names and types.
-* **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
+* **Expressions**: Represented by [`Exp`], which can be symbols [`Sol`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.Sol) or applications [`App`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.App).
+* **Symbols and definitions**: [`Sym`] introduces an identity with a type; [`Def`] names an expression.
+* **Modules**: Collections of related symbols, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
 ## Features
@@ -26,11 +26,12 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 * Macros for concise expression construction
 
 [`Bools`]: https://docs.rs/baselang/latest/baselang/struct.Bools.html
+[`Def`]: https://docs.rs/baselang/latest/baselang/struct.Def.html
 [`Exp`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html
 [`Lists`]: https://docs.rs/baselang/latest/baselang/struct.Lists.html
 [`Nats`]: https://docs.rs/baselang/latest/baselang/struct.Nats.html
+[`Sym`]: https://docs.rs/baselang/latest/baselang/struct.Sym.html
 [`Typ`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html
-[`Var`]: https://docs.rs/baselang/latest/baselang/struct.Var.html
 
 <!-- crate documentation end -->
 

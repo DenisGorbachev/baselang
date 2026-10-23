@@ -1,4 +1,4 @@
-use crate::{Exp, Render, Typ, Var};
+use crate::{Def, Exp, Render, Sym, Typ};
 use derive_more::{From, Into};
 use derive_new::new;
 use std::borrow::Cow;
@@ -11,10 +11,10 @@ pub struct PlainRenderer {
 }
 
 impl PlainRenderer {
-    pub fn render_var_inner(&self, var: &Var, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
-        let name = &var.nym().short.en.singular;
+    pub fn render_sym_inner(&self, sym: &Sym, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
+        let name = &sym.nym().short.en.singular;
         if with_type {
-            let typ = self.render_typ_inner(var.typ());
+            let typ = self.render_typ_inner(sym.typ());
             if wrapped { format!("({name} : {typ})") } else { format!("{name} : {typ}") }
         } else {
             name.to_string()
@@ -26,19 +26,20 @@ impl PlainRenderer {
             Typ::Top => self.top.clone().into_owned(),
             Typ::One(exp) => self.render_exp_inner(exp, false, false),
             Typ::Fun(param, typ) => {
-                format!("{var} -> {typ}", var = self.render_var_inner(param, false, true, true), typ = self.render_typ_inner(typ))
+                format!("{sym} -> {typ}", sym = self.render_sym_inner(param, false, true, true), typ = self.render_typ_inner(typ))
             }
         }
     }
 
     pub fn render_exp_inner(&self, exp: &Exp, is_top_level: bool, with_type: bool) -> String {
         match exp {
-            Exp::Sol(var) => self.render_var_inner(var, is_top_level, with_type, true),
+            Exp::Sol(sym) => self.render_sym_inner(sym, is_top_level, with_type, true),
             Exp::App(fun, arg, typ) => {
                 // We don't want to print the types of inner values, only the type of the current exp itself
                 const WITH_TYPE_INNER: bool = false;
                 let fun = self.render_exp_inner(fun, false, WITH_TYPE_INNER);
-                let arg = self.render_exp_inner(arg, false, WITH_TYPE_INNER);
+                let arg_render = self.render_exp_inner(arg, false, WITH_TYPE_INNER);
+                let arg = if matches!(arg.as_ref(), Exp::App(..)) { format!("({arg_render})") } else { arg_render };
 
                 if with_type {
                     let typ = self.render_typ_inner(typ);
@@ -58,8 +59,14 @@ impl PlainRenderer {
 }
 
 impl Render for PlainRenderer {
-    fn render_var(&self, var: &Var) -> Option<String> {
-        Some(self.render_var_inner(var, true, true, false))
+    fn render_sym(&self, sym: &Sym) -> Option<String> {
+        Some(self.render_sym_inner(sym, true, true, false))
+    }
+
+    fn render_def(&self, def: &Def) -> Option<String> {
+        let name = &def.nym().short.en.singular;
+        let exp = self.render_exp_inner(def.exp(), false, false);
+        Some(format!("{name} = {exp}"))
     }
 
     fn render_typ(&self, typ: &Typ) -> Option<String> {

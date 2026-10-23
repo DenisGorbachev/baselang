@@ -1,4 +1,4 @@
-use crate::{Exp, InvalidApplicationError, Parse, Typ, Var, VarRc};
+use crate::{Exp, InvalidApplicationError, Parse, Sym, SymRc, Typ};
 use core::iter::from_fn;
 use derive_new::new;
 use non_empty_str::cow::NonEmptyCowStr;
@@ -24,7 +24,7 @@ pub struct PlainParser {
 impl Parse for PlainParser {
     type Error = PlainParserParseError;
 
-    fn parse(&mut self, input: &str) -> impl Iterator<Item = Result<VarRc, Self::Error>> {
+    fn parse(&mut self, input: &str) -> impl Iterator<Item = Result<SymRc, Self::Error>> {
         let mut scope = Vec::new();
         let mut failed = false;
         let top = self.top.clone();
@@ -65,9 +65,9 @@ impl Parse for PlainParser {
                             None => continue,
                         };
                         let result = match parse_line(line, &scope, top.as_ref().as_ref()) {
-                            Ok(var) => {
-                                scope.push(var.clone());
-                                Ok(var)
+                            Ok(sym) => {
+                                scope.push(sym.clone());
+                                Ok(sym)
                             }
                             Err(source) => {
                                 failed = true;
@@ -212,7 +212,7 @@ fn strip_prefix_checked<'a>(input: &'a str, prefix: &str) -> Result<&'a str, Pla
     }
 }
 
-fn parse_line(line: &str, scope: &[VarRc], top: &str) -> Result<VarRc, PlainParserParseError> {
+fn parse_line(line: &str, scope: &[SymRc], top: &str) -> Result<SymRc, PlainParserParseError> {
     use PlainParserParseError::*;
     let colon_index = match find_first_top_level_colon(line) {
         Ok(Some(colon_index)) => colon_index,
@@ -265,10 +265,10 @@ fn parse_line(line: &str, scope: &[VarRc], top: &str) -> Result<VarRc, PlainPars
             });
         }
     };
-    Ok(Var::new_rc(name.to_string(), typ, None))
+    Ok(Sym::new_rc(name.to_string(), typ, None))
 }
 
-fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParserParseError> {
+fn parse_typ(input: &str, scope: &[SymRc], top: &str) -> Result<Typ, PlainParserParseError> {
     use PlainParserParseError::*;
     let input = input.trim();
     if input.is_empty() {
@@ -409,7 +409,7 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                 };
                 let binders = names
                     .into_iter()
-                    .map(|name| Var::new_rc(name.to_string(), binder_typ.clone(), None))
+                    .map(|name| Sym::new_rc(name.to_string(), binder_typ.clone(), None))
                     .collect::<Vec<_>>();
                 let mut inner_scope = scope.to_vec();
                 inner_scope.extend(binders.iter().cloned());
@@ -446,11 +446,11 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
                 });
             }
         };
-        let binder = Var::new_rc("_", domain_typ, None);
+        let binder = Sym::new_rc("_", domain_typ, None);
         return Ok(Typ::fun(&binder, codomain));
     }
 
-    if input == top && find_var(scope, input).is_none() {
+    if input == top && find_sym(scope, input).is_none() {
         return Ok(Typ::top());
     }
     let exp = match parse_exp(input, scope, top) {
@@ -465,7 +465,7 @@ fn parse_typ(input: &str, scope: &[VarRc], top: &str) -> Result<Typ, PlainParser
     Ok(Typ::one(exp))
 }
 
-fn parse_exp(input: &str, scope: &[VarRc], top: &str) -> Result<Exp, PlainParserParseError> {
+fn parse_exp(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParserParseError> {
     use PlainParserParseError::*;
     let input = input.trim();
     if input.is_empty() {
@@ -528,7 +528,7 @@ fn parse_exp(input: &str, scope: &[VarRc], top: &str) -> Result<Exp, PlainParser
     })
 }
 
-fn parse_exp_atom(input: &str, scope: &[VarRc], top: &str) -> Result<Exp, PlainParserParseError> {
+fn parse_exp_atom(input: &str, scope: &[SymRc], top: &str) -> Result<Exp, PlainParserParseError> {
     use PlainParserParseError::*;
     let input = input.trim();
     if let Some(inner) = match strip_outer_parens(input) {
@@ -542,13 +542,13 @@ fn parse_exp_atom(input: &str, scope: &[VarRc], top: &str) -> Result<Exp, PlainP
     } {
         return parse_exp(inner, scope, top);
     }
-    if input == top && find_var(scope, input).is_none() {
+    if input == top && find_sym(scope, input).is_none() {
         return Err(TopTypeUsedAsExpression {
             input: input.to_string(),
         });
     }
-    match find_var(scope, input) {
-        Some(var) => Ok(Exp::sol(&var)),
+    match find_sym(scope, input) {
+        Some(sym) => Ok(Exp::sol(&sym)),
         None => Err(UnknownIdentifier {
             name: input.to_string(),
             input: input.to_string(),
@@ -569,10 +569,10 @@ fn parse_application(fun: Exp, arg: Exp) -> Result<Exp, InvalidApplicationError>
     }
 }
 
-fn find_var(scope: &[VarRc], name: &str) -> Option<VarRc> {
-    scope.iter().rev().find_map(|var| {
-        let candidate = var.nym().short.en.singular.canonical.as_str();
-        if candidate == name { Some(var.clone()) } else { None }
+fn find_sym(scope: &[SymRc], name: &str) -> Option<SymRc> {
+    scope.iter().rev().find_map(|sym| {
+        let candidate = sym.nym().short.en.singular.canonical.as_str();
+        if candidate == name { Some(sym.clone()) } else { None }
     })
 }
 

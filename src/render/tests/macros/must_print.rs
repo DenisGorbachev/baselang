@@ -1,9 +1,9 @@
-use crate::{Render, VarsVec, parse_prints, render_vars_vec};
+use crate::{Render, SymsVec, parse_prints, render_syms_vec};
 use itertools::Itertools;
 use std::iter::zip;
 
-pub fn assert_eq_prints(module: &impl VarsVec, renderer: &impl Render, prints: &str) {
-    let prints_actual = render_vars_vec(module, renderer).collect_vec();
+pub fn assert_eq_prints(module: &impl SymsVec, renderer: &impl Render, prints: &str) {
+    let prints_actual = render_syms_vec(module, renderer).collect_vec();
     let prints_expected = parse_prints(prints);
     // Using a loop to see the error diffs more clearly
     for (actual, expected) in zip(&prints_actual, &prints_expected) {

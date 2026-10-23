@@ -5,7 +5,7 @@ use derive_new::new;
 use std::borrow::Cow;
 use std::fmt::{self, Display, Formatter};
 
-/// This struct holds the canonical and capitalized names of a [`crate::Var`]
+/// This struct holds the canonical and capitalized names of a [`crate::Sym`]
 ///
 /// ```rust
 /// # use baselang::{Capitalized, Phrase};

@@ -4,17 +4,17 @@ use facet::Facet;
 use thiserror::Error;
 
 #[derive(Facet, Debug)]
-pub struct StructVar {
-    pub fields: StructVarFields,
-    pub methods: StructVarMethods,
+pub struct StructSym {
+    pub fields: StructSymFields,
+    pub methods: StructSymMethods,
 }
 
-impl StructVar {
-    pub fn new(ctx: &Ctx<'_>) -> Result<Self, StructVarNewError> {
-        use StructVarNewError::*;
-        let var = handle!(ctx.adt_struct("Var"), AdtStructFailed);
-        let fields = StructVarFields::new(var);
-        let methods = StructVarMethods::new(ctx, var);
+impl StructSym {
+    pub fn new(ctx: &Ctx<'_>) -> Result<Self, StructSymNewError> {
+        use StructSymNewError::*;
+        let sym = handle!(ctx.adt_struct("Sym"), AdtStructFailed);
+        let fields = StructSymFields::new(sym);
+        let methods = StructSymMethods::new(ctx, sym);
         Ok(Self {
             fields,
             methods,
@@ -24,30 +24,30 @@ impl StructVar {
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarNewError {
-    #[error("failed to get `struct Var`")]
-    AdtStructFailed { source: StructVarAdtStructError },
+pub enum StructSymNewError {
+    #[error("failed to get `struct Sym`")]
+    AdtStructFailed { source: StructSymAdtStructError },
 }
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarAdtStructError {
-    #[error("failed to get a unique `Var` item")]
-    GetLocalDefIdFailed { source: StructVarGetLocalDefIdError },
+pub enum StructSymAdtStructError {
+    #[error("failed to get a unique `Sym` item")]
+    GetLocalDefIdFailed { source: StructSymGetLocalDefIdError },
     #[error("item '{symbol}' is not a struct")]
     NotStruct { symbol: String },
 }
 
 #[derive(Error, Facet, Debug)]
 #[repr(u8)]
-pub enum StructVarGetLocalDefIdError {
+pub enum StructSymGetLocalDefIdError {
     #[error("item not found by symbol '{symbol}'")]
     NotFound { symbol: String },
     #[error("item not unique by symbol '{symbol}'")]
     NotUnique { symbol: String },
 }
 
-impl From<StructDefError> for StructVarAdtStructError {
+impl From<StructDefError> for StructSymAdtStructError {
     fn from(value: StructDefError) -> Self {
         use StructDefError::*;
         match value {
@@ -65,7 +65,7 @@ impl From<StructDefError> for StructVarAdtStructError {
     }
 }
 
-impl From<GetLocalDefIdError> for StructVarGetLocalDefIdError {
+impl From<GetLocalDefIdError> for StructSymGetLocalDefIdError {
     fn from(value: GetLocalDefIdError) -> Self {
         use GetLocalDefIdError::*;
         match value {
@@ -83,10 +83,10 @@ impl From<GetLocalDefIdError> for StructVarGetLocalDefIdError {
     }
 }
 
-mod struct_var_fields;
+mod struct_sym_fields;
 
-pub use struct_var_fields::*;
+pub use struct_sym_fields::*;
 
-mod struct_var_methods;
+mod struct_sym_methods;
 
-pub use struct_var_methods::*;
+pub use struct_sym_methods::*;

@@ -6,9 +6,13 @@ mod typ;
 
 pub use typ::*;
 
-mod var;
+mod sym;
 
-pub use var::*;
+pub use sym::*;
+
+mod def;
+
+pub use def::*;
 
 mod nym_lang;
 

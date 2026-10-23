@@ -1,4 +1,4 @@
-use crate::{Nats, exp, module, top, typ, var};
+use crate::{Nats, exp, module, sym, top, typ};
 
 // TODO: Move it to `Nats`
 module!(
@@ -18,21 +18,21 @@ impl Sum {
             ..
         } = nat;
 
-        var!(a: typ!(exp!(nat)));
-        var!(b: typ!(exp!(nat)));
-        var!(c: typ!(exp!(nat)));
+        sym!(a: typ!(exp!(nat)));
+        sym!(b: typ!(exp!(nat)));
+        sym!(c: typ!(exp!(nat)));
 
-        var!(sum: typ!(a => typ!(b => typ!(c => top!()))));
+        sym!(sum: typ!(a => typ!(b => typ!(c => top!()))));
 
         let sum_zero_c_c_exp = exp!(&sum, zero, &c, &c);
-        var!(sum_base: typ!(c => sum_zero_c_c_exp));
+        sym!(sum_base: typ!(c => sum_zero_c_c_exp));
 
         let next_a = exp!(next, &a);
         let next_c = exp!(next, &c);
         let sum_a_b_c_exp = exp!(&sum, &a, &b, &c);
-        var!(sum_a_b_c: typ!(sum_a_b_c_exp));
+        sym!(sum_a_b_c: typ!(sum_a_b_c_exp));
         let sum_next_a_b_next_c_exp = exp!(&sum, next_a, &b, next_c);
-        var!(sum_step: typ!(a => typ!(b => typ!(c => typ!(sum_a_b_c => typ!(sum_next_a_b_next_c_exp))))));
+        sym!(sum_step: typ!(a => typ!(b => typ!(c => typ!(sum_a_b_c => typ!(sum_next_a_b_next_c_exp))))));
 
         Self {
             sum,

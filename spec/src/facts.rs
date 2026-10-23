@@ -11,7 +11,7 @@ pub fn every_type_must_be_static() -> Option<bool> {
     }
 }
 
-/// Whether vars that have the same type and the same set of constructors must be equal
+/// Whether syms that have the same type and the same set of constructors must be equal
 ///
 /// ## Examples
 ///
@@ -39,7 +39,7 @@ pub fn every_type_must_be_static() -> Option<bool> {
 /// ## Notes
 ///
 /// - Structural equality breaks "semantic typing" (`Meters : Type; Meters.Mk : Nat -> Type; Seconds : Type; Seconds.Mk : Nat -> Type`)
-pub fn structurally_equal_vars_must_be_equal() -> bool {
+pub fn structurally_equal_syms_must_be_equal() -> bool {
     false
 }
 
@@ -69,7 +69,7 @@ pub fn definitions_are_content_addressable() -> bool {
     true
 }
 
-pub fn var_struct_must_have_field_constructors_of_option_vec() -> Option<bool> {
+pub fn sym_struct_must_have_field_constructors_of_option_vec() -> Option<bool> {
     match (must_support_types_with_empty_set_of_constructors(), must_not_require_constructors_of_constructors(), every_type_must_be_static()) {
         (true, true, Some(true)) => Some(true),
         _ => None,
@@ -90,8 +90,8 @@ pub fn must_not_require_constructors_of_constructors() -> bool {
     true
 }
 
-/// It's better to avoid `Var::set_constructors`
-pub fn should_not_have_mutators_for_constructors_on_var_struct() -> bool {
+/// It's better to avoid `Sym::set_constructors`
+pub fn should_not_have_mutators_for_constructors_on_sym_struct() -> bool {
     true
 }
 
@@ -110,16 +110,6 @@ pub fn constructors_should_be_forward_mutable() -> bool {
 
 /// Whether users should be able to write `One = Succ Zero` and use `One` in the subsequent declarations
 ///
-/// Implementation options:
-/// - Extend `Var` struct with `value: Value` field (`enum Value { Known { exp: Exp }, Unknown { typ: Typ } }`)
-///   - Maybe switch from tuple-like `Typ::Fun` to vector-like `Typ::Fun`
-///     - Think about how to refactor `Exp::App` to a vector-like variant
-/// - Introduce `Exp::Let { var: VarRc, val: Exp, exp: Exp}` variant
-/// - Introduce `Typ::Let { var: VarRc, val: Exp, typ: Typ }` variant
-///
-/// Implementation imperatives:
-/// - Must support let bindings at all levels (including the top level)
-///   - This requirement invalidates the `Exp::Let` implementation because expressions are not allowed at the top level
 pub fn should_support_let_bindings() -> bool {
     true
 }

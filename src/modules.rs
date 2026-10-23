@@ -1,21 +1,21 @@
 /*!
 # Modules
 
-Baselang modules are implemented as Rust structs with [`VarRc`](crate::VarRc) fields.
+Baselang modules are implemented as Rust structs with [`SymRc`](crate::SymRc) fields.
 
-TODO: Modules are isomorphic to functions that expose both the inputs and the outputs (inputs are other modules, vars, names, counts; outputs are vars)
+TODO: Modules are isomorphic to functions that expose both the inputs and the outputs (inputs are other modules, syms, names, counts; outputs are syms)
 
 Module passes the following validations:
 
 * Module is a Rust struct
 * Every field of a module passes the following validations:
     * Fields is `pub`
-    * Field is a [`VarRc`](crate::VarRc)
+    * Field is a [`SymRc`](crate::SymRc)
 * Module has a `pub fn new` which returns `Self`
     * Some modules don't implement `Default` because they accept other modules as arguments to their `pub fn new`
     * If a module doesn't accept any arguments to `pub fn new`, it should implement `Default`
 * The name of the root export field, after camel-case transformation, is equal to the name of the module.
-    * Example: `Nat` module has a field `nat` with [`VarRc`] type. The Rust field `Nat::nat` holds the Baselang `Nat` type.
+    * Example: `Nat` module has a field `nat` with [`SymRc`] type. The Rust field `Nat::nat` holds the Baselang `Nat` type.
     * Notes
         * This makes it more convenient for users of the module who can pattern-match on the module struct to extract the variables with correct names (no need to rename them).
 

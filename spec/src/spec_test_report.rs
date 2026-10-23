@@ -8,8 +8,8 @@ use tokio::task::yield_now;
 
 #[derive(Facet, Debug)]
 pub struct SpecTestReport {
-    /// `struct Var`
-    pub struct_var: Result<StructVar, StructVarNewError>,
+    /// `struct Sym`
+    pub struct_sym: Result<StructSym, StructSymNewError>,
     pub tests: Tests,
 }
 
@@ -22,10 +22,10 @@ impl SpecTestReport {
 
     pub async fn new_async(ctx: &Ctx<'_>) -> Self {
         yield_now().await;
-        let struct_var = StructVar::new(ctx);
+        let struct_sym = StructSym::new(ctx);
         let tests = Tests::new();
         Self {
-            struct_var,
+            struct_sym,
             tests,
         }
     }
@@ -37,9 +37,9 @@ pub enum ReportGenerateError {
     BuildFailed { source: io::Error },
 }
 
-mod struct_var;
+mod struct_sym;
 
-pub use struct_var::*;
+pub use struct_sym::*;
 
 mod tests;
 

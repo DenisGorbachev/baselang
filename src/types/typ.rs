@@ -1,22 +1,20 @@
-use crate::types::exp::Exp;
-use crate::types::var::{Var, VarRc};
-use crate::{AlphaEq, alpha_eq_typ};
+use crate::{AlphaEq, Def, Exp, Sym, SymRc, alpha_eq_typ};
 use Exp::Sol;
 use Typ::*;
 use std::rc::Rc;
 
-/// [`Typ`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Var`] must not derive them.
+/// [`Typ`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Sym`] must not derive them.
 /// [`Typ`] may be compared semantically via [`AlphaEq`].
 #[derive(Clone, Debug)]
 pub enum Typ {
-    /// Needed because some vars have fun types that end in a top (e.g. `List : (t : Top) -> Top`)
+    /// Needed because some syms have fun types that end in a top (e.g. `List : (t : Top) -> Top`)
     Top,
     /// Maybe it can own the exp
     /// Name is chosen so that it could be exported (doesn't conflict with other names)
     One(/* exp */ Exp),
-    /// Must wrap [`Var`] in [`Rc`] because this var may be used in the following typ (e.g. in `Nil : (t : Top) -> List t`, the `t` var is used in `List t`)
+    /// Must wrap [`Sym`] in [`Rc`] because this sym may be used in the following typ (e.g. in `Nil : (t : Top) -> List t`, the `t` sym is used in `List t`)
     /// Must wrap [`Typ`] in [`Box`] to avoid "recursive type" error
-    Fun(/* param */ VarRc, /* typ */ TypBox),
+    Fun(/* param */ SymRc, /* typ */ TypBox),
 }
 
 pub type TypRc = Rc<Typ>;
@@ -30,13 +28,13 @@ impl Typ {
 
     #[inline(always)]
     pub fn one(exp: impl Into<Exp>) -> Self {
-        // TODO: validate that Exp contains only vars that are either constructors or bound variables (e.g. reject a case where `n : nat` is created with the intention of being a bound var, but not added to a fun type)
+        // TODO: validate that Exp contains only syms that are either constructors or bound variables (e.g. reject a case where `n : nat` is created with the intention of being a bound sym, but not added to a fun type)
         // TODO: This is related to a TODO in Self::substitute
         One(exp.into())
     }
 
     #[inline(always)]
-    pub fn fun(param: &VarRc, typ: impl Into<Typ>) -> Self {
+    pub fn fun(param: &SymRc, typ: impl Into<Typ>) -> Self {
         Fun(param.clone(), Box::new(typ.into()))
     }
 
@@ -45,17 +43,17 @@ impl Typ {
         if let Fun(_, typ) = self { typ.as_ref() } else { self }
     }
 
-    pub fn substitute(&self, var: &VarRc, arg: &Exp) -> Self {
-        debug_assert!(var.typ().alpha_eq(arg.typ()));
+    pub fn substitute(&self, sym: &SymRc, arg: &Exp) -> Self {
+        debug_assert!(sym.typ().alpha_eq(arg.typ()));
         match self {
             Top => Top,
-            One(exp) => One(exp.substitute(var, arg)),
+            One(exp) => One(exp.substitute(sym, arg)),
             Fun(param, typ) => {
-                if Rc::ptr_eq(param, var) {
+                if Rc::ptr_eq(param, sym) {
                     self.clone()
                 } else {
-                    let substituted_param = substitute_var_rc(param, var, arg);
-                    let substituted_typ = typ.substitute(var, arg);
+                    let substituted_param = substitute_sym_rc(param, sym, arg);
+                    let substituted_typ = typ.substitute(sym, arg);
                     let substituted_typ = if Rc::ptr_eq(&substituted_param, param) {
                         substituted_typ
                     } else {
@@ -67,20 +65,20 @@ impl Typ {
         }
     }
 
-    pub fn contains_var(&self, target: &VarRc) -> bool {
+    pub fn contains_sym(&self, target: &SymRc) -> bool {
         match self {
             Top => false,
-            One(exp) => exp.contains_var(target),
-            Fun(param, typ) => param.contains_var(target) || typ.contains_var(target),
+            One(exp) => exp.contains_sym(target),
+            Fun(param, typ) => param.contains_sym(target) || typ.contains_sym(target),
         }
     }
 
-    pub fn replace(&self, from: &VarRc, to: &VarRc) -> Self {
+    pub fn replace(&self, from: &SymRc, to: &SymRc) -> Self {
         match self {
             Top => Top,
             One(exp) => One(exp.replace(from, to)),
             Fun(param, typ) => {
-                let replaced_param = replace_var_rc(param, from, to);
+                let replaced_param = replace_sym_rc(param, from, to);
                 let replaced_typ = typ.replace(from, to);
                 Fun(replaced_param, Box::new(replaced_typ))
             }
@@ -88,38 +86,38 @@ impl Typ {
     }
 }
 
-fn substitute_var_rc(fun: &VarRc, var: &VarRc, arg: &Exp) -> VarRc {
-    if fun.contains_var(var) { Rc::new(fun.substitute(var, arg)) } else { fun.clone() }
+fn substitute_sym_rc(fun: &SymRc, sym: &SymRc, arg: &Exp) -> SymRc {
+    if fun.contains_sym(sym) { Rc::new(fun.substitute(sym, arg)) } else { fun.clone() }
 }
 
-fn replace_var_rc(fun: &VarRc, from: &VarRc, to: &VarRc) -> VarRc {
+fn replace_sym_rc(fun: &SymRc, from: &SymRc, to: &SymRc) -> SymRc {
     if Rc::ptr_eq(fun, from) {
         to.clone()
-    } else if fun.contains_var(from) {
-        Rc::new(fun.replace_var(from, to))
+    } else if fun.contains_sym(from) {
+        Rc::new(fun.replace_sym(from, to))
     } else {
         fun.clone()
     }
 }
 
-impl From<Var> for Typ {
+impl From<Sym> for Typ {
     #[inline(always)]
-    fn from(var: Var) -> Self {
-        One(Sol(Rc::new(var)))
+    fn from(sym: Sym) -> Self {
+        One(Sol(Rc::new(sym)))
     }
 }
 
-impl From<VarRc> for Typ {
+impl From<SymRc> for Typ {
     #[inline(always)]
-    fn from(var: VarRc) -> Self {
-        One(Sol(var))
+    fn from(sym: SymRc) -> Self {
+        One(Sol(sym))
     }
 }
 
-impl From<&VarRc> for Typ {
+impl From<&SymRc> for Typ {
     #[inline(always)]
-    fn from(var: &VarRc) -> Self {
-        One(Sol(var.clone()))
+    fn from(sym: &SymRc) -> Self {
+        One(Sol(sym.clone()))
     }
 }
 
@@ -130,31 +128,43 @@ impl From<Exp> for Typ {
     }
 }
 
-impl From<(Var, Typ)> for Typ {
+impl From<Def> for Typ {
+    fn from(def: Def) -> Self {
+        Self::one(def)
+    }
+}
+
+impl From<&Def> for Typ {
+    fn from(def: &Def) -> Self {
+        Self::one(def)
+    }
+}
+
+impl From<(Sym, Typ)> for Typ {
     #[inline(always)]
-    fn from((param, typ): (Var, Typ)) -> Self {
+    fn from((param, typ): (Sym, Typ)) -> Self {
         Fun(Rc::new(param), Box::new(typ))
     }
 }
 
-impl From<(VarRc, Typ)> for Typ {
+impl From<(SymRc, Typ)> for Typ {
     #[inline(always)]
-    fn from((param, typ): (VarRc, Typ)) -> Self {
+    fn from((param, typ): (SymRc, Typ)) -> Self {
         Fun(param, Box::new(typ))
     }
 }
 
-impl From<(&VarRc, Typ)> for Typ {
+impl From<(&SymRc, Typ)> for Typ {
     #[inline(always)]
-    fn from((var, typ): (&VarRc, Typ)) -> Self {
-        Self::from((var.clone(), typ))
+    fn from((sym, typ): (&SymRc, Typ)) -> Self {
+        Self::from((sym.clone(), typ))
     }
 }
 
-impl From<(&VarRc, Exp)> for Typ {
+impl From<(&SymRc, Exp)> for Typ {
     #[inline(always)]
-    fn from((var, exp): (&VarRc, Exp)) -> Self {
-        Self::from((var.clone(), Self::from(exp)))
+    fn from((sym, exp): (&SymRc, Exp)) -> Self {
+        Self::from((sym.clone(), Self::from(exp)))
     }
 }
 
@@ -164,9 +174,9 @@ impl AlphaEq for Typ {
     }
 }
 
-/// This macro uses `$var.clone()` to avoid the "&" before variables.
-/// `$var` should have a [`VarRc`] type.
-/// `$var.clone()` is also used in [`exp`](crate::exp) macro.
+/// This macro uses `$sym.clone()` to avoid the "&" before variables.
+/// `$sym` should have a [`SymRc`] type.
+/// `$sym.clone()` is also used in [`exp`](crate::exp) macro.
 #[macro_export]
 macro_rules! typ {
     () => {
@@ -175,8 +185,8 @@ macro_rules! typ {
     ($exp: expr) => {
         $crate::Typ::one($exp)
     };
-    ($var: ident => $typ: expr) => {
-        $crate::Typ::fun(&$var, $typ)
+    ($sym: ident => $typ: expr) => {
+        $crate::Typ::fun(&$sym, $typ)
     };
 }
 
@@ -190,14 +200,14 @@ macro_rules! top {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Equality, InvalidApplicationError, Of, exp, var};
+    use crate::{Equality, InvalidApplicationError, Of, exp, sym};
     use pretty_assertions::assert_matches;
 
     #[test]
     fn must_compare_types_up_to_alpha_equivalence() {
-        var!(x);
-        var!(y);
-        var!(z);
+        sym!(x);
+        sym!(y);
+        sym!(z);
 
         let left = typ!(x => &x);
         let right = typ!(y => &y);
@@ -209,14 +219,14 @@ mod tests {
 
     #[test]
     fn must_substitute_all_instances() {
-        var!(t);
-        var!(u);
-        var!(a: typ!(&t));
-        var!(b: typ!(&t));
+        sym!(t);
+        sym!(u);
+        sym!(a: typ!(&t));
+        sym!(b: typ!(&t));
 
         let (eq, refl) = Equality::default().into();
 
-        // NOTE: `eq t t` and `refl t` are not even expressible in Rust, because `Typ::Top` is not a `Var`, so it can't be passed as a first argument to `eq` or `refl`
+        // NOTE: `eq t t` and `refl t` are not even expressible in Rust, because `Typ::Top` is not a `Sym`, so it can't be passed as a first argument to `eq` or `refl`
 
         let eq_t_a_a = exp!(&eq, &t, &a, &a);
         let eq_t_b_b = exp!(&eq, &t, &b, &b); // can be expressed but can't be constructed
@@ -233,14 +243,14 @@ mod tests {
 
     #[test]
     #[ignore = "known bug: substitution captures free occurrences of later binders"]
-    fn must_not_capture_free_var_in_substituted_argument() {
-        var!(x);
-        var!(y);
+    fn must_not_capture_free_sym_in_substituted_argument() {
+        sym!(x);
+        sym!(y);
 
         let f_typ = typ!(x => &y);
         let actual = f_typ.substitute(&y, &Exp::sol(&x));
 
-        var!(x_fresh);
+        sym!(x_fresh);
         let expected = typ!(x_fresh => &x);
 
         assert!(!f_typ.alpha_eq(&expected));
@@ -248,13 +258,13 @@ mod tests {
     }
 
     #[test]
-    fn must_refresh_binder_identity_when_substitution_changes_it_to_equal_var() {
-        // vars are still different even if they have the same name
-        var!(y1: top!(); "y");
-        var!(y2: top!(); "y");
-        var!(z);
+    fn must_refresh_binder_identity_when_substitution_changes_it_to_equal_sym() {
+        // syms are still different even if they have the same name
+        sym!(y1: top!(); "y");
+        sym!(y2: top!(); "y");
+        sym!(z);
 
-        var!(x1: typ!(&y1));
+        sym!(x1: typ!(&y1));
         let f_typ = typ!(x1 => &y1);
 
         // this substitution must change the type
@@ -263,7 +273,7 @@ mod tests {
         // this substitution must not change the type (because y1 has already been substituted)
         let actual_2 = actual_1.substitute(&y1, &Exp::sol(&z));
 
-        var!(v2: typ!(&y2));
+        sym!(v2: typ!(&y2));
         let expected = typ!(v2 => &y2);
 
         assert!(!f_typ.alpha_eq(&expected));

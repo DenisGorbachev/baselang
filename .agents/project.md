@@ -47,37 +47,57 @@ Alias: CTR.
 - Must require `F: Apply<Arg = A, Typ = T>`.
 - Must compute `typ` by calling `fun.apply(&arg)`.
 
-## struct Var
+## struct Sym
 
-A struct that represents a variable.
+A struct that introduces an identity with a type and no defining expression.
 
 - Must have fields:
   - `nym: Nym`
-  - `value: Value`
-- Must have functions:
-  - `pub fn typ(&self) -> &Typ`
-    - Must match on `self.value`
+  - `typ: Typ`
+  - `constructors: Constructors`
+- Must derive `Getters`.
+- Must keep its type immutable after construction.
+- Must be shared through `SymRc`, an alias for `Rc<Sym>`.
+- Must compare symbol occurrences by identity using `Rc::ptr_eq`, with bound symbols compared through alpha-equivalence.
+- Symbols with the same name and type may still have different identities.
+- Includes constructors such as `Nat`, `Zero`, and `Succ`.
+- Includes function parameters that may be bound and substituted.
+- The `sym!` macro must construct symbols.
 
-Notes:
+## struct Def
 
-- Vars with a known value don't participate in application (because they already have a value)
+A struct that names an expression without introducing a new symbol identity.
 
-## enum Value
+- Must have fields:
+  - `nym: Nym`
+  - `exp: Exp`
+- Must derive `Getters`.
+- Must have `pub fn typ(&self) -> &Typ` that returns `self.exp.typ()`.
+- Must derive its type from the expression instead of storing a separate type.
+- Must convert into `Exp` by returning its defining expression.
+- Converting `&Def` into `Exp` must clone the expression while preserving the identities of its symbols.
+- Must convert into `Typ` as `Typ::One` of its defining expression.
+- Application must use the defining expression as the function or argument.
+- Definitions must not introduce function parameters or independent constructors.
+- Includes aliases such as `One = Succ Zero`.
+- The `def!` macro must construct definitions.
+- Renderers must distinguish symbol declarations (`Zero : Nat`) from definitions (`One = Succ Zero`).
 
-An enum that represents a value of the variable.
+## type Constructors
 
-- Must have exactly the following variants:
-  - `Known(Exp)`
-  - `Unknown(Typ)`
+An alias for `Option<Vec<Sym>>`.
+
+- `None` means that the symbol does not need constructors.
+- `Some(vec![])` means that the symbol has no constructors.
 
 ## enum Typ
 
-An enum that represents a type of the variable.
+An enum that represents a type of a symbol or expression.
 
 - Must have exactly the following variants:
   - `Top`,
   - `One(Exp)`
-  - `Fun(DuoVec<VarRc>)`
+  - `Fun(DuoVec<SymRc>)`
 - Must have methods:
   - `pub fn last(&self) -> &Self`
 
@@ -86,7 +106,7 @@ An enum that represents a type of the variable.
 An enum that represents an expression.
 
 - Must have exactly the following variants:
-  - `Sol(VarRc)`
+  - `Sol(SymRc)`
   - `App(ExpBox, ExpBox, TypBox)`
 - Must have methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
@@ -108,7 +128,7 @@ A newtype for `Vec` that has at least two elements.
 
 ## Constructor of type X
 
-A [var](#struct-var) whose `var.typ().last()` is `X`.
+A [sym](#struct-sym) whose `sym.typ().last()` is `X`.
 
 Examples:
 
@@ -116,29 +136,29 @@ Examples:
 - `Succ : Nat -> Nat` is a constructor of type `Nat`
 - `Nil : (T : ^_^) -> List T` a constructor of type `List T`
 
-## Constructor of var V
+## Constructor of sym V
 
-A [var](#struct-var) whose `var.typ().last().head()` is `V`.
+A [sym](#struct-sym) whose `sym.typ().last().head()` is `V`.
 
 Examples:
 
-- `Zero : Nat` is a constructor of var `Nat`
-- `Succ : Nat -> Nat` is a constructor of var `Nat`
-- `Nil : (T : ^_^) -> List T` a constructor of var `List` (because `List` is the head var of `List T`) (note that `List T` is a type, not a var)
+- `Zero : Nat` is a constructor of sym `Nat`
+- `Succ : Nat -> Nat` is a constructor of sym `Nat`
+- `Nil : (T : ^_^) -> List T` a constructor of sym `List` (because `List` is the head sym of `List T`) (note that `List T` is a type, not a sym)
 
-## Reducer of var V
+## Reducer of sym V
 
-A [var](#struct-var) that satisfies the following requirements:
+A [sym](#struct-sym) that satisfies the following requirements:
 
-- `var.typ().prelast().head() == V`
-- `var.typ().prelast() == var.typ().last()`
+- `sym.typ().prelast().head() == V`
+- `sym.typ().prelast() == sym.typ().last()`
 - The output must be strictly smaller than input (the recursion must be well-founded)
   - TODO: Specify this requirement more precisely (the current phrase conveys the intent, but is not technically correct)
 
 Examples:
 
-- `Add.Zero : (b : Nat) -> Add Zero b -> b` is a reducer of var `Add`
-- `Add.Succ : (a : Nat) -> (b : Nat) -> Add (Succ a) b -> Succ (Add a b)` is a reducer of var `Add`
+- `Add.Zero : (b : Nat) -> Add Zero b -> b` is a reducer of sym `Add`
+- `Add.Succ : (a : Nat) -> (b : Nat) -> Add (Succ a) b -> Succ (Add a b)` is a reducer of sym `Add`
 
 ## Smart application
 

@@ -2,7 +2,7 @@ use derive_more::{From, Into};
 use derive_new::new;
 use std::rc::Rc;
 
-/// `Nym` is a struct that stores different names of a [`Var`](crate::Var). The word "nym" is a Greek suffix that means "name".
+/// `Nym` is a struct that stores different names of a [`Sym`](crate::Sym). The word "nym" is a Greek suffix that means "name".
 #[derive(new, From, Into, Ord, PartialOrd, Eq, PartialEq, Hash, Clone, Debug)]
 pub struct NymLang {
     pub en: NymEn,

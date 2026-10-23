@@ -1,4 +1,4 @@
-use crate::{module, top, var};
+use crate::{module, sym, top};
 
 module!(
     /// This module is based on International System of Units (SI).
@@ -16,13 +16,13 @@ module!(
 
 impl Units {
     pub fn new() -> Self {
-        var!(meter: top!());
-        var!(gram: top!());
-        var!(second: top!());
-        var!(ampere: top!());
-        var!(kelvin: top!());
-        var!(mole: top!());
-        var!(candela: top!());
+        sym!(meter: top!());
+        sym!(gram: top!());
+        sym!(second: top!());
+        sym!(ampere: top!());
+        sym!(kelvin: top!());
+        sym!(mole: top!());
+        sym!(candela: top!());
 
         Self {
             meter,

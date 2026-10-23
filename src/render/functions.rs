@@ -1,6 +1,6 @@
-mod render_vars;
+mod render_syms;
 
-pub use render_vars::*;
+pub use render_syms::*;
 
 mod dedup_renders;
 

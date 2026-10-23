@@ -1,17 +1,17 @@
-use crate::VarRc;
+use crate::SymRc;
 
-pub type RefsTuple1<'a> = &'a VarRc;
-pub type RefsTuple2<'a> = (&'a VarRc, &'a VarRc);
-pub type RefsTuple3<'a> = (&'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple4<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple5<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple6<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple7<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple8<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple9<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple10<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple11<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
-pub type RefsTuple12<'a> = (&'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc, &'a VarRc);
+pub type RefsTuple1<'a> = &'a SymRc;
+pub type RefsTuple2<'a> = (&'a SymRc, &'a SymRc);
+pub type RefsTuple3<'a> = (&'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple4<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple5<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple6<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple7<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple8<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple9<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple10<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple11<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
+pub type RefsTuple12<'a> = (&'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc, &'a SymRc);
 
 #[macro_export]
 macro_rules! refs_tuple_type {

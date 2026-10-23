@@ -1,4 +1,4 @@
-use crate::{Bools, Ints, Lists, Nats, Rats, Wats, impl_vars_vec_aggregate};
+use crate::{Bools, Ints, Lists, Nats, Rats, Wats, impl_syms_vec_aggregate};
 use derive_more::Into;
 
 #[derive(Into, Clone, Debug)]
@@ -30,7 +30,7 @@ impl Prelude {
     }
 }
 
-impl_vars_vec_aggregate!(Prelude, bool, nat, list, wat, int, rat);
+impl_syms_vec_aggregate!(Prelude, bool, nat, list, wat, int, rat);
 
 impl Default for Prelude {
     fn default() -> Self {

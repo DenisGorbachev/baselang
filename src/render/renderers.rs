@@ -1,4 +1,4 @@
-use crate::{Exp, Preset, Render, Typ, Var};
+use crate::{Def, Exp, Preset, Render, Sym, Typ};
 use derive_more::From;
 
 macro_rules! renderer {
@@ -14,9 +14,15 @@ macro_rules! renderer {
         }
 
         impl Render for Renderer {
-            fn render_var(&self, var: &Var) -> Option<String> {
+            fn render_sym(&self, sym: &Sym) -> Option<String> {
                 match self {
-                    $(Self::$variant(inner) => inner.render_var(var)),+
+                    $(Self::$variant(inner) => inner.render_sym(sym)),+
+                }
+            }
+
+            fn render_def(&self, def: &Def) -> Option<String> {
+                match self {
+                    $(Self::$variant(inner) => inner.render_def(def)),+
                 }
             }
 

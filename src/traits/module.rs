@@ -1,6 +1,6 @@
-use crate::VarsVec;
+use crate::SymsVec;
 
-pub trait Module: VarsVec {
+pub trait Module: SymsVec {
     type RefsTuple<'a>
     where
         Self: 'a;
@@ -22,22 +22,22 @@ macro_rules! module {
     (
         $(#[$meta:meta])*
         $vis:vis struct $name:ident {
-            $($var:ident),+$(,)?
+            $($sym:ident),+$(,)?
         }
     ) => {
         $(#[$meta])*
         #[derive(derive_more::Into, Clone, Debug)]
         $vis struct $name {
-            $(pub $var: $crate::VarRc),+
+            $(pub $sym: $crate::SymRc),+
         }
 
-        $crate::impl_vars_vec!($name, $($var),+);
+        $crate::impl_syms_vec!($name, $($sym),+);
 
         impl $crate::Module for $name {
-            type RefsTuple<'a> = $crate::refs_tuple_type!($($var),+);
+            type RefsTuple<'a> = $crate::refs_tuple_type!($($sym),+);
             // type RefsTuple<'a> = $crate::RefsTuple4<'a>;
 
-            $crate::refs_tuple!($($var),+);
+            $crate::refs_tuple!($($sym),+);
         }
     };
 }

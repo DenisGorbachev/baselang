@@ -1,4 +1,4 @@
-use crate::{Exp, Typ, VarRc};
+use crate::{Exp, SymRc, Typ};
 use std::rc::Rc;
 
 /// Semantic equality up to alpha-equivalence.
@@ -16,7 +16,7 @@ pub fn alpha_eq_exp(left: &Exp, right: &Exp) -> bool {
 
 #[derive(Default)]
 struct AlphaEqCtx {
-    bindings: Vec<(VarRc, VarRc)>,
+    bindings: Vec<(SymRc, SymRc)>,
 }
 
 impl AlphaEqCtx {
@@ -25,11 +25,11 @@ impl AlphaEqCtx {
         match (left, right) {
             (Top, Top) => true,
             (One(left_exp), One(right_exp)) => self.exp(left_exp, right_exp),
-            (Fun(left_param, left_typ), Fun(right_var, right_typ)) => {
-                if !self.typ(left_param.typ(), right_var.typ()) {
+            (Fun(left_param, left_typ), Fun(right_sym, right_typ)) => {
+                if !self.typ(left_param.typ(), right_sym.typ()) {
                     return false;
                 }
-                self.bindings.push((left_param.clone(), right_var.clone()));
+                self.bindings.push((left_param.clone(), right_sym.clone()));
                 let is_body_equal = self.typ(left_typ, right_typ);
                 self.bindings.pop();
                 is_body_equal
@@ -41,13 +41,13 @@ impl AlphaEqCtx {
     fn exp(&mut self, left: &Exp, right: &Exp) -> bool {
         use Exp::*;
         match (left, right) {
-            (Sol(left_var), Sol(right_var)) => self.same_var_occurrence(left_var, right_var),
+            (Sol(left_sym), Sol(right_sym)) => self.same_sym_occurrence(left_sym, right_sym),
             (App(left_fun, left_arg, left_typ), App(right_fun, right_arg, right_typ)) => self.exp(left_fun, right_fun) && self.exp(left_arg, right_arg) && self.typ(left_typ, right_typ),
             _ => false,
         }
     }
 
-    fn same_var_occurrence(&self, left: &VarRc, right: &VarRc) -> bool {
+    fn same_sym_occurrence(&self, left: &SymRc, right: &SymRc) -> bool {
         if let Some((_, mapped_right)) = self
             .bindings
             .iter()

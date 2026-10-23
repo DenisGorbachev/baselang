@@ -44,8 +44,8 @@ fn must_assert_impl_of() {
 
 // #[test]
 // fn must_print_app_in_complex_type() {
-//     var!(t: Top);
-//     var!(_test_var: typ!(t => Top));
+//     sym!(t: Top);
+//     sym!(_test_sym: typ!(t => Top));
 // }
 mod macros;
 

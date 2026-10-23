@@ -1,4 +1,4 @@
-use crate::{Exp, Form, NymEn, Render, Typ, Var};
+use crate::{Def, Exp, Form, NymEn, Render, Sym, Typ};
 use Cow::*;
 use derive_getters::Getters;
 use derive_more::{From, Into};
@@ -15,9 +15,16 @@ pub struct EnglishRenderer {
 }
 
 impl Render for EnglishRenderer {
-    fn render_var(&self, var: &Var) -> Option<String> {
-        self.render_var_inner(var, true, true, true, false)
+    fn render_sym(&self, sym: &Sym) -> Option<String> {
+        self.render_sym_inner(sym, true, true, true, false)
             .map(|cow| cow.into_owned())
+    }
+
+    fn render_def(&self, def: &Def) -> Option<String> {
+        let name = &def.nym().get(self.form)?.en.singular;
+        let name = if self.capitalize { name.to_capitalized() } else { name.to_canonical() };
+        let exp = self.render_exp_inner(def.exp(), false, true, false)?;
+        Some(format!("{name} means {exp}"))
     }
 
     fn render_typ(&self, typ: &Typ) -> Option<String> {
@@ -32,32 +39,32 @@ impl Render for EnglishRenderer {
 
 impl EnglishRenderer {
     #[allow(clippy::collapsible_else_if)]
-    pub fn render_var_inner<'a>(&self, var: &'a Var, is_top_level: bool, with_name: bool, with_type: bool, _wrapped: bool) -> Option<Cow<'a, str>> {
+    pub fn render_sym_inner<'a>(&self, sym: &'a Sym, is_top_level: bool, with_name: bool, with_type: bool, _wrapped: bool) -> Option<Cow<'a, str>> {
         if is_top_level {
-            self.name_is_typ(var).map(Owned)
+            self.name_is_typ(sym).map(Owned)
         } else {
             if with_name {
-                if with_type { self.typ_called_name(var).map(Owned) } else { self.name_canonical(var) }
+                if with_type { self.typ_called_name(sym).map(Owned) } else { self.name_canonical(sym) }
             } else {
-                self.render_typ_inner_with_article(var.typ()).map(Owned)
+                self.render_typ_inner_with_article(sym.typ()).map(Owned)
             }
         }
     }
 
-    pub fn name_canonical<'a>(&self, var: &'a Var) -> Option<Cow<'a, str>> {
-        Some(var.nym().get(self.form)?.en.singular.to_canonical())
+    pub fn name_canonical<'a>(&self, sym: &'a Sym) -> Option<Cow<'a, str>> {
+        Some(sym.nym().get(self.form)?.en.singular.to_canonical())
     }
 
-    pub fn name_is_typ(&self, var: &Var) -> Option<String> {
-        let name = &var.nym().get(self.form)?.en.singular;
+    pub fn name_is_typ(&self, sym: &Sym) -> Option<String> {
+        let name = &sym.nym().get(self.form)?.en.singular;
         let name = if self.capitalize { name.to_capitalized() } else { name.to_canonical() };
-        let typ = self.render_typ_inner_with_article(var.typ())?;
+        let typ = self.render_typ_inner_with_article(sym.typ())?;
         Some(format!("{name} is {typ}"))
     }
 
-    pub fn typ_called_name(&self, var: &Var) -> Option<String> {
-        let name = &var.nym().get(self.form)?.en.singular;
-        let typ = self.render_typ_inner_with_article(var.typ())?;
+    pub fn typ_called_name(&self, sym: &Sym) -> Option<String> {
+        let name = &sym.nym().get(self.form)?.en.singular;
+        let typ = self.render_typ_inner_with_article(sym.typ())?;
         Some(format!("{typ} called \"{name}\""))
     }
 
@@ -67,9 +74,9 @@ impl EnglishRenderer {
             Typ::Top => Some(Owned(self.top.singular.to_string())),
             Typ::One(exp) => self.render_exp_inner(exp, false, true, false),
             Typ::Fun(param, typ) => {
-                let var_render = self.render_var_inner(param, false, true, false, true)?;
+                let sym_render = self.render_sym_inner(param, false, true, false, true)?;
                 let typ_render = self.render_typ_inner_with_article(typ)?;
-                Some(Owned(format!("program that takes `{var_render}` and gives `{typ_render}`")))
+                Some(Owned(format!("program that takes `{sym_render}` and gives `{typ_render}`")))
             }
         }
     }
@@ -82,7 +89,7 @@ impl EnglishRenderer {
 
     pub fn render_exp_inner<'a>(&self, exp: &'a Exp, _is_top_level: bool, with_name: bool, with_type: bool) -> Option<Cow<'a, str>> {
         match exp {
-            Exp::Sol(var) => self.render_var_inner(var, false, with_name, false, true),
+            Exp::Sol(sym) => self.render_sym_inner(sym, false, with_name, false, true),
             Exp::App(fun, arg, typ) => {
                 // We don't want to print the types of inner values, only the type of the current exp itself
                 const WITH_TYPE_INNER: bool = false;

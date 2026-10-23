@@ -2,32 +2,32 @@
 ```rust assert_eq(yes.name, "arst"); ```
 */
 
-use crate::{Exp, Module, RefsTuple3, Typ, Var, VarRc, impl_vars_vec};
+use crate::{Exp, Module, RefsTuple3, Sym, SymRc, Typ, impl_syms_vec};
 use derive_more::Into;
 
 #[derive(Into, Clone, Debug)]
 pub struct Bools {
-    pub bool: VarRc,
+    pub bool: SymRc,
     /// This field is named `yes` instead of `true` because `true` is a reserved keyword in Rust
-    /// Note that the printed name of this variable is "true" (matching the user expectations)
-    pub yes: VarRc,
+    /// Note that the printed name of this symbol is "true" (matching the user expectations)
+    pub yes: SymRc,
     /// This field is named `no` instead of `false` because `false` is a reserved keyword in Rust
-    /// Note that the printed name of this variable is "false" (matching the user expectations)
-    pub no: VarRc,
+    /// Note that the printed name of this symbol is "false" (matching the user expectations)
+    pub no: SymRc,
 }
 
-pub type BoolsTuple = (VarRc, VarRc, VarRc);
+pub type BoolsTuple = (SymRc, SymRc, SymRc);
 
 impl Bools {
     pub fn new() -> Self {
         // Bool : Top
-        let bool = Var::new_rc("bool", Typ::top(), None);
+        let bool = Sym::new_rc("bool", Typ::top(), None);
 
         // Yes : Bool
-        let yes = Var::new_rc("true", Typ::one(Exp::sol(&bool)), None);
+        let yes = Sym::new_rc("true", Typ::one(Exp::sol(&bool)), None);
 
         // No : Bool
-        let no = Var::new_rc("false", Typ::one(Exp::sol(&bool)), None);
+        let no = Sym::new_rc("false", Typ::one(Exp::sol(&bool)), None);
 
         Self {
             bool,
@@ -47,7 +47,7 @@ impl Default for Bools {
     }
 }
 
-impl_vars_vec!(Bools, bool, yes, no);
+impl_syms_vec!(Bools, bool, yes, no);
 
 impl Module for Bools {
     type RefsTuple<'a> = RefsTuple3<'a>;

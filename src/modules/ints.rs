@@ -1,4 +1,4 @@
-use crate::{Nats, module, typ, var};
+use crate::{Nats, module, sym, typ};
 
 module!(
     /// * `int.zero` is `0`
@@ -14,12 +14,12 @@ module!(
 
 impl Ints {
     pub fn new(nats: &Nats) -> Self {
-        var!(n: typ!(&nats.nat));
+        sym!(n: typ!(&nats.nat));
 
-        var!(int: typ!());
-        var!(zero: typ!(&int));
-        var!(pos: typ!(n => &int));
-        var!(neg: typ!(n => &int));
+        sym!(int: typ!());
+        sym!(zero: typ!(&int));
+        sym!(pos: typ!(n => &int));
+        sym!(neg: typ!(n => &int));
 
         Self {
             int,

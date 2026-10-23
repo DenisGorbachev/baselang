@@ -1,4 +1,4 @@
-use crate::{Indenter, Prelude, Preset, Renderer, VarsVec, dedup_inner_iter, filter_renders, render_vars};
+use crate::{Indenter, Prelude, Preset, Renderer, SymsVec, dedup_inner_iter, filter_renders, render_syms};
 use clap::Parser;
 use errgonomic::handle;
 use itertools::Itertools;
@@ -19,8 +19,8 @@ impl RenderPreludeCommand {
         let renderers: Vec<Renderer> = Preset::iter().map(Renderer::from).collect_vec();
         let indenter = Indenter::new_simple("// ");
         let prelude = Prelude::new();
-        let vars = prelude.vars_vec();
-        let renders = render_vars(vars, &renderers);
+        let syms = prelude.syms_vec();
+        let renders = render_syms(syms, &renderers);
         let renders = filter_renders(renders);
         let renders = dedup_inner_iter(renders);
         let renders = indenter.indent_blocks(renders);

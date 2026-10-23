@@ -1,4 +1,4 @@
-use crate::{Bools, BoolsTuple, Lists, ListsTuple, Nats, NatsTuple, impl_vars_vec_aggregate};
+use crate::{Bools, BoolsTuple, Lists, ListsTuple, Nats, NatsTuple, impl_syms_vec_aggregate};
 use derive_more::{From, Into};
 
 #[derive(From, Into, Default, Clone, Debug)]
@@ -23,4 +23,4 @@ impl TestPrelude {
     }
 }
 
-impl_vars_vec_aggregate!(TestPrelude, bool, nat, list);
+impl_syms_vec_aggregate!(TestPrelude, bool, nat, list);

@@ -1,4 +1,4 @@
-use crate::{Typ, VarRc, exp, module, typ, var};
+use crate::{SymRc, Typ, exp, module, sym, typ};
 use Typ::*;
 
 module!(
@@ -9,26 +9,26 @@ module!(
     }
 );
 
-pub type ListsTuple = (VarRc, VarRc, VarRc);
+pub type ListsTuple = (SymRc, SymRc, SymRc);
 
 impl Lists {
     pub fn new() -> Self {
         // List : (t : Top) -> Top
         // List (t : Top) : Top
-        var!(t: Top);
-        var!(list: typ!(t => Top));
+        sym!(t: Top);
+        sym!(list: typ!(t => Top));
 
         // Nil : (t : Top) -> List t
         // Nil (t : Top) : List t
         let list_t = exp!(&list, &t);
-        var!(nil: typ!(t => typ!(list_t)));
+        sym!(nil: typ!(t => typ!(list_t)));
 
         // Cons : (t : Top) -> (a : t) -> List t
         // Cons (t : Top) (a : t) : List t
-        var!(a: typ!(exp!(t)));
+        sym!(a: typ!(exp!(t)));
         let list_t = exp!(&list, &t);
         let cons_typ = typ!(t => typ!(a => typ!(list_t)));
-        var!(cons: cons_typ);
+        sym!(cons: cons_typ);
 
         Self {
             list,
