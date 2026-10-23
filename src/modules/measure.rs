@@ -28,14 +28,23 @@ impl Measure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, Prelude, assert_eq_prints};
+    use crate::{PlainRenderer, Prelude, PreludeNewError, assert_eq_prints};
+    use errgonomic::handle;
+    use thiserror::Error;
 
     #[test]
-    fn must_print() {
-        let prelude = Prelude::new();
+    fn must_print() -> Result<(), MustPrintError> {
+        use MustPrintError::*;
+        let prelude = handle!(Prelude::new(), NewFailed);
         let measure = Measure::new(&prelude.rat);
         let renderer = PlainRenderer::default();
         let prints = include_str!("measure/prints/plain.base");
         assert_eq_prints(&measure, &renderer, prints);
+        Ok(())
+    }
+    #[derive(Error, Debug)]
+    pub enum MustPrintError {
+        #[error("failed to construct the prelude")]
+        NewFailed { source: PreludeNewError },
     }
 }

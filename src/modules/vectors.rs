@@ -1,21 +1,22 @@
-use crate::{Nats, SymRc, Typ, exp, module, sym, typ};
-use Typ::*;
+use crate::{Exp, Module, Nats, RefsTuple4, Rewrite, Scope, ScopeApplyManyError, ScopeInsertRewriteError, ScopeInsertSymError, SymRc, Typ, Validator, ValidatorValidateError, impl_syms_vec, sym, typ};
+use derive_more::Into;
+use errgonomic::{ErrVec, handle, handle_iter};
+use thiserror::Error;
 
-module!(
-    pub struct Vectors {
-        vector,
-        nil,
-        cons,
-        append,
-        append_nil,
-        append_cons,
-    }
-);
+#[derive(Into, Clone, Debug)]
+pub struct Vectors {
+    pub vector: SymRc,
+    pub nil: SymRc,
+    pub cons: SymRc,
+    pub append: SymRc,
+    pub scope: Scope,
+}
 
-pub type VectorsTuple = (SymRc, SymRc, SymRc, SymRc, SymRc, SymRc);
+pub type VectorsTuple = (SymRc, SymRc, SymRc, SymRc, Scope);
 
 impl Vectors {
-    pub fn new(nats: &Nats) -> Self {
+    pub fn new(nats: &Nats) -> Result<Self, VectorsNewError> {
+        use VectorsNewError::*;
         let Nats {
             nat,
             zero,
@@ -23,61 +24,118 @@ impl Vectors {
             add,
             ..
         } = nats;
-
-        // Vector : (t : Top) -> (len : Nat) -> Top
-        sym!(t: Top);
-        sym!(len: typ!(exp!(nat)));
-        sym!(vector: typ!(t => typ!(len => Top)));
-
-        // Nil : (t : Top) -> Vector t Zero
-        let vector_t = exp!(&vector, &t);
-        let vector_t_zero = exp!(vector_t.clone(), zero);
-        sym!(nil: typ!(t => typ!(vector_t_zero)));
-
-        // Cons : (t : Top) -> (len : Nat) -> (head : t) -> (tail : Vector t len) -> Vector t (Next len)
-        sym!(head: typ!(exp!(t)));
-        let vector_t_len = exp!(vector_t.clone(), &len);
-        sym!(tail: typ!(vector_t_len.clone()));
-        let next_len = exp!(next, &len);
-        let vector_t_next_len = exp!(vector_t.clone(), next_len);
-        sym!(cons: typ!(t => typ!(len => typ!(head => typ!(tail => typ!(vector_t_next_len))))));
-
-        // Append : (t : Top) -> (len_a : Nat) -> (len_b : Nat) -> (a : Vector t len_a) -> (b : Vector t len_b) -> Vector t (Add len_a len_b)
-        sym!(len_a: typ!(exp!(nat)));
-        sym!(len_b: typ!(exp!(nat)));
-        let vector_t_len_a = exp!(vector_t.clone(), &len_a);
-        let vector_t_len_b = exp!(vector_t.clone(), &len_b);
-        sym!(a: typ!(vector_t_len_a.clone()));
-        sym!(b: typ!(vector_t_len_b.clone()));
-        let add_len_a_len_b = exp!(add, &len_a, &len_b);
-        let vector_t_add_len_a_len_b = exp!(vector_t.clone(), add_len_a_len_b);
-        sym!(append: typ!(t => typ!(len_a => typ!(len_b => typ!(a => typ!(b => typ!(vector_t_add_len_a_len_b)))))));
-
-        // Append.Nil : (t : Top) -> (len_b : Nat) -> (b : Vector t len_b) -> (Append t Zero len_b (Nil t) b -> b)
-        let nil_t = exp!(&nil, &t);
-        let append_zero_len_b_nil_t_b_exp = exp!(&append, &t, zero, &len_b, nil_t, &b);
-        sym!(append_zero_len_b_nil_t_b: typ!(append_zero_len_b_nil_t_b_exp));
-        sym!(append_nil: typ!(t => typ!(len_b => typ!(b => typ!(append_zero_len_b_nil_t_b => typ!(&b))))));
-
-        // Append.Cons : (t : Top) -> (len_a : Nat) -> (len_b : Nat) -> (head : t) -> (tail : Vector t len_a) -> (b : Vector t len_b) -> (Append t (Next len_a) len_b (Cons t len_a head tail) b -> Cons t (Add len_a len_b) head (Append t len_a len_b tail b))
-        sym!(head: typ!(exp!(t)));
-        sym!(tail: typ!(vector_t_len_a));
-        let next_len_a = exp!(next, &len_a);
-        let cons_t_len_a_head_tail = exp!(&cons, &t, &len_a, &head, &tail);
-        let append_t_next_len_a_len_b_cons_b_exp = exp!(&append, &t, next_len_a, &len_b, cons_t_len_a_head_tail, &b);
-        sym!(append_t_next_len_a_len_b_cons_b: typ!(append_t_next_len_a_len_b_cons_b_exp));
-        let add_len_a_len_b = exp!(add, &len_a, &len_b);
-        let append_t_len_a_len_b_tail_b = exp!(&append, &t, &len_a, &len_b, &tail, &b);
-        let cons_t_add_len_a_len_b_head_append = exp!(&cons, &t, add_len_a_len_b, &head, append_t_len_a_len_b_tail_b);
-        sym!(append_cons: typ!(t => typ!(len_a => typ!(len_b => typ!(head => typ!(tail => typ!(b => typ!(append_t_next_len_a_len_b_cons_b => typ!(cons_t_add_len_a_len_b_head_append)))))))));
-
-        Self {
+        let mut scope = nats.scope.clone();
+        sym!(t: Typ::Top);
+        sym!(len: typ!(nat));
+        sym!(vector: typ!(t => typ!(len => Typ::Top)));
+        let vector_t_zero = handle!(scope.apply_many(&vector, [&t, zero]), ApplyVectorZeroFailed, scope);
+        sym!(nil: typ!(t => vector_t_zero));
+        sym!(head: typ!(&t));
+        let vector_t_len = handle!(scope.apply_many(&vector, [&t, &len]), ApplyVectorLengthFailed, scope);
+        sym!(tail: typ!(vector_t_len));
+        let next_len = handle!(scope.apply_many(next, [&len]), ApplyNextLengthFailed, scope);
+        let vector_t_next = handle!(scope.apply_many(&vector, [Exp::sol(&t), next_len]), ApplyVectorNextFailed, scope);
+        sym!(cons: typ!(t => typ!(len => typ!(head => typ!(tail => vector_t_next)))));
+        sym!(len_a: typ!(nat));
+        sym!(len_b: typ!(nat));
+        let vector_t_a = handle!(scope.apply_many(&vector, [&t, &len_a]), ApplyVectorLeftFailed, scope);
+        let vector_t_b = handle!(scope.apply_many(&vector, [&t, &len_b]), ApplyVectorRightFailed, scope);
+        sym!(a: typ!(vector_t_a.clone()));
+        sym!(b: typ!(vector_t_b));
+        let add_lengths = handle!(scope.apply_many(add, [&len_a, &len_b]), ApplyAddLengthsFailed, scope);
+        let result_arguments = [Exp::sol(&t), add_lengths.clone()];
+        let result = handle!(scope.apply_many(&vector, result_arguments), ApplyResultTypeFailed, scope);
+        sym!(append: typ!(t => typ!(len_a => typ!(len_b => typ!(a => typ!(b => result))))));
+        let registrations = [&vector, &nil, &cons, &append]
+            .into_iter()
+            .map(|sym| scope.insert_sym(sym.clone()));
+        handle_iter!(registrations, InsertSymFailed, scope);
+        let nil_t = handle!(scope.apply_many(&nil, [&t]), ApplyNilFailed, scope);
+        let rule = Rewrite::new(
+            vec![
+                Exp::sol(&t),
+                Exp::sol(zero),
+                Exp::sol(&len_b),
+                nil_t,
+                Exp::sol(&b),
+            ],
+            Exp::sol(&b),
+        );
+        let rule_head = append.clone();
+        handle!(scope.insert_rewrite(rule_head, rule), InsertRewriteNilFailed, scope);
+        sym!(head: typ!(&t));
+        sym!(tail: typ!(vector_t_a));
+        let next_len_a = handle!(scope.apply_many(next, [&len_a]), ApplyNextLeftFailed, scope);
+        let cons_pattern = handle!(scope.apply_many(&cons, [&t, &len_a, &head, &tail]), ApplyConsPatternFailed, scope);
+        let recursive = handle!(scope.apply_many(&append, [&t, &len_a, &len_b, &tail, &b]), ApplyRecursiveFailed, scope);
+        let body = handle!(scope.apply_many(&cons, [Exp::sol(&t), add_lengths, Exp::sol(&head), recursive]), ApplyBodyFailed, scope);
+        let rule = Rewrite::new(
+            vec![
+                Exp::sol(&t),
+                next_len_a,
+                Exp::sol(&len_b),
+                cons_pattern,
+                Exp::sol(&b),
+            ],
+            body,
+        );
+        let rule_head = append.clone();
+        handle!(scope.insert_rewrite(rule_head, rule), InsertRewriteConsFailed, scope);
+        handle!(Validator::new(&scope).validate(), ValidateFailed, scope);
+        Ok(Self {
             vector,
             nil,
             cons,
             append,
-            append_nil,
-            append_cons,
-        }
+            scope,
+        })
     }
+}
+
+impl_syms_vec!(Vectors, vector, nil, cons, append; scope);
+
+impl Module for Vectors {
+    type RefsTuple<'a> = RefsTuple4<'a>;
+
+    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
+        (&self.vector, &self.nil, &self.cons, &self.append)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum VectorsNewError {
+    #[error("failed to construct the empty vector type")]
+    ApplyVectorZeroFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the vector element type")]
+    ApplyVectorLengthFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the successor length")]
+    ApplyNextLengthFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the successor vector type")]
+    ApplyVectorNextFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the left vector type")]
+    ApplyVectorLeftFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the right vector type")]
+    ApplyVectorRightFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the sum of vector lengths")]
+    ApplyAddLengthsFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct append's result type")]
+    ApplyResultTypeFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to register vector symbols")]
+    InsertSymFailed { source: ErrVec<ScopeInsertSymError>, scope: Box<Scope> },
+    #[error("failed to construct the empty vector pattern")]
+    ApplyNilFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to insert append's empty-vector rule")]
+    InsertRewriteNilFailed { source: ScopeInsertRewriteError, scope: Box<Scope> },
+    #[error("failed to construct the successor length pattern")]
+    ApplyNextLeftFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the nonempty vector pattern")]
+    ApplyConsPatternFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct recursive append")]
+    ApplyRecursiveFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct append's result")]
+    ApplyBodyFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to insert append's nonempty-vector rule")]
+    InsertRewriteConsFailed { source: ScopeInsertRewriteError, scope: Box<Scope> },
+    #[error("invalid vector module")]
+    ValidateFailed { source: ValidatorValidateError, scope: Box<Scope> },
 }

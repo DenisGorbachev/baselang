@@ -1,10 +1,10 @@
-use crate::{Def, Exp, Sym, Typ};
+use crate::{Exp, Rewrite, Sym, Typ};
 
 // TODO: Refactor to use a Writer
 pub trait Render {
     fn render_sym(&self, sym: &Sym) -> Option<String>;
 
-    fn render_def(&self, def: &Def) -> Option<String>;
+    fn render_rewrite(&self, sym: &Sym, rewrite: &Rewrite) -> Option<String>;
 
     fn render_typ(&self, typ: &Typ) -> Option<String>;
 

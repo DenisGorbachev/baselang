@@ -1,4 +1,4 @@
-use crate::{Def, Exp, Render, Sym, Typ};
+use crate::{Exp, Render, Rewrite, Sym, Typ};
 use derive_more::{From, Into};
 use derive_new::new;
 use std::borrow::Cow;
@@ -11,6 +11,17 @@ pub struct PlainRenderer {
 }
 
 impl PlainRenderer {
+    pub fn render_arguments(&self, arguments: &[Exp]) -> String {
+        arguments
+            .iter()
+            .map(|arg| {
+                let text = self.render_exp_inner(arg, false, false);
+                if matches!(arg, Exp::App(..)) { format!("({text})") } else { text }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
     pub fn render_sym_inner(&self, sym: &Sym, _is_top_level: bool, with_type: bool, wrapped: bool) -> String {
         let name = &sym.nym().short.en.singular;
         if with_type {
@@ -63,10 +74,25 @@ impl Render for PlainRenderer {
         Some(self.render_sym_inner(sym, true, true, false))
     }
 
-    fn render_def(&self, def: &Def) -> Option<String> {
-        let name = &def.nym().short.en.singular;
-        let exp = self.render_exp_inner(def.exp(), false, false);
-        Some(format!("{name} = {exp}"))
+    fn render_rewrite(&self, sym: &Sym, rewrite: &Rewrite) -> Option<String> {
+        let name = &sym.nym().short.en.singular;
+        let lhs = rewrite
+            .patterns
+            .iter()
+            .fold(name.to_string(), |mut text, pattern| {
+                text.push(' ');
+                let pattern_text = self.render_exp_inner(pattern, false, false);
+                if matches!(pattern, Exp::App(..)) {
+                    text.push('(');
+                    text.push_str(&pattern_text);
+                    text.push(')');
+                } else {
+                    text.push_str(&pattern_text);
+                }
+                text
+            });
+        let body = self.render_exp_inner(&rewrite.body, false, false);
+        Some(format!("{lhs} => {body}"))
     }
 
     fn render_typ(&self, typ: &Typ) -> Option<String> {
@@ -88,12 +114,22 @@ impl Default for PlainRenderer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{PlainRenderer, TestPrelude, must_print};
+    use crate::{PlainRenderer, TestPrelude, TestPreludeNewError, assert_eq_prints};
+    use errgonomic::handle;
+    use thiserror::Error;
 
-    must_print!(
-        #[ignore]
-        TestPrelude,
-        PlainRenderer,
-        "plain_renderer/test_prelude.plain.base"
-    );
+    #[test]
+    #[ignore]
+    fn must_print() -> Result<(), MustPrintError> {
+        use MustPrintError::*;
+        let module = handle!(TestPrelude::new(), NewFailed);
+        assert_eq_prints(&module, &PlainRenderer::default(), include_str!("plain_renderer/test_prelude.plain.base"));
+        Ok(())
+    }
+
+    #[derive(Error, Debug)]
+    pub enum MustPrintError {
+        #[error("failed to construct the prelude")]
+        NewFailed { source: TestPreludeNewError },
+    }
 }

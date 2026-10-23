@@ -1,4 +1,4 @@
-use crate::{Def, Exp, Form, NymEn, Render, Sym, Typ};
+use crate::{Exp, Form, NymEn, Render, Rewrite, Sym, Typ};
 use Cow::*;
 use derive_getters::Getters;
 use derive_more::{From, Into};
@@ -20,11 +20,23 @@ impl Render for EnglishRenderer {
             .map(|cow| cow.into_owned())
     }
 
-    fn render_def(&self, def: &Def) -> Option<String> {
-        let name = &def.nym().get(self.form)?.en.singular;
+    fn render_rewrite(&self, sym: &Sym, rewrite: &Rewrite) -> Option<String> {
+        let name = &sym.nym().get(self.form)?.en.singular;
         let name = if self.capitalize { name.to_capitalized() } else { name.to_canonical() };
-        let exp = self.render_exp_inner(def.exp(), false, true, false)?;
-        Some(format!("{name} means {exp}"))
+        let patterns = rewrite
+            .patterns
+            .iter()
+            .map(|pattern| self.render_exp_inner(pattern, false, true, false))
+            .collect::<Option<Vec<_>>>()?;
+        let body = self.render_exp_inner(&rewrite.body, false, true, false)?;
+        let lhs = patterns
+            .into_iter()
+            .fold(name.into_owned(), |mut text, pattern| {
+                text.push(' ');
+                text.push_str(&pattern);
+                text
+            });
+        Some(format!("{lhs} means {body}"))
     }
 
     fn render_typ(&self, typ: &Typ) -> Option<String> {

@@ -1,7 +1,9 @@
-use crate::{AlphaEq, Binding, Def, DefRc, InvalidApplicationError, Of, Sym, TypBox, alpha_eq_exp};
+use crate::{AlphaEq, InvalidApplicationError, Of, Substitution, Sym, TypBox, alpha_eq_exp};
 use crate::{SymRc, Typ};
 use Exp::*;
 use Typ::*;
+use std::iter::from_fn;
+use std::ptr::NonNull;
 use std::rc::Rc;
 
 /// [`Exp`] may be compared semantically via [`AlphaEq`].
@@ -22,6 +24,59 @@ pub type ExpRc = Rc<Exp>;
 pub type ExpBox = Box<Exp>;
 
 impl Exp {
+    pub fn symbols(&self) -> impl Iterator<Item = &SymRc> {
+        let mut pending = vec![self];
+        from_fn(move || {
+            while let Some(exp) = pending.pop() {
+                match exp {
+                    Sol(sym) => return Some(sym),
+                    App(fun, arg, _) => {
+                        pending.push(arg);
+                        pending.push(fun);
+                    }
+                }
+            }
+            None
+        })
+    }
+
+    pub fn spine(&self) -> (&SymRc, Vec<&Self>) {
+        let mut args = Vec::new();
+        let mut exp = self;
+        while let App(fun, arg, _) = exp {
+            args.push(arg.as_ref());
+            exp = fun;
+        }
+        args.reverse();
+        (exp.head(), args)
+    }
+
+    pub fn same_term(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Sol(left), Sol(right)) => Rc::ptr_eq(left, right),
+            (App(left_fun, left_arg, _), App(right_fun, right_arg, _)) => left_fun.same_term(right_fun) && left_arg.same_term(right_arg),
+            _ => false,
+        }
+    }
+
+    pub fn strict_subterm(&self, other: &Self) -> bool {
+        other
+            .spine()
+            .1
+            .into_iter()
+            .any(|arg| self.same_term(arg) || self.strict_subterm(arg))
+    }
+
+    pub fn instantiate(&self, substitution: &Substitution) -> Self {
+        match self {
+            Sol(sym) => substitution
+                .get(&NonNull::from(sym.as_ref()))
+                .cloned()
+                .unwrap_or_else(|| self.clone()),
+            App(fun, arg, typ) => App(Box::new(fun.instantiate(substitution)), Box::new(arg.instantiate(substitution)), Box::new(typ.instantiate(substitution))),
+        }
+    }
+
     pub fn head(&self) -> &SymRc {
         let mut exp = self;
         loop {
@@ -67,7 +122,6 @@ impl Exp {
     ///
     /// The caller must ensure that `sym` and `arg` have the same type.
     pub fn substitute(&self, sym: &SymRc, arg: &Exp) -> Self {
-        debug_assert!(sym.typ().alpha_eq(arg.typ()));
         match self {
             Sol(sym_inner) => {
                 if Rc::ptr_eq(sym_inner, sym) {
@@ -136,47 +190,9 @@ impl From<&SymRc> for Exp {
     }
 }
 
-impl<N> From<Def<N>> for Exp {
-    fn from(def: Def<N>) -> Self {
-        let (_, exp) = def.into();
-        exp
-    }
-}
-
-impl<N> From<&Def<N>> for Exp {
-    fn from(def: &Def<N>) -> Self {
-        def.exp().clone()
-    }
-}
-
-impl<N> From<DefRc<N>> for Exp {
-    fn from(def: DefRc<N>) -> Self {
-        match Rc::try_unwrap(def) {
-            Ok(def) => def.into(),
-            Err(def) => def.as_ref().into(),
-        }
-    }
-}
-
-impl<N> From<&DefRc<N>> for Exp {
-    fn from(def: &DefRc<N>) -> Self {
-        def.as_ref().into()
-    }
-}
-
 impl From<&Exp> for Exp {
     fn from(exp: &Exp) -> Self {
         exp.clone()
-    }
-}
-
-impl From<&Binding> for Exp {
-    fn from(binding: &Binding) -> Self {
-        use Binding::*;
-        match binding {
-            Sym(sym) => sym.into(),
-            Def(def) => def.into(),
-        }
     }
 }
 
@@ -279,11 +295,14 @@ macro_rules! exp {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AlphaEq, Bools, Lists, Nats, Of, Vectors, sym, typ};
+    use crate::{AlphaEq, Bools, Lists, Nats, NatsNewError, Of, ScopeApplyManyError, ScopeConvertibleError, Vectors, VectorsNewError, sym, typ};
+    use errgonomic::{handle, handle_bool};
+    use thiserror::Error;
 
     #[test]
     #[allow(unused_variables)]
-    fn must_error_for_wrong_types() {
+    fn must_error_for_wrong_types() -> Result<(), MustErrorForWrongTypesError> {
+        use MustErrorForWrongTypesError::*;
         let Bools {
             bool,
             yes,
@@ -299,90 +318,96 @@ mod tests {
             zero,
             next,
             ..
-        } = Nats::new();
+        } = handle!(Nats::new(), NatsNewFailed);
         let list_bool = list.of(&bool).unwrap();
         let nil_bool = nil.of(&bool).unwrap();
         let cons_nat = cons.of(&nat).unwrap();
-        // let cons_nat_zero = cons_nat.of(&zero).unwrap();
-        // assert!(cons_nat_zero.of(&nil_bool).is_err())
+        Ok(())
     }
 
     #[test]
-    fn must_partially_apply_add_next_to_two() {
+    fn must_partially_apply_add_to_two() -> Result<(), MustPartiallyApplyAddToTwoError> {
+        use MustPartiallyApplyAddToTwoError::*;
         let Nats {
             nat,
             zero,
             next,
             add,
-            add_next,
-            ..
-        } = Nats::new();
-
+            scope,
+        } = handle!(Nats::new(), NatsNewFailed);
         let one = exp!(&next, &zero);
-        let two = exp!(&next, one.clone());
-
-        let actual = add_next.of(two.clone()).unwrap();
-
-        sym!(b: typ!(exp!(nat)));
-        let next_two = exp!(&next, two.clone());
-        let add_next_two_b_exp = exp!(&add, next_two, &b);
-        sym!(add_next_a_b: typ!(add_next_two_b_exp));
-        let add_two_b_exp = exp!(&add, two.clone(), &b);
-        let next_add_two_b_exp = exp!(&next, add_two_b_exp);
-        sym!(expected: typ!(b => typ!(add_next_a_b => typ!(next_add_two_b_exp))));
-
-        assert!(actual.typ().alpha_eq(expected.typ()));
+        let two = exp!(&next, one);
+        let actual = handle!(scope.apply_many(&add, [two]), ApplyManyFailed);
+        sym!(b: typ!(&nat));
+        let expected = typ!(b => &nat);
+        assert!(actual.typ().alpha_eq(&expected));
+        Ok(())
     }
 
     #[test]
-    fn must_partially_apply_append_cons_to_bool_one_two_yes() {
+    fn must_partially_apply_append_to_bool_two_two() -> Result<(), MustPartiallyApplyAppendToBoolTwoTwoError> {
+        use MustPartiallyApplyAppendToBoolTwoTwoError::*;
         let Bools {
             bool,
             yes,
             ..
         } = Bools::new();
-        let nats = Nats::new();
-        let Nats {
-            zero,
-            next,
-            add,
-            ..
-        } = nats.clone();
+        let nats = handle!(Nats::new(), NatsNewFailed);
         let Vectors {
             vector,
             cons,
             append,
-            append_cons,
+            scope,
             ..
-        } = Vectors::new(&nats);
-
-        let one = exp!(&next, &zero);
-        let two = exp!(&next, one.clone());
-
-        let actual = append_cons
-            .of(&bool)
-            .unwrap()
-            .of(one.clone())
-            .unwrap()
-            .of(two.clone())
-            .unwrap()
-            .of(&yes)
-            .unwrap();
-
+        } = handle!(Vectors::new(&nats), VectorsNewFailed);
+        let one = exp!(&nats.next, &nats.zero);
+        let two = exp!(&nats.next, one.clone());
         let vector_bool = exp!(&vector, &bool);
         let vector_bool_one = exp!(vector_bool.clone(), one.clone());
         let vector_bool_two = exp!(vector_bool.clone(), two.clone());
         sym!(tail: typ!(vector_bool_one));
         sym!(b: typ!(vector_bool_two));
-        let next_one = exp!(&next, one.clone());
         let cons_bool_one_yes_tail = exp!(&cons, &bool, one.clone(), &yes, &tail);
-        let append_bool_next_one_two_cons_b_exp = exp!(&append, &bool, next_one, two.clone(), cons_bool_one_yes_tail, &b);
-        sym!(append_t_next_len_a_len_b_cons_b: typ!(append_bool_next_one_two_cons_b_exp));
-        let add_one_two = exp!(&add, one.clone(), two.clone());
-        let append_bool_one_two_tail_b = exp!(&append, &bool, one, two, &tail, &b);
-        let cons_bool_add_one_two_yes_append = exp!(&cons, &bool, add_one_two, &yes, append_bool_one_two_tail_b);
-        sym!(expected: typ!(tail => typ!(b => typ!(append_t_next_len_a_len_b_cons_b => typ!(cons_bool_add_one_two_yes_append)))));
+        let arguments = [
+            (&bool).into(),
+            two.clone(),
+            two.clone(),
+            cons_bool_one_yes_tail,
+        ];
+        let actual = handle!(scope.apply_many(&append, arguments), ApplyManyFailed);
+        let add_one_two = exp!(&nats.add, one, two);
+        let next_sum = exp!(&nats.next, add_one_two);
+        let expected = typ!(b => typ!(exp!(vector_bool, next_sum)));
+        let valid = handle!(scope.convertible(actual.typ(), &expected), ConvertibleFailed);
+        handle_bool!(!valid, ResultTypeInvalid);
+        Ok(())
+    }
 
-        assert!(actual.typ().alpha_eq(expected.typ()));
+    #[derive(Error, Debug)]
+    pub enum MustErrorForWrongTypesError {
+        #[error("failed to construct natural numbers")]
+        NatsNewFailed { source: NatsNewError },
+    }
+
+    #[derive(Error, Debug)]
+    pub enum MustPartiallyApplyAddToTwoError {
+        #[error("failed to construct natural numbers")]
+        NatsNewFailed { source: NatsNewError },
+        #[error("failed to apply addition")]
+        ApplyManyFailed { source: ScopeApplyManyError },
+    }
+
+    #[derive(Error, Debug)]
+    pub enum MustPartiallyApplyAppendToBoolTwoTwoError {
+        #[error("failed to construct natural numbers")]
+        NatsNewFailed { source: NatsNewError },
+        #[error("failed to construct vectors")]
+        VectorsNewFailed { source: VectorsNewError },
+        #[error("failed to apply append")]
+        ApplyManyFailed { source: ScopeApplyManyError },
+        #[error("failed to compare result types")]
+        ConvertibleFailed { source: ScopeConvertibleError },
+        #[error("the result type differs from the expected type")]
+        ResultTypeInvalid {},
     }
 }

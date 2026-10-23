@@ -826,6 +826,9 @@ Alias: CSR.
 - Constructor indexes must reflect changes to defining rules and to the normal forms of registered symbols' terminal types.
 - Raw symbol construction must not register the symbol in a scope.
 - Binding a function parameter must not register it in the enclosing scope.
+- A registered identifier must consist of one or more dot-separated components.
+- Each identifier component must begin with an alphabetic character or `_`.
+- Subsequent component characters must be alphanumeric characters or `_`.
 
 ##### pub fn new_sym
 
@@ -844,6 +847,33 @@ Alias: CSR.
 - Must reject a `sym` whose allocation identity does not match a registered symbol.
 - On success, must append `rewrite` to the rules associated with `sym`.
 - On error, the returned error must own the rejected `sym` and `rewrite`.
+- Before committing an insertion, must validate the new rule's bindings, patterns, cached expression types, and result type.
+- Coverage, overlap, and termination checks must use the complete rule set during theory construction.
+
+##### pub fn define
+
+- Must accept `&mut self`, `nym: impl Into<Nym>`, and `body: impl Into<Exp>`.
+- Must infer the symbol's type from `body`.
+- Must register the symbol and its zero-argument rule atomically.
+- Must return `Result<SymRc, ScopeDefineError>`.
+
+##### pub fn apply
+
+- Must accept `&self`, `fun: impl Into<Exp>`, and `arg: impl Into<Exp>`.
+- Must compare the function parameter's type and the argument's type after normalization in this scope.
+- Must substitute the argument into the function's result type.
+- Must return `Result<Exp, ScopeApplyError>`.
+
+##### pub fn normalize
+
+- Must accept `&self` and `exp: &Exp`.
+- Must return `Result<Exp, ScopeNormalizeError>`.
+- Must normalize application arguments before matching rewrite rules.
+- Must substitute all pattern-variable bindings simultaneously into a matching rule's body.
+- Must recursively normalize the substituted body.
+- Must leave an application with fewer arguments than the head's rule arity unreduced at that head.
+- Must apply arguments beyond the rule arity to the rewritten result.
+- Must return an error when dynamic size-change checking detects a recursive cycle without structural descent.
 
 ##### pub fn rewrites_of
 
@@ -861,6 +891,30 @@ Alias: CSR.
 
 - Must be an alias for `HashMap<NonNull<Sym>, Vec<Rewrite>>`.
 - Keys must use symbol allocation identity.
+
+#### struct Theory
+
+- Must pass [CSR](#compiler-struct-requirements).
+- Must have one generic parameter `S`, defaulting to `Scope`.
+- Must have exactly one field `scope: S`.
+- `Theory::new(scope: Scope)` must return `Result<Self, TheoryNewError>`.
+- Construction must validate all declarations and rules against the supplied scope's complete rule set.
+- Validation must check bindings, cached expression types, pattern validity, rule result types, overlap, structural termination, and constructor-pattern coverage.
+- Successful construction must establish all of these validation predicates as invariants.
+- Failed construction must return an error owning the rejected scope.
+
+#### trait Parse
+
+- Must have associated type `Error`.
+- Must have `fn parse(&mut self, input: &str) -> Result<Theory, Self::Error>`.
+- The returned theory must retain all parsed declarations and rewrite rules.
+- Final validation must complete before returning `Ok`.
+
+#### struct PlainParser
+
+- `parse_scope` must return a provisional scope without requiring complete coverage or termination evidence.
+- `expression` must resolve names in its supplied scope and use that scope's application checking.
+- A parse error must preserve the source text and identify the failing source line when parsing declarations or rules.
 
 #### type Constructors
 
@@ -2961,7 +3015,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 * **Types**: Represented by [`Typ`], which can be top-level types [`Top`](Typ::Top), expression types [`One`](Typ::One), function types [`Fun`](Typ::Fun).
 * **Expressions**: Represented by [`Exp`], which can be symbols [`Sol`](Exp::Sol) or applications [`App`](Exp::App).
-* **Symbols and definitions**: [`Sym`] introduces an identity with a type; [`Def`] names an expression.
+* **Symbols and rewrites**: [`Sym`] introduces an identity with a type; [`Scope`] associates symbols with [`Rewrite`] rules.
 * **Modules**: Collections of related symbols, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
@@ -3011,6 +3065,9 @@ mod utils;
 pub use utils::*;
 
 mod macros;
+
+mod functions;
+pub use functions::*;
 ```
 
 ### src/main.rs

@@ -7,7 +7,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 * **Types**: Represented by [`Typ`], which can be top-level types [`Top`](Typ::Top), expression types [`One`](Typ::One), function types [`Fun`](Typ::Fun).
 * **Expressions**: Represented by [`Exp`], which can be symbols [`Sol`](Exp::Sol) or applications [`App`](Exp::App).
-* **Symbols and definitions**: [`Sym`] introduces an identity with a type; [`Def`] names an expression.
+* **Symbols and rewrites**: [`Sym`] introduces an identity with a type; [`Scope`] associates symbols with [`Rewrite`] rules.
 * **Modules**: Collections of related symbols, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
@@ -57,3 +57,6 @@ mod utils;
 pub use utils::*;
 
 mod macros;
+
+mod functions;
+pub use functions::*;

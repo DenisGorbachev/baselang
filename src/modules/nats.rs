@@ -1,63 +1,51 @@
-use crate::Typ;
-use crate::{AlphaEq, Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple6, SymRc, exp, impl_syms_vec, sym, typ};
+use crate::{Exp, Module, Nym, NymEn, NymLang, NymRu, NymRuCases, RefsTuple4, Rewrite, Scope, ScopeApplyManyError, ScopeInsertRewriteError, ScopeInsertSymError, SymRc, Validator, ValidatorValidateError, impl_syms_vec, sym, typ};
 use derive_more::Into;
+use errgonomic::{ErrVec, handle, handle_iter};
+use thiserror::Error;
 
 #[derive(Into, Clone, Debug)]
 pub struct Nats {
     pub nat: SymRc,
     pub zero: SymRc,
-    /// Let's use `next` instead of `succ` because it's more understandable
     pub next: SymRc,
     pub add: SymRc,
-    pub add_zero: SymRc,
-    pub add_next: SymRc,
+    pub scope: Scope,
 }
 
-pub type NatsTuple = (SymRc, SymRc, SymRc, SymRc, SymRc, SymRc);
+pub type NatsTuple = (SymRc, SymRc, SymRc, SymRc, Scope);
 
 impl Nats {
-    pub fn new() -> Self {
-        // Nat : Top
+    pub fn new() -> Result<Self, NatsNewError> {
+        use NatsNewError::*;
         sym!(nat: typ!(); Self::nat_nym());
-
-        // `sym!(nat: typ!());` expands to the following declaration:
-        debug_assert!(nat.nym() == &Self::nat_nym());
-        debug_assert!(nat.typ().alpha_eq(&Typ::top()));
-        // note that debug_assert_eq! will be removed in optimized builds, and any variables that are used only in debug_assert_eq! invocation should also be treated as dead code and removed by the compiler
-
-        // Zero : Nat
-        sym!(zero: typ!(exp!(nat)));
-
-        // Succ : (n : Nat) -> Nat
-        sym!(n: typ!(exp!(nat)));
-        sym!(next: typ!(n => typ!(exp!(nat))));
-
-        // Add : (a : Nat) -> (b : Nat) -> Nat
-        sym!(a: typ!(exp!(nat)));
-        sym!(b: typ!(exp!(nat)));
-        sym!(add: typ!(a => typ!(b => typ!(exp!(nat)))));
-
-        // Add.Zero : (b : Nat) -> (Add Zero b -> b)
-        let add_zero_b_exp = exp!(&add, &zero, &b);
-        sym!(add_zero_b: typ!(add_zero_b_exp));
-        sym!(add_zero: typ!(b => typ!(add_zero_b => typ!(&b))));
-
-        // Add.Next : (a : Nat) -> (b : Nat) -> (Add (Next a) b -> Next (Add a b))
-        let next_a = exp!(&next, &a);
-        let add_next_a_b_exp = exp!(&add, next_a, &b);
-        sym!(add_next_a_b: typ!(add_next_a_b_exp));
-        let add_a_b_exp = exp!(&add, &a, &b);
-        let next_add_a_b_exp = exp!(&next, add_a_b_exp);
-        sym!(add_next: typ!(a => typ!(b => typ!(add_next_a_b => typ!(next_add_a_b_exp)))));
-
-        Self {
+        sym!(zero: typ!(&nat));
+        sym!(n: typ!(&nat));
+        sym!(next: typ!(n => &nat));
+        sym!(a: typ!(&nat));
+        sym!(b: typ!(&nat));
+        sym!(add: typ!(a => typ!(b => &nat)));
+        let mut scope = Scope::default();
+        let registrations = [&nat, &zero, &next, &add]
+            .into_iter()
+            .map(|sym| scope.insert_sym(sym.clone()));
+        handle_iter!(registrations, InsertSymFailed, scope);
+        let zero_rule = Rewrite::new(vec![Exp::sol(&zero), Exp::sol(&b)], Exp::sol(&b));
+        let rule_head = add.clone();
+        handle!(scope.insert_rewrite(rule_head, zero_rule), InsertRewriteZeroFailed, scope);
+        let next_a = handle!(scope.apply_many(&next, [&a]), ApplyManyNextFailed, scope);
+        let add_a_b = handle!(scope.apply_many(&add, [&a, &b]), ApplyManyAddFailed, scope);
+        let body = handle!(scope.apply_many(&next, [add_a_b]), ApplyManyBodyFailed, scope);
+        let next_rule = Rewrite::new(vec![next_a, Exp::sol(&b)], body);
+        let rule_head = add.clone();
+        handle!(scope.insert_rewrite(rule_head, next_rule), InsertRewriteNextFailed, scope);
+        handle!(Validator::new(&scope).validate(), ValidateFailed, scope);
+        Ok(Self {
             nat,
             zero,
             next,
             add,
-            add_zero,
-            add_next,
-        }
+            scope,
+        })
     }
 
     pub fn nat_nym() -> Nym {
@@ -83,26 +71,49 @@ impl Nats {
     }
 }
 
-impl Default for Nats {
-    fn default() -> Self {
-        Self::new()
+impl_syms_vec!(Nats, nat, zero, next, add; scope);
+
+impl Module for Nats {
+    type RefsTuple<'a> = RefsTuple4<'a>;
+
+    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
+        (&self.nat, &self.zero, &self.next, &self.add)
     }
 }
 
-impl_syms_vec!(Nats, nat, zero, next, add, add_zero, add_next);
-
-impl Module for Nats {
-    type RefsTuple<'a> = RefsTuple6<'a>;
-
-    fn refs_tuple(&self) -> Self::RefsTuple<'_> {
-        (&self.nat, &self.zero, &self.next, &self.add, &self.add_zero, &self.add_next)
-    }
+#[derive(Error, Debug)]
+pub enum NatsNewError {
+    #[error("failed to register natural-number symbols")]
+    InsertSymFailed { source: ErrVec<ScopeInsertSymError>, scope: Box<Scope> },
+    #[error("failed to insert the zero case of addition")]
+    InsertRewriteZeroFailed { source: ScopeInsertRewriteError, scope: Box<Scope> },
+    #[error("failed to construct the successor pattern")]
+    ApplyManyNextFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct recursive addition")]
+    ApplyManyAddFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to construct the addition result")]
+    ApplyManyBodyFailed { source: ScopeApplyManyError, scope: Box<Scope> },
+    #[error("failed to insert the successor case of addition")]
+    InsertRewriteNextFailed { source: ScopeInsertRewriteError, scope: Box<Scope> },
+    #[error("invalid natural-number module")]
+    ValidateFailed { source: ValidatorValidateError, scope: Box<Scope> },
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{PlainRenderer, must_print};
+    use crate::{PlainRenderer, assert_eq_prints};
 
-    must_print!(Nats, PlainRenderer, "nats/prints/plain.base");
+    #[test]
+    fn must_print() -> Result<(), MustPrintError> {
+        use MustPrintError::*;
+        let module = handle!(Nats::new(), NewFailed);
+        assert_eq_prints(&module, &PlainRenderer::default(), include_str!("nats/prints/plain.base"));
+        Ok(())
+    }
+    #[derive(Error, Debug)]
+    pub enum MustPrintError {
+        #[error("failed to construct natural numbers")]
+        NewFailed { source: NatsNewError },
+    }
 }

@@ -1,4 +1,4 @@
-use crate::{Def, Exp, Preset, Render, Sym, Typ};
+use crate::{Exp, Preset, Render, Rewrite, Sym, Typ};
 use derive_more::From;
 
 macro_rules! renderer {
@@ -20,9 +20,9 @@ macro_rules! renderer {
                 }
             }
 
-            fn render_def(&self, def: &Def) -> Option<String> {
+            fn render_rewrite(&self, sym: &Sym, rewrite: &Rewrite) -> Option<String> {
                 match self {
-                    $(Self::$variant(inner) => inner.render_def(def)),+
+                    $(Self::$variant(inner) => inner.render_rewrite(sym, rewrite)),+
                 }
             }
 

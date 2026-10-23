@@ -10,10 +10,6 @@ mod sym;
 
 pub use sym::*;
 
-mod def;
-
-pub use def::*;
-
 mod nym_lang;
 
 pub use nym_lang::*;
@@ -35,8 +31,41 @@ pub use constructors::*;
 mod app;
 pub use app::*;
 
-mod binding;
-pub use binding::*;
-
 mod scope;
 pub use scope::*;
+
+mod rewrite;
+pub use rewrite::*;
+
+mod rewrites;
+pub use rewrites::*;
+
+mod substitution;
+pub use substitution::*;
+
+mod normalizer;
+pub use normalizer::*;
+
+mod unifier;
+pub use unifier::*;
+
+mod theory;
+pub use theory::*;
+
+mod validator;
+pub use validator::*;
+
+mod coverage;
+pub use coverage::*;
+
+mod size_change;
+pub use size_change::*;
+
+mod call;
+pub use call::*;
+
+mod termination;
+pub use termination::*;
+
+mod context_instantiation;
+pub use context_instantiation::*;

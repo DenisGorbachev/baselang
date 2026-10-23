@@ -10,13 +10,6 @@
 
 * Maintain the canonical specification in [.agents/spec.md](.agents/spec.md).
 * FUN: Specify functions as mathematical objects.
-  * Implement `Rewrite` and scope-owned rules indexed by `Sym` identity.
-  * Replace the Rust `Def`, `def!`, scope-definition APIs, and definition renderers with symbols and zero-argument rewrites.
-  * Migrate the legacy terminal reductions in `Nats` and `Vectors`.
-  * Implement rewrite parsing, evaluation, and type inference for simple definitions.
-  * Pass the scope's rewrite context through application checking, definitional conversion, and normalization.
-  * Keep constructor indexes consistent with defining rules and normalized terminal types.
-  * Validate earlier declarations and patterns against the finalized rewrite-rule set.
   * Define dependent function introduction.
   * Define function abstraction.
   * Define function application.
@@ -50,12 +43,11 @@
   * Specify conversion under binders.
   * Specify function extensionality.
 * RWT: Extend dependent rewriting.
-  * Specify forced parameter patterns.
-  * Specify forced index patterns.
-  * Specify normalization during matching.
+  * Resolve type equations blocked on defined symbols during coverage and overlap checking.
+  * Support function-valued pattern variables with explicit termination evidence.
   * Specify impossible cases.
   * Specify overlap checking after index refinement.
-  * Specify admissible termination evidence.
+  * Support termination evidence beyond structural size-change analysis.
   * Specify admissible confluence evidence.
   * Consider translating dependent matches into eliminators.
 * SYN: Specify input syntax.

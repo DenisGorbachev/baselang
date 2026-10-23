@@ -216,7 +216,12 @@ Increment => Add One
 - An argument-pattern identifier that does not resolve to a declared constant introduces a rule-local variable.
 - A pattern variable's type is inferred from the function signature and enclosing symbol applications.
 - Ambiguous pattern-variable types are rejected.
-- Each pattern variable occurs exactly once on the left-hand side.
+- Each pattern variable must occur exactly once outside forced constructor arguments on the left-hand side.
+- A constructor argument is forced when unifying the constructor's result type with the expected pattern type determines that argument.
+- A forced argument must be definitionally equal to the value determined by that unification.
+- An occurrence inside a forced argument must not introduce an additional pattern-variable binding.
+- `_` in an argument pattern must introduce a fresh anonymous variable.
+- An anonymous variable must not be available by name in the right-hand side.
 - Pattern variables are bound throughout the right-hand side.
 - Patterns match symbol identity and application structure after argument normalization.
 - An argument that does not expose the required symbol leaves the application unreduced.
@@ -236,6 +241,10 @@ The argument pattern `One` expands to `Step Zero`. Adding `F (Step Zero) => Zero
 - Logical reduction must terminate.
 - Logical reduction must be confluent.
 - Recursive calls must decrease under a well-founded relation.
+- The implementation must establish structural termination by size-change analysis of calls between defined symbols.
+- Every idempotent cycle in the composed size-change graph must contain a strict decrease on its diagonal.
+- Calling or returning a function-valued pattern variable requires termination evidence beyond this structural check.
+- The implementation must reject definitions when this check cannot establish termination.
 - The entire right-hand side need not be syntactically smaller than the left-hand side.
 - A total function with rule arity `k` must have an applicable rule for every well-typed closed tuple of `k` arguments after normalization in the finalized theory.
 
@@ -257,6 +266,10 @@ Neg Bool.False => Bool.True
 - The rewrite-rule set remains editable until the theory is finalized.
 - Constructor classification and argument-pattern validity must use the finalized rewrite-rule set.
 - A later defining rule must trigger revalidation of earlier patterns containing its head symbol.
+- Coverage checking must refine dependent argument types when splitting an argument into constructor cases.
+- Constructor cases whose result types cannot unify with the refined argument type must be excluded.
+- A type equation blocked on a defined symbol must not be classified as an impossible constructor case.
+- Validation must reject blocked type equations when it cannot establish coverage or non-overlap.
 - Theory checks run at the end of the single pass:
   - Typing under the finalized rewrite-rule set.
   - Argument-pattern validity after unfolding zero-argument definitions.

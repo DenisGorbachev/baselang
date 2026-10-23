@@ -1,4 +1,4 @@
-use crate::{Indenter, Prelude, Preset, Renderer, SymsVec, dedup_inner_iter, filter_renders, render_syms};
+use crate::{Indenter, Prelude, PreludeNewError, Preset, Renderer, dedup_inner_iter, filter_renders, render_module};
 use clap::Parser;
 use errgonomic::handle;
 use itertools::Itertools;
@@ -18,9 +18,8 @@ impl RenderPreludeCommand {
         let Self {} = self;
         let renderers: Vec<Renderer> = Preset::iter().map(Renderer::from).collect_vec();
         let indenter = Indenter::new_simple("// ");
-        let prelude = Prelude::new();
-        let syms = prelude.syms_vec();
-        let renders = render_syms(syms, &renderers);
+        let prelude = handle!(Prelude::new(), PreludeNewFailed);
+        let renders = render_module(&prelude, &renderers);
         let renders = filter_renders(renders);
         let renders = dedup_inner_iter(renders);
         let renders = indenter.indent_blocks(renders);
@@ -55,6 +54,8 @@ pub fn write_block(writer: &mut impl Write, block: impl IntoIterator<Item = Stri
 
 #[derive(Error, Debug)]
 pub enum RenderPreludeCommandRunError {
+    #[error("failed to construct the prelude")]
+    PreludeNewFailed { source: PreludeNewError },
     #[error("failed to render prelude")]
     WriteBlocksFailed { source: WriteBlocksError },
 }

@@ -1,6 +1,7 @@
-use crate::{AlphaEq, Def, DefRc, Exp, Sym, SymRc, alpha_eq_typ};
+use crate::{AlphaEq, Exp, Substitution, Sym, SymRc, alpha_eq_typ};
 use Exp::Sol;
 use Typ::*;
+use std::ptr::NonNull;
 use std::rc::Rc;
 
 /// [`Typ`] may be compared semantically via [`AlphaEq`].
@@ -20,6 +21,28 @@ pub type TypRc = Rc<Typ>;
 pub type TypBox = Box<Typ>;
 
 impl Typ {
+    pub fn instantiate(&self, substitution: &Substitution) -> Self {
+        match self {
+            Top => Top,
+            One(exp) => One(exp.instantiate(substitution)),
+            Fun(param, body) => {
+                let typ = param.typ().instantiate(substitution);
+                let mut inner = substitution.clone();
+                let key = NonNull::from(param.as_ref());
+                inner.remove(&key);
+                let captures = substitution.values().any(|value| value.contains_sym(param));
+                let param_new = if typ.alpha_eq(param.typ()) && !captures {
+                    param.clone()
+                } else {
+                    let fresh = Sym::new_rc(param.nym().clone(), typ);
+                    inner.insert(key, Exp::sol(&fresh));
+                    fresh
+                };
+                Fun(param_new, Box::new(body.instantiate(&inner)))
+            }
+        }
+    }
+
     #[inline(always)]
     pub fn top() -> Self {
         Top
@@ -54,7 +77,6 @@ impl Typ {
     }
 
     pub fn substitute(&self, sym: &SymRc, arg: &Exp) -> Self {
-        debug_assert!(sym.typ().alpha_eq(arg.typ()));
         match self {
             Top => Top,
             One(exp) => One(exp.substitute(sym, arg)),
@@ -90,6 +112,11 @@ impl Typ {
             Fun(param, typ) => {
                 let replaced_param = param.replace_rc(from, to);
                 let replaced_typ = typ.replace(from, to);
+                let replaced_typ = if Rc::ptr_eq(&replaced_param, param) {
+                    replaced_typ
+                } else {
+                    replaced_typ.replace(param, &replaced_param)
+                };
                 Fun(replaced_param, Box::new(replaced_typ))
             }
         }
@@ -121,30 +148,6 @@ impl From<Exp> for Typ {
     #[inline(always)]
     fn from(exp: Exp) -> Self {
         One(exp)
-    }
-}
-
-impl<N> From<Def<N>> for Typ {
-    fn from(def: Def<N>) -> Self {
-        Self::one(def)
-    }
-}
-
-impl<N> From<&Def<N>> for Typ {
-    fn from(def: &Def<N>) -> Self {
-        Self::one(def)
-    }
-}
-
-impl<N> From<DefRc<N>> for Typ {
-    fn from(def: DefRc<N>) -> Self {
-        Self::one(def)
-    }
-}
-
-impl<N> From<&DefRc<N>> for Typ {
-    fn from(def: &DefRc<N>) -> Self {
-        Self::one(def)
     }
 }
 

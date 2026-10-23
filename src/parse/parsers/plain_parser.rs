@@ -1,7 +1,6 @@
-use crate::{Exp, InvalidApplicationError, Parse, Scope, ScopeNewSymError, Sym, SymRc, Typ};
-use core::iter::from_fn;
+use crate::{Exp, Parse, Rewrite, Scope, ScopeApplyError, ScopeConvertibleError, ScopeDefineError, ScopeInsertRewriteError, ScopeNewSymError, ScopeNormalizeTypError, Sym, SymRc, Theory, TheoryNewError, Typ, is_identifier};
 use derive_new::new;
-use errgonomic::handle;
+use errgonomic::{handle, handle_bool, handle_opt};
 use non_empty_str::cow::NonEmptyCowStr;
 use std::borrow::Cow;
 use thiserror::Error;
@@ -25,73 +24,45 @@ pub struct PlainParser {
 impl Parse for PlainParser {
     type Error = PlainParserParseError;
 
-    fn parse(&mut self, input: &str) -> impl Iterator<Item = Result<SymRc, Self::Error>> {
+    fn parse(&mut self, input: &str) -> Result<Theory, Self::Error> {
+        use PlainParserParseError::*;
+        let scope = handle!(self.parse_scope(input), ParseScopeFailed);
+        Ok(handle!(Theory::new(scope), TheoryNewFailed))
+    }
+}
+
+impl PlainParser {
+    pub fn parse_scope(&self, input: &str) -> Result<Scope, PlainParserParseScopeError> {
+        use PlainParserParseScopeError::*;
         let mut scope = Scope::default();
-        let mut failed = false;
-        let top = self.top.clone();
-        let single_line_comment = self.single_line_comment.clone();
-        let multi_line_comment_start = self.multi_line_comment_start.clone();
-        let multi_line_comment_end = self.multi_line_comment_end.clone();
-        let mut lines = input.lines().enumerate();
-        let mut multi_line_comment_start_line_number = None;
-        from_fn(move || {
-            if failed {
-                return None;
+        let mut comment_lines = Vec::new();
+        handle!(input.lines().enumerate().try_for_each(|(index, raw)| {
+            use PlainParserParseScopeLineError::*;
+            let line_number = handle_opt!(index.checked_add(1), LineNumberInvalid);
+            let line = handle!(strip_comments_from_line(raw, self.single_line_comment.as_ref().as_ref(), self.multi_line_comment_start.as_ref().as_ref(), self.multi_line_comment_end.as_ref().as_ref(), &mut comment_lines, line_number), StripCommentsFromLineFailed, line_number, line: raw);
+            if let Some(line) = normalize_line(&line) {
+                handle!(parse_line(line, &mut scope, self.top.as_ref().as_ref()), ParseLineFailed, line_number, line);
             }
-            loop {
-                return match lines.next() {
-                    Some((line_index, raw_line)) => {
-                        let line_number = match line_index.checked_add(1) {
-                            Some(line_number) => line_number,
-                            None => {
-                                failed = true;
-                                return Some(Err(PlainParserParseError::LineNumberOverflowFailed {
-                                    line_index,
-                                }));
-                            }
-                        };
-                        let line = match strip_comments_from_line(raw_line, single_line_comment.as_ref().as_ref(), multi_line_comment_start.as_ref().as_ref(), multi_line_comment_end.as_ref().as_ref(), &mut multi_line_comment_start_line_number, line_number) {
-                            Ok(line) => line,
-                            Err(source) => {
-                                failed = true;
-                                return Some(Err(PlainParserParseError::ParseLineFailed {
-                                    source: Box::new(source),
-                                    line_number,
-                                    line: raw_line.to_string(),
-                                }));
-                            }
-                        };
-                        let line = match normalize_line(line.as_ref()) {
-                            Some(line) => line,
-                            None => continue,
-                        };
-                        let result = match parse_line(line, &mut scope, top.as_ref().as_ref()) {
-                            Ok(sym) => Ok(sym),
-                            Err(source) => {
-                                failed = true;
-                                Err(PlainParserParseError::ParseLineFailed {
-                                    source: Box::new(source),
-                                    line_number,
-                                    line: line.to_string(),
-                                })
-                            }
-                        };
-                        Some(result)
-                    }
-                    None => {
-                        if let Some(line_number) = multi_line_comment_start_line_number.take() {
-                            failed = true;
-                            return Some(Err(PlainParserParseError::UnclosedMultiLineComment {
-                                line_number,
-                                start: multi_line_comment_start.as_ref().to_string(),
-                                end: multi_line_comment_end.as_ref().to_string(),
-                            }));
-                        }
-                        None
-                    }
-                };
-            }
-        })
+            Ok(())
+        }), ParseScopeLineFailed, input: input);
+        if let Some(&line_number) = comment_lines.first() {
+            return Err(CommentUnclosedInvalid {
+                line_number,
+                input: input.to_owned(),
+            });
+        }
+        Ok(scope)
+    }
+
+    pub fn expression(&self, input: &str, scope: &Scope) -> Result<Exp, PlainParserExpressionError> {
+        use PlainParserExpressionError::*;
+        Ok(handle!(parse_exp(input, scope, &[], self.top.as_ref().as_ref()), ParseExpFailed, input: input))
+    }
+}
+
+impl Default for PlainParser {
+    fn default() -> Self {
+        Self::new(non_empty_str::non_empty_str!("Type"), non_empty_str::non_empty_str!("//"), non_empty_str::non_empty_str!("/*"), non_empty_str::non_empty_str!("*/"))
     }
 }
 
@@ -104,114 +75,67 @@ fn normalize_line(line: &str) -> Option<&str> {
     if line.is_empty() { None } else { Some(line) }
 }
 
-fn strip_comments_from_line<'a>(line: &'a str, single_line_comment: &str, multi_line_comment_start: &str, multi_line_comment_end: &str, multi_line_comment_start_line_number: &mut Option<usize>, line_number: usize) -> Result<Cow<'a, str>, PlainParserParseError> {
-    let mut output = None::<String>;
+fn strip_comments_from_line<'a>(line: &'a str, single_line_comment: &str, multi_line_comment_start: &str, multi_line_comment_end: &str, comment_lines: &mut Vec<usize>, line_number: usize) -> Result<Cow<'a, str>, PlainParserParseError> {
+    use PlainParserParseError::*;
     let mut remaining = line;
-    let mut line_changed = false;
-    loop {
-        if multi_line_comment_start_line_number.is_some() {
-            line_changed = true;
-            let end_index = match remaining.find(multi_line_comment_end) {
-                Some(end_index) => end_index,
-                None => {
+    let mut output = (!comment_lines.is_empty()).then(String::new);
+    let mut quoted = false;
+    let mut escaped = false;
+    while !remaining.is_empty() {
+        if !comment_lines.is_empty() {
+            if let Some(suffix) = remaining.strip_prefix(multi_line_comment_end) {
+                comment_lines.pop();
+                remaining = suffix;
+                continue;
+            }
+            if let Some(suffix) = remaining.strip_prefix(multi_line_comment_start) {
+                comment_lines.push(line_number);
+                remaining = suffix;
+                continue;
+            }
+        } else if !quoted {
+            let single = remaining.starts_with(single_line_comment);
+            let multi = remaining.starts_with(multi_line_comment_start);
+            if single || multi {
+                if output.is_none() {
+                    let length = handle_opt!(line.len().checked_sub(remaining.len()), TextSliceFailed, input: line);
+                    output = Some(handle_opt!(line.get(..length), TextSliceFailed, input: line).to_owned());
+                }
+                if single && (!multi || single_line_comment.len() >= multi_line_comment_start.len()) {
                     return Ok(Cow::Owned(output.unwrap_or_default()));
                 }
-            };
-            let (_comment, suffix) = split_text_at(remaining, end_index)?;
-            remaining = strip_prefix_checked(suffix, multi_line_comment_end)?;
-            *multi_line_comment_start_line_number = None;
-            continue;
-        }
-        let next_comment = find_next_comment_start(remaining, single_line_comment, multi_line_comment_start);
-        let (comment_index, is_multi_line_comment) = match next_comment {
-            Some(next_comment) => next_comment,
-            None => {
-                if let Some(mut output) = output {
-                    output.push_str(remaining);
-                    return Ok(Cow::Owned(output));
+                if let Some(output) = output.as_mut() {
+                    output.push(' ');
                 }
-                if line_changed {
-                    return Ok(Cow::Owned(remaining.to_string()));
-                }
-                return Ok(Cow::Borrowed(line));
-            }
-        };
-        line_changed = true;
-        let (prefix, suffix) = split_text_at(remaining, comment_index)?;
-        push_visible_text(&mut output, prefix);
-        if is_multi_line_comment {
-            remaining = strip_prefix_checked(suffix, multi_line_comment_start)?;
-            *multi_line_comment_start_line_number = Some(line_number);
-            continue;
-        }
-        return Ok(Cow::Owned(output.unwrap_or_default()));
-    }
-}
-
-fn push_visible_text(output: &mut Option<String>, visible_text: &str) {
-    if visible_text.is_empty() {
-        return;
-    }
-    match output {
-        Some(output) => output.push_str(visible_text),
-        None => {
-            *output = Some(visible_text.to_string());
-        }
-    }
-}
-
-fn find_next_comment_start(input: &str, single_line_comment: &str, multi_line_comment_start: &str) -> Option<(usize, bool)> {
-    let single_line_index = input.find(single_line_comment);
-    let multi_line_index = input.find(multi_line_comment_start);
-    match (single_line_index, multi_line_index) {
-        (Some(single_line_index), Some(multi_line_index)) if single_line_index < multi_line_index => Some((single_line_index, false)),
-        (Some(single_line_index), Some(multi_line_index)) if multi_line_index < single_line_index => Some((multi_line_index, true)),
-        (Some(single_line_index), Some(_multi_line_index)) => {
-            if multi_line_comment_start.len() > single_line_comment.len() {
-                Some((single_line_index, true))
-            } else {
-                Some((single_line_index, false))
+                comment_lines.push(line_number);
+                remaining = handle_opt!(remaining.strip_prefix(multi_line_comment_start), TextSliceFailed, input: line);
+                continue;
             }
         }
-        (Some(single_line_index), None) => Some((single_line_index, false)),
-        (None, Some(multi_line_index)) => Some((multi_line_index, true)),
-        (None, None) => None,
-    }
-}
-
-fn split_text_at(input: &str, index: usize) -> Result<(&str, &str), PlainParserParseError> {
-    use PlainParserParseError::*;
-    let prefix = match input.get(..index) {
-        Some(prefix) => prefix,
-        None => {
-            return Err(TextSliceFailed {
-                input: input.to_string(),
-            });
+        let ch = handle_opt!(remaining.chars().next(), TextSliceFailed, input: line);
+        if comment_lines.is_empty() {
+            if let Some(output) = output.as_mut() {
+                output.push(ch);
+            }
+            if escaped {
+                escaped = false;
+            } else if quoted && ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                quoted = !quoted;
+            }
         }
-    };
-    let suffix = match input.get(index..) {
-        Some(suffix) => suffix,
-        None => {
-            return Err(TextSliceFailed {
-                input: input.to_string(),
-            });
-        }
-    };
-    Ok((prefix, suffix))
-}
-
-fn strip_prefix_checked<'a>(input: &'a str, prefix: &str) -> Result<&'a str, PlainParserParseError> {
-    use PlainParserParseError::*;
-    match input.strip_prefix(prefix) {
-        Some(input) => Ok(input),
-        None => Err(TextSliceFailed {
-            input: input.to_string(),
-        }),
+        remaining = handle_opt!(remaining.get(ch.len_utf8()..), TextSliceFailed, input: line);
     }
+    Ok(output.map_or(Cow::Borrowed(line), Cow::Owned))
 }
 
 fn parse_line(line: &str, scope: &mut Scope, top: &str) -> Result<SymRc, PlainParserParseError> {
     use PlainParserParseError::*;
+    if let Some((lhs, rhs)) = line.split_once("=>") {
+        return Ok(handle!(parse_rewrite(lhs.trim(), rhs.trim(), scope, top), ParseRewriteFailed));
+    }
+    handle_bool!(line.contains('='), DefinitionOperatorInvalid, input: line);
     let colon_index = match find_first_top_level_colon(line) {
         Ok(Some(colon_index)) => colon_index,
         Ok(None) => {
@@ -249,7 +173,7 @@ fn parse_line(line: &str, scope: &mut Scope, top: &str) -> Result<SymRc, PlainPa
             });
         }
     };
-    if name.is_empty() || name.chars().any(char::is_whitespace) {
+    if !is_identifier(name) {
         return Err(InvalidDefinitionName {
             input: name.to_string(),
         });
@@ -449,7 +373,7 @@ fn parse_typ(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Result<
         return Ok(Typ::fun(&binder, codomain));
     }
 
-    if input == top && find_sym(scope, locals, input).is_none() {
+    if (input == top || input == "Type") && find_sym(scope, locals, input).is_none() {
         return Ok(Typ::top());
     }
     let exp = match parse_exp(input, scope, locals, top) {
@@ -520,7 +444,7 @@ fn parse_exp(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Result<
                 });
             }
         };
-        let exp = handle!(Exp::app(fun, arg), InvalidApplicationFailed, input);
+        let exp = handle!(scope.apply(fun, arg), InvalidApplicationFailed, input);
         Ok(exp)
     })
 }
@@ -539,7 +463,7 @@ fn parse_exp_atom(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Re
     } {
         return parse_exp(inner, scope, locals, top);
     }
-    if input == top && find_sym(scope, locals, input).is_none() {
+    if (input == top || input == "Type") && find_sym(scope, locals, input).is_none() {
         return Err(TopTypeUsedAsExpression {
             input: input.to_string(),
         });
@@ -554,6 +478,9 @@ fn parse_exp_atom(input: &str, scope: &Scope, locals: &[SymRc], top: &str) -> Re
 }
 
 fn find_sym(scope: &Scope, locals: &[SymRc], name: &str) -> Option<SymRc> {
+    if name == "_" {
+        return None;
+    }
     locals
         .iter()
         .rev()
@@ -760,8 +687,178 @@ fn split_application_terms(input: &str) -> Result<Vec<&str>, PlainParserParseErr
     Ok(terms)
 }
 
+fn parse_rewrite(lhs: &str, rhs: &str, scope: &mut Scope, top: &str) -> Result<SymRc, ParseRewriteError> {
+    use ParseRewriteError::*;
+    let terms = handle!(split_application_terms(lhs), SplitApplicationTermsFailed, lhs: lhs, rhs: rhs);
+    let mut terms = terms.into_iter();
+    let name = handle_opt!(terms.next(), HeadNotFound, lhs: lhs, rhs: rhs);
+    handle_bool!(!is_identifier(name), NameInvalid, name: name);
+    let terms = terms.collect::<Vec<_>>();
+    if terms.is_empty() && scope.sym(name).is_none() {
+        let body = handle!(parse_exp(rhs, scope, &[], top), ParseExpFailed, rhs: rhs);
+        return Ok(handle!(scope.define(name, body), DefineFailed));
+    }
+    let sym = handle_opt!(scope.sym(name).cloned(), SymbolNotFound, name: name);
+    let mut locals = Vec::new();
+    let (_, patterns) = handle!(
+        terms
+            .into_iter()
+            .try_fold((Exp::sol(&sym), Vec::new()), |(fun, mut patterns), input| {
+                use ParseRewritePatternError::*;
+                let typ = handle!(scope.normalize_typ(fun.typ()), NormalizeTypFailed);
+                let Typ::Fun(param, _) = typ else {
+                    return Err(ArityInvalid {
+                        input: input.to_owned(),
+                    });
+                };
+                let pattern = handle!(parse_pattern(input, param.typ(), scope, &mut locals, top), ParsePatternFailed);
+                let fun = handle!(scope.apply(fun, &pattern), ApplyFailed);
+                patterns.push(pattern);
+                Ok((fun, patterns))
+            }),
+        ParseRewritePatternFailed
+    );
+    let body = handle!(parse_exp(rhs, scope, &locals, top), ParseExpFailed, rhs: rhs);
+    let head = sym.clone();
+    handle!(scope.insert_rewrite(head, Rewrite::new(patterns, body)), InsertRewriteFailed);
+    Ok(sym)
+}
+
+fn parse_pattern(input: &str, expected: &Typ, scope: &Scope, locals: &mut Vec<SymRc>, top: &str) -> Result<Exp, ParsePatternError> {
+    use ParsePatternError::*;
+    let input = input.trim();
+    if let Some(inner) = handle!(strip_outer_parens(input), StripOuterParensFailed, input: input) {
+        return Ok(handle!(parse_pattern(inner, expected, scope, locals, top), ParsePatternInnerFailed));
+    }
+    let terms = handle!(split_application_terms(input), SplitApplicationTermsFailed, input: input);
+    let (first, rest) = handle_opt!(terms.split_first(), PatternEmptyInvalid, input: input);
+    let first = if let Some(sym) = find_sym(scope, locals, first) {
+        Exp::sol(&sym)
+    } else {
+        handle_bool!(!rest.is_empty() || !is_identifier(first) || *first == top || *first == "Type", VariableTypeInvalid, input: input);
+        let sym = Sym::new_rc(*first, expected.clone());
+        if *first != "_" {
+            locals.push(sym.clone());
+        }
+        Exp::Sol(sym)
+    };
+    let pattern = handle!(
+        rest.iter().try_fold(first, |fun, input| {
+            use ParsePatternArgumentError::*;
+            let typ = handle!(scope.normalize_typ(fun.typ()), NormalizeTypFailed);
+            let Typ::Fun(param, _) = typ else {
+                return Err(ArityInvalid {
+                    input: (*input).to_owned(),
+                });
+            };
+            let arg = handle!(parse_pattern(input, param.typ(), scope, locals, top), ParsePatternFailed);
+            Ok(handle!(scope.apply(fun, arg), ApplyFailed))
+        }),
+        ParsePatternArgumentFailed
+    );
+    let valid = handle!(scope.convertible(pattern.typ(), expected), ConvertibleFailed);
+    handle_bool!(!valid, TypeInvalid, input: input);
+    Ok(pattern)
+}
+
+#[derive(Error, Debug)]
+pub enum PlainParserParseScopeError {
+    #[error("failed to parse the source")]
+    ParseScopeLineFailed { source: Box<PlainParserParseScopeLineError>, input: String },
+    #[error("unclosed block comment opened on line {line_number}")]
+    CommentUnclosedInvalid { line_number: usize, input: String },
+}
+
+#[derive(Error, Debug)]
+pub enum PlainParserParseScopeLineError {
+    #[error("source line number exceeds addressable memory")]
+    LineNumberInvalid {},
+    #[error("failed to strip comments on line {line_number}: '{line}'")]
+    StripCommentsFromLineFailed { source: PlainParserParseError, line_number: usize, line: String },
+    #[error("failed to parse line {line_number}: '{line}'")]
+    ParseLineFailed { source: PlainParserParseError, line_number: usize, line: String },
+}
+
+#[derive(Error, Debug)]
+pub enum PlainParserExpressionError {
+    #[error("failed to parse expression '{input}'")]
+    ParseExpFailed { source: PlainParserParseError, input: String },
+}
+
+#[derive(Error, Debug)]
+pub enum ParseRewriteError {
+    #[error("failed to split rule head '{lhs}'")]
+    SplitApplicationTermsFailed { source: Box<PlainParserParseError>, lhs: String, rhs: String },
+    #[error("rule has no head")]
+    HeadNotFound { lhs: String, rhs: String },
+    #[error("invalid rule head '{name}'")]
+    NameInvalid { name: String },
+    #[error("symbol '{name}' must be declared before its argument rules")]
+    SymbolNotFound { name: String },
+    #[error("failed to parse rule body '{rhs}'")]
+    ParseExpFailed { source: Box<PlainParserParseError>, rhs: String },
+    #[error("failed to introduce the definition")]
+    DefineFailed { source: ScopeDefineError },
+    #[error("failed to parse rule arguments")]
+    ParseRewritePatternFailed { source: ParseRewritePatternError },
+    #[error("failed to insert the rewrite rule")]
+    InsertRewriteFailed { source: ScopeInsertRewriteError },
+}
+
+#[derive(Error, Debug)]
+pub enum ParseRewritePatternError {
+    #[error("failed to normalize the rule head's parameter type")]
+    NormalizeTypFailed { source: ScopeNormalizeTypError },
+    #[error("too many patterns before '{input}'")]
+    ArityInvalid { input: String },
+    #[error("failed to parse an argument pattern")]
+    ParsePatternFailed { source: ParsePatternError },
+    #[error("failed to apply the head to its pattern")]
+    ApplyFailed { source: ScopeApplyError },
+}
+
+#[derive(Error, Debug)]
+pub enum ParsePatternError {
+    #[error("invalid parentheses in '{input}'")]
+    StripOuterParensFailed { source: Box<PlainParserParseError>, input: String },
+    #[error("failed to parse parenthesized pattern")]
+    ParsePatternInnerFailed { source: Box<Self> },
+    #[error("failed to split pattern '{input}'")]
+    SplitApplicationTermsFailed { source: Box<PlainParserParseError>, input: String },
+    #[error("empty argument pattern")]
+    PatternEmptyInvalid { input: String },
+    #[error("cannot infer a pattern variable type in '{input}'")]
+    VariableTypeInvalid { input: String },
+    #[error("failed to parse constructor arguments")]
+    ParsePatternArgumentFailed { source: Box<ParsePatternArgumentError> },
+    #[error("failed to compare pattern types")]
+    ConvertibleFailed { source: ScopeConvertibleError },
+    #[error("pattern '{input}' has the wrong type")]
+    TypeInvalid { input: String },
+}
+
+#[derive(Error, Debug)]
+pub enum ParsePatternArgumentError {
+    #[error("failed to normalize a constructor parameter type")]
+    NormalizeTypFailed { source: ScopeNormalizeTypError },
+    #[error("too many constructor arguments before '{input}'")]
+    ArityInvalid { input: String },
+    #[error("failed to parse a constructor argument")]
+    ParsePatternFailed { source: Box<ParsePatternError> },
+    #[error("failed to apply the constructor")]
+    ApplyFailed { source: ScopeApplyError },
+}
+
 #[derive(Error, Debug)]
 pub enum PlainParserParseError {
+    #[error("failed to parse declarations and rewrite rules")]
+    ParseScopeFailed { source: Box<PlainParserParseScopeError> },
+    #[error("final theory validation failed")]
+    TheoryNewFailed { source: Box<TheoryNewError> },
+    #[error("failed to parse a rewrite rule")]
+    ParseRewriteFailed { source: Box<ParseRewriteError> },
+    #[error("'=' is not a definition operator; use '=>' in '{input}'")]
+    DefinitionOperatorInvalid { input: String },
     #[error("failed to create a symbol from '{input}'")]
     NewSymFailed { source: ScopeNewSymError, input: String },
     #[error("line number overflow at index {line_index}")]
@@ -801,7 +898,7 @@ pub enum PlainParserParseError {
     #[error("top type '{input}' can't be used as an expression")]
     TopTypeUsedAsExpression { input: String },
     #[error("invalid application in '{input}'")]
-    InvalidApplicationFailed { source: InvalidApplicationError, input: String },
+    InvalidApplicationFailed { source: ScopeApplyError, input: String },
     #[error("unmatched closing parenthesis in '{input}'")]
     UnmatchedClosingParenthesis { input: String },
     #[error("unclosed parenthesis in '{input}'")]
@@ -815,14 +912,14 @@ pub enum PlainParserParseError {
 #[cfg(test)]
 mod tests {
     use crate::{Parse, PlainParser};
-    use itertools::Itertools;
     use non_empty_str::non_empty_str;
 
     #[test]
     #[ignore]
     fn must_parse() {
         let mut parser = PlainParser::new(non_empty_str!("^_^"), non_empty_str!("//"), non_empty_str!("/*"), non_empty_str!("*/"));
-        let iter = parser.parse(include_str!("../../../samples/all.plain.base"));
-        let _: Vec<_> = iter.try_collect().unwrap();
+        let _theory = parser
+            .parse(include_str!("../../../samples/all.plain.base"))
+            .unwrap();
     }
 }
