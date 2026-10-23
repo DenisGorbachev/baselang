@@ -27,3 +27,6 @@ mod command;
 pub use command::*;
 mod constructors;
 pub use constructors::*;
+
+mod app;
+pub use app::*;

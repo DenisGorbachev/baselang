@@ -17,7 +17,8 @@ pub enum Exp {
     App(/* fun */ ExpBox, /* arg */ ExpBox, /* typ */ TypBox),
 }
 
-pub use Exp::*;
+use Exp::App;
+pub use Exp::Sol;
 
 pub type ExpRc = Rc<Exp>;
 pub type ExpBox = Box<Exp>;

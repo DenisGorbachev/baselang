@@ -676,6 +676,51 @@ Proxy command example:
 
 ### Baselang concepts
 
+#### `Cargo.toml`
+
+- `workspace.dependencies` must contain:
+  - `derive_getters`
+
+#### Compiler type requirements
+
+- Every field must have a distinct generic type.
+- Must have a getter for every field (prefer deriving via `Getters`).
+
+Alias: CTR.
+
+#### Trait `Apply`
+
+- Must have associated types:
+  - `Arg`
+  - `Typ`
+  - `Error: std::error::Error + 'static`
+- Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Error>`.
+- `apply` must validate the argument and return the application's resulting type.
+
+#### Struct `App`
+
+- Must have generics:
+  - `F: Apply`
+  - `A`
+  - `T`
+- Must have fields:
+  - `fun: F`
+  - `arg: A`
+  - `typ: T`
+- Must pass [CTR](#compiler-type-requirements).
+
+##### `impl App`
+
+###### `pub fn new`
+
+- Must have args:
+  - `fun`
+  - `arg`
+- Must require `F: Apply<Arg = A, Typ = T>`.
+- Must compute `typ` by calling `fun.apply(&arg)`.
+- Must return an error containing the source error, `fun`, and `arg` if application fails.
+- Must preserve the validated fields behind getters.
+
 #### `Var`
 
 A struct that represents a variable.
@@ -2441,7 +2486,6 @@ title = ""
 readme.generate = false
 
 [dependencies]
-derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive_more = { version = "2.1.1", features = ["deref"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 facet = { version = "0.44.3", features = ["reflect"] }
@@ -2449,6 +2493,7 @@ rustc-hash = { version = "2.1.2" }
 smallvec = "1.15.1"
 thiserror = "2.0.18"
 stub-macro = "0.3.0"
+derive_getters.workspace = true
 
 [lints]
 workspace = true
@@ -2460,6 +2505,9 @@ workspace = true
 [workspace]
 members = ["aist", "spec"]
 resolver = "3"
+
+[workspace.dependencies]
+derive_getters = { package = "derive-getters", version = "0.5.0", features = ["auto_copy_getters"] }
 
 [workspace.package]
 version = "0.1.0"
@@ -2525,8 +2573,8 @@ workspace = true
 
 [dependencies]
 clap = { version = "4.5.11", features = ["derive"] }
-derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive-new = "0.7.0"
+derive_getters.workspace = true
 derive_more = { version = "2.1.1", features = ["full"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 itertools = "0.14.0"
@@ -2740,7 +2788,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 # Core Concepts
 
 * **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`], function types [`Fun`].
-* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
+* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`](Exp::App).
 * **Variables**: Represented by [`Var`], which have names and types.
 * **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.

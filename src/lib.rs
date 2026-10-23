@@ -6,7 +6,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 # Core Concepts
 
 * **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`], function types [`Fun`].
-* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`].
+* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`](Exp::App).
 * **Variables**: Represented by [`Var`], which have names and types.
 * **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.

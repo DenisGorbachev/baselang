@@ -1,5 +1,50 @@
 # Baselang concepts
 
+## `Cargo.toml`
+
+- `workspace.dependencies` must contain:
+  - `derive_getters`
+
+## Compiler type requirements
+
+- Every field must have a distinct generic type.
+- Must have a getter for every field (prefer deriving via `Getters`).
+
+Alias: CTR.
+
+## Trait `Apply`
+
+- Must have associated types:
+  - `Arg`
+  - `Typ`
+  - `Error: std::error::Error + 'static`
+- Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Error>`.
+- `apply` must validate the argument and return the application's resulting type.
+
+## Struct `App`
+
+- Must have generics:
+  - `F: Apply`
+  - `A`
+  - `T`
+- Must have fields:
+  - `fun: F`
+  - `arg: A`
+  - `typ: T`
+- Must pass [CTR](#compiler-type-requirements).
+
+### `impl App`
+
+#### `pub fn new`
+
+- Must have args:
+  - `fun`
+  - `arg`
+- Must require `F: Apply<Arg = A, Typ = T>`.
+- Must compute `typ` by calling `fun.apply(&arg)`.
+- Must return an error containing the source error, `fun`, and `arg` if application fails.
+- Must preserve the validated fields behind getters.
+
 ## `Var`
 
 A struct that represents a variable.
