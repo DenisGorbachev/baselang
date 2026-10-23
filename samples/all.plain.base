@@ -48,6 +48,9 @@ Add : (T : ^_^) -> (x : T) -> (y : T) -> (_ : T)
 Add Nat Zero b => b
 Add Nat (Succ a) b => Succ (Add Nat a b)
 
+One => Succ Zero
+Increment => Add Nat One
+
 // Lists
 List : (T : ^_^) -> ^_^
 List.Nil : (T : ^_^) -> List T

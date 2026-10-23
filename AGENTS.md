@@ -787,33 +787,6 @@ Alias: CSR.
 - A supplied `typ` must implement `Into<Typ>`.
 - A supplied `nym` must implement `Into<Nym>`.
 
-#### struct Def
-
-- Must have generics:
-  - `N`, defaulting to `Nym`
-  - `E`, defaulting to `Exp`
-- Must have exactly these fields:
-  - `nym: N`
-  - `exp: E`
-- Must pass [CSR](#compiler-struct-requirements).
-- `Def<N, Exp>` must have `pub fn typ(&self) -> &Typ` that returns `self.exp.typ()`.
-- `From<Def<N, Exp>> for Exp` must return the owned `exp` field.
-- `From<&Def<N, Exp>> for Exp` must return `exp.clone()`.
-- `From<Def<N, Exp>> for Typ` must return `Typ::One(Exp::from(def))`.
-- `From<&Def<N, Exp>> for Typ` must return `Typ::One(Exp::from(def))`.
-- For `A: Into<Exp>`, `<Def<N, Exp> as Of<A>>::of(&self, arg)` must return the result of `self.exp.of(arg)`.
-- Must not implement a conversion from `Def<N, Exp>` into `Sym` or `SymRc`.
-
-##### macro def
-
-- Must pass [macro constructor requirements](#macro-constructor-requirements).
-- `name` must be a Rust identifier.
-- `def!(name = exp)` must expand to `let name = $crate::Def::<$crate::Nym, $crate::Exp>::new(stringify!(name), exp);`.
-- `def!(name = exp; nym)` must expand to `let name = $crate::Def::<$crate::Nym, $crate::Exp>::new(nym, exp);`.
-- Each form must introduce an immutable Rust binding named `name` with type `Def<Nym, Exp>` in the invocation's scope.
-- A supplied `exp` must implement `Into<Exp>`.
-- A supplied `nym` must implement `Into<Nym>`.
-
 #### struct Fun
 
 - Must pass [CSR](#compiler-struct-requirements).
@@ -826,6 +799,8 @@ Alias: CSR.
   - `typ: T`
   - `rules: R`
 - `rules` must contain this function's defining rewrite rules.
+- Must support zero-argument rules whose bodies have either function or non-function types.
+- All rules must have the same number of argument patterns.
 - Must not implement a conversion into `Sym` or `SymRc`.
 - Registration in a scope must not insert the function into any constructor set.
 
@@ -834,8 +809,8 @@ Alias: CSR.
 - Must pass [CTR](#compiler-type-requirements).
 - Must have exactly these variants:
   - `Sym(SymRc)`
-  - `Def(DefRc)`
-- `nym()` must return the enclosed symbol's or definition's `nym()`.
+  - `Fun(FunRc)`
+- `nym()` must return the enclosed symbol's or function's `nym()`.
 
 #### struct Scope
 
@@ -849,11 +824,11 @@ Alias: CSR.
 - The default scope must be empty.
 - Invariants for the default generic arguments:
   - Each binding key must equal `binding.nym().identifier()`.
-  - Symbols and definitions must share the same name namespace.
+  - Symbols and functions must share the same name namespace.
   - `constructors_of(s)` must contain exactly the registered symbols satisfying [Constructor of sym S](#constructor-of-sym-s).
   - Each symbol must occur at most once in each constructor list.
 - `Nym::identifier()` must return `&self.short.en.singular.canonical`.
-- Registration of an occupied identifier must return an error owning the rejected symbol or definition.
+- Registration of an occupied identifier must return an error owning the rejected symbol or function.
 - Failed registration must leave the scope unchanged.
 - Raw symbol construction must not register the symbol in a scope.
 - Binding a function parameter must not register it in the enclosing scope.
@@ -868,15 +843,10 @@ Alias: CSR.
 - Must accept `&mut self` and `sym: SymRc`.
 - Must register and return that same symbol as `Result<SymRc, ScopeInsertSymError>`.
 
-##### pub fn new_def
+##### pub fn insert_fun
 
-- Must accept `&mut self`, `nym: impl Into<Nym>`, and `exp: impl Into<Exp>`.
-- Must return the newly registered definition as `Result<DefRc, ScopeNewDefError>`.
-
-##### pub fn insert_def
-
-- Must accept `&mut self` and `def: DefRc`.
-- Must register and return that same definition as `Result<DefRc, ScopeInsertDefError>`.
+- Must accept `&mut self` and `fun: FunRc`.
+- Must register and return that same function as `Result<FunRc, ScopeInsertFunError>`.
 
 ##### pub fn constructors_of
 
@@ -923,6 +893,7 @@ Alias: CSR.
 - Must pass [CTR](#compiler-type-requirements).
 - Must have exactly the following variants:
   - `Sol(SymRc)`
+  - `Fun(FunRc)`
   - `App(ExpBox, ExpBox, TypBox)`
 - Must have methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
@@ -945,8 +916,7 @@ Alias: CSR.
 
 - For `render_sym(sym)`, let `name = sym.nym().short.en.singular.to_string()` and `typ = self.render_typ_inner(sym.typ())`.
 - `render_sym(sym)` must return `Some(format!("{name} : {typ}"))`.
-- For `render_def(def)`, let `name = def.nym().short.en.singular.to_string()` and `exp = self.render_exp_inner(def.exp(), false, false)`.
-- `render_def(def)` must return `Some(format!("{name} = {exp}"))`.
+- A zero-argument rule with rendered name `name` and rendered body `body` must render as `format!("{name} => {body}")`.
 
 #### struct DuoVec
 
@@ -969,8 +939,9 @@ Alias: CSR.
 #### Constructor of type X
 
 - Must be a [sym](#struct-sym).
-- `sym.typ().last()` must be `Typ::One(_)`.
-- For `X: &Typ`, must satisfy `sym.typ().last().alpha_eq(X)`.
+- Let `result` be the normal form of `sym.typ().last()` under the theory's rewrite rules.
+- `result` must be `Typ::One(_)`.
+- For `X: &Typ`, `result` must be alpha-equivalent to the normal form of `X`.
 
 Examples:
 
@@ -981,10 +952,10 @@ Examples:
 #### Constructor of sym S
 
 - Must be a [sym](#struct-sym).
-- For `S: &SymRc`, `sym.typ().last()` must be `Typ::One(exp)`.
-- Define `head(Exp::Sol(s)) = s`.
+- The normal form of `sym.typ().last()` must be `Typ::One(exp)`.
 - Define `head(Exp::App(fun, _, _)) = head(fun)`.
-- Must satisfy `Rc::ptr_eq(head(exp), S)`.
+- Define `head(exp) = exp` for `Exp::Sol(_)` and `Exp::Fun(_)`.
+- For `S: &SymRc`, `head(exp)` must be `Exp::Sol(s)` with `Rc::ptr_eq(s, S)`.
 
 Examples:
 

@@ -1,18 +1,20 @@
 # TODO
 
-* Add intro
-  * Continuous change
-    * Our experience is continuous - some things don't change. But the same experience tells us that other things change. This duality gives rise to the idea of "continuous change" - a transformation that maintains some properties while changing the others. And the most fundamental continuity is the continuity itself - the fact that "some things don't change" doesn't change.
 * Update positioning
   * Most people don't have a problem with making decisions, but they do have a problem with persuading other people about correctness of their decisions.
 * Process knowledge
   * If you can't detect the cycles in the sequence, then it's not valid to use the axiom of the cycle, because the current sequence may be only a part of the cycle
+* Review the accumulated unreviewed changes with `git -C ~/workspace/baselang diff 6fbd1fb..HEAD`.
 
 ## Language specification
 
 * Maintain the canonical specification in [.agents/spec.md](.agents/spec.md).
 * FUN: Specify functions as mathematical objects.
   * Integrate `Fun` into expressions and scope bindings.
+  * Replace the Rust `Def`, `def!`, scope-definition APIs, and definition renderers with zero-argument rewrites owned by `Fun`.
+  * Migrate the legacy terminal reductions in `Nats` and `Vectors`.
+  * Implement rewrite parsing, evaluation, and type inference for simple definitions.
+  * Keep constructor indexes consistent with type normalization through `Fun` definitions.
   * Define dependent function introduction.
   * Define function abstraction.
   * Define function application.
@@ -43,7 +45,7 @@
   * Define reflexivity.
   * Define dependent transport.
   * Specify definitional conversion.
-  * Specify alias unfolding.
+  * Specify conversion through zero-argument definitions.
   * Specify conversion under binders.
   * Specify function extensionality.
 * RWT: Extend dependent rewriting.

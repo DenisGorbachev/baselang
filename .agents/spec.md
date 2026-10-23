@@ -20,18 +20,20 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
 ## Canonical notation
 
 - `name : T` declares a name with type `T`.
-- `name = value` binds a new name to an existing value.
 - `(x : A) -> B` is a function type whose result type may depend on `x`.
 - `A -> B` is a function type with an unnamed parameter of type `A`.
 - `f a` applies `f` to `a`.
 - `lhs => rhs` declares a rewrite rule.
+- `name => rhs` defines a name with a zero-argument rewrite rule.
+- `=` is not a definition operator.
 - `@command args...` invokes a compiler command.
 - Application associates to the left: `f a b` means `(f a) b`.
 - Function-type arrows associate to the right: `A -> B -> C` means `A -> (B -> C)`.
 - Application binds more tightly than arrows.
 - Parentheses group expressions.
 - In `(x : A) -> B`, `x` is bound in `B`.
-- Canonical applications supply every argument.
+- Canonical applications must not insert omitted arguments.
+- Partial application is permitted.
 - Other input syntaxes may infer omitted arguments.
 
 ## Compiler
@@ -52,14 +54,14 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
 - Names are case-sensitive.
 - Qualified names such as `Bool.True` identify declarations within namespaces.
 - Redeclaring a name in the same scope is rejected.
-- A binding created by `=` is immutable.
-- A binding name must be an identifier.
-  - `2 = "Hello"` is invalid.
-  - `"H" = "Hello"` is invalid.
+- Adding a defining rule does not change the owning declaration's identity or type.
+- A declaration's name must be an identifier.
+  - `2 => "Hello"` is invalid.
+  - `"H" => "Hello"` is invalid.
 - `_` in a parameter position introduces an unnamed binder.
 
 ```baselang
-text = "Hello"
+text => "Hello"
 @print text
 @print text
 ```
@@ -89,7 +91,7 @@ text = "Hello"
 - Declarations produced by evaluation enter the current theory.
 
 ````baselang
-print_hello_twice = ```
+print_hello_twice => ```
 @print "Hello"
 @print "Hello"
 ```
@@ -130,13 +132,13 @@ Eq : (T : Type) -> (a : T) -> (b : T) -> Type
 - The head of a symbol is that symbol.
 - The head of an application `f a` is the head of `f`.
 - The head of a function reference is that function.
-- A declared `Sym` is a constructor of its terminal type if that terminal type is a term.
-- It is a constructor of a `Sym` `S` if that terminal type's head is `S`.
+- Constructor membership must use the normal form of the terminal type.
+- A declared `Sym` is a constructor of that normal form if it is a term.
+- It is a constructor of a `Sym` `S` if that normal form's head is `S`.
 - `Type` has no head.
 - A symbol whose terminal type is `Type` is not a constructor.
 - A scope's constructor sets contain exactly its registered symbols satisfying this definition.
 - Parameter binders do not enter the enclosing scope's constructor sets.
-- Alias bindings do not add constructors.
 - A `Sym` cannot have defining rewrite rules.
 
 ### Addition as a relation
@@ -158,7 +160,19 @@ Add.Step : (m : Nat) -> (n : Nat) -> (sum : Nat) -> (proof : Add m n sum) -> Add
 - Functions defined by rewrite rules must use [struct `Fun`](project.md#struct-fun).
 - A `Fun` must not be a `Sym`.
 - A `Fun` must not enter any constructor set.
-- Symbols, functions, and aliases must share the scope's name namespace.
+- Symbols and functions must share the scope's name namespace.
+- Simple definitions and definitions by cases must use the same `Fun` representation.
+
+### Simple definitions
+
+- `name => rhs` must introduce a `Fun` if `name` is not already declared.
+- Its type must be inferred from `rhs` when no type signature is supplied.
+- If the type cannot be inferred, an explicit type signature is required.
+- References in `rhs` retain their bindings from the definition's lexical scope.
+- If `name` is already declared, it must be a `Fun`.
+- An explicit type signature must agree with the type of `rhs` under definitional conversion.
+- A recursive definition requires its type signature before its defining rules.
+- A simple definition may have a function type.
 
 ## Rewrite rules
 
@@ -174,13 +188,29 @@ Add (Step m) n => Step (Add m n)
 
 Here `Add` is a `Fun`; `Nat`, `Zero`, and `Step` are `Sym`s.
 
+```baselang
+One => Step Zero
+Increment => Add One
+```
+
+`One` has type `Nat`; `Increment` has type `Nat -> Nat`. Both have a zero-argument defining rule.
+
+### Rule arity
+
+- A rule's arity is the number of argument patterns following its head on the left-hand side.
+- All rules belonging to one `Fun` must have the same arity.
+- Rule arity may be zero even when the declared type is a function type.
+- With fewer arguments than the rule arity, an application must remain unreduced at its head.
+- A matching rule consumes exactly its arity's worth of arguments.
+- Any remaining arguments must be applied to the rewritten result.
+
 ### Binding and matching
 
 - A rewrite rule has its owning `Fun` as its head.
-- The left-hand side supplies every parameter of that function.
-- Argument patterns consist of `Sym` applications and pattern variables.
-- A `Fun` must not occur in an argument pattern.
-- Aliases in patterns resolve to their underlying expressions.
+- Zero-argument definitions occurring inside argument patterns must be unfolded recursively before pattern validation.
+- Unfolding must preserve the definition's lexical bindings.
+- Expanded argument patterns must consist of `Sym` applications and pattern variables.
+- Any `Fun` reference remaining in an expanded argument pattern is rejected.
 - An argument-pattern identifier that does not resolve to a declared constant introduces a rule-local variable.
 - A pattern variable's type is inferred from the function signature and enclosing symbol applications.
 - Ambiguous pattern-variable types are rejected.
@@ -188,6 +218,14 @@ Here `Add` is a `Fun`; `Nat`, `Zero`, and `Step` are `Sym`s.
 - Pattern variables are bound throughout the right-hand side.
 - Patterns match symbol identity and application structure after argument normalization.
 - An argument that does not expose the required symbol leaves the application unreduced.
+- Pattern type inference, linearity checks, and overlap checks must use the expanded patterns.
+
+```baselang
+F : Nat -> Nat
+F One => Zero
+```
+
+The argument pattern `One` expands to `Step Zero`. Adding `F (Step Zero) => Zero` would overlap the existing rule.
 
 ### Admissibility
 
@@ -197,7 +235,7 @@ Here `Add` is a `Fun`; `Nat`, `Zero`, and `Step` are `Sym`s.
 - Logical reduction must be confluent.
 - Recursive calls must decrease under a well-founded relation.
 - The entire right-hand side need not be syntactically smaller than the left-hand side.
-- A total function defined by rewrite rules must have an applicable rule for every well-typed closed tuple of arguments after normalization in the finalized theory.
+- A total function with rule arity `k` must have an applicable rule for every well-typed closed tuple of `k` arguments after normalization in the finalized theory.
 
 ```baselang
 Bool : Type
