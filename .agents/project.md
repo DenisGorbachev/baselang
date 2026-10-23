@@ -10,17 +10,40 @@
 
 ## Compiler type requirements
 
-- Applies to `App`, `Sym`, `Def`, `Exp`, and `Typ`.
-- Every struct field must have a distinct generic type.
-- Recursive structs may use concrete field types when generic defaults would create recursive type aliases.
-- Structs must derive `Getters`.
-- Must not expose mutable access to fields that determine their type.
-- Must keep cached type information immutable after construction.
-- Must provide a `<Type>Rc` alias for `Rc<Type>`.
-- Generic parameters must be preserved by the `<Type>Rc` alias.
-- Shared references must clone the `Rc` instead of the underlying value.
+- For a type named `X`, must declare a public type alias named `XRc` whose target is `Rc<X>`.
+- `XRc` must declare the same generic parameters, in the same order and with the same defaults, as `X`.
+- Each generic argument supplied to `XRc` must be forwarded to the corresponding parameter of `X`.
+- Must state each invariant as a predicate over its fields or the results of specified methods.
+- Every constructor, conversion, and deserializer that returns a value of the type must establish all declared invariants before returning that value.
+- Every public mutator must preserve all declared invariants when called on a value satisfying them.
+- Preservation of invariants must hold on both successful and error returns from a mutator.
+- A public field or an API exposing mutable access to a field is permitted only if every assignment or mutation available through that access preserves all declared invariants.
 
 Alias: CTR.
+
+## Compiler struct requirements
+
+- Must be a struct.
+- Must pass [CTR](#compiler-type-requirements).
+- The declared type of each field must be a type parameter of the struct.
+- Different fields must use different type parameters in their declarations.
+- Must derive `Getters`.
+
+Alias: CSR.
+
+## Macro constructor
+
+- Must be declared with `macro_rules!`.
+- Must have `#[macro_export]`.
+- References to items from this crate in its expansion must use `$crate` paths.
+- Must support every input form specified in the type's section.
+- Each accepted input form must specify whether the expansion is an expression or a binding declaration.
+- Each expression form must specify its result type.
+- Each binding form must specify the identifier and type of the introduced binding.
+- Every supplied expression operand must be evaluated at most once.
+- If the expansion completes without unwinding, every supplied expression operand must have been evaluated exactly once.
+- Every form that invokes a fallible function must specify its behavior for both `Ok` and `Err`.
+- A form with a variadic operand list must accept a trailing comma.
 
 ## trait Apply
 
@@ -29,7 +52,10 @@ Alias: CTR.
   - `Typ`
   - `Err: std::error::Error`
 - Must have `fn apply(&self, arg: &Self::Arg) -> Result<Self::Typ, Self::Err>`.
-- `apply` must validate the argument and return the application's resulting type.
+- Each implementation for a type `F` must specify a validity predicate `V_F(fun, arg, typ)`, where `fun: F`, `arg: F::Arg`, and `typ: F::Typ`.
+- `apply` must return `Ok(typ)` only if `V_F(self, arg, typ)` holds.
+- If no `typ` satisfies `V_F(self, arg, typ)`, `apply` must return `Err`.
+- If at least one `typ` satisfies `V_F(self, arg, typ)`, `apply` must return one such `typ` in `Ok`.
 
 ## struct App
 
@@ -37,11 +63,12 @@ Alias: CTR.
   - `F`
   - `A`
   - `T`
-- Must have fields:
+- Must have exactly these fields:
   - `fun: F`
   - `arg: A`
   - `typ: T`
-- Must pass [CTR](#compiler-type-requirements).
+- Must pass [CSR](#compiler-struct-requirements).
+- Invariant: `V_F(fun, arg, typ)` must hold whenever `F: Apply<Arg = A, Typ = T>`.
 
 ### impl<F, A, T> App<F, A, T>
 
@@ -52,83 +79,141 @@ Alias: CTR.
   - `arg: A`
 - Must return `Result<Self, F::Err>`.
 - Must require `F: Apply<Arg = A, Typ = T>`.
-- Must compute `typ` by calling `fun.apply(&arg)`.
+- Must call `fun.apply(&arg)` exactly once.
+- If that call returns `Ok(typ)`, must return `Ok(Self { fun, arg, typ })` using the supplied `fun` and `arg` and the returned `typ`.
+- If that call returns `Err(error)`, must return `Err(error)`.
 
 ## struct Sym
 
-- Must have fields:
+- Must have exactly these fields:
   - `nym: Nym`
   - `typ: Typ`
   - `constructors: Constructors`
-- Must pass [CTR](#compiler-type-requirements).
-- Must compare symbol occurrences by identity using `Rc::ptr_eq`, with bound symbols compared through alpha-equivalence.
-- Symbols with the same name and type may still have different identities.
-- Must represent constructors such as `Nat`, `Zero`, and `Succ`.
-- Must represent function parameters that may be bound and substituted.
-- The `sym!` macro must construct symbols.
+- Must pass [CSR](#compiler-struct-requirements), except its field types must be the concrete types specified above instead of type parameters.
+- Must not implement `PartialEq`, `Eq`, or `Hash`.
+- Must have [sym! macro constructor](#macro-constructor).
+
+### macro sym
+
+- `name` must be a Rust identifier.
+- `sym!(name)` must expand to `let name = $crate::Sym::new_top_rc(stringify!(name), None);`.
+- `sym!(name: typ)` must expand to `let name = $crate::Sym::new_rc(stringify!(name), typ, None);`.
+- `sym!(name: typ; nym)` must expand to `let name = $crate::Sym::new_rc(nym, typ, None);`.
+- Each form must introduce an immutable Rust binding named `name` with type `SymRc` in the invocation's scope.
+- A supplied `typ` must implement `Into<Typ>`.
+- A supplied `nym` must implement `Into<Nym>`.
 
 ## struct Def
 
 - Must have generics:
   - `N`, defaulting to `Nym`
   - `E`, defaulting to `Exp`
-- Must have fields:
+- Must have exactly these fields:
   - `nym: N`
   - `exp: E`
-- Must pass [CTR](#compiler-type-requirements).
+- Must pass [CSR](#compiler-struct-requirements).
 - `Def<N, Exp>` must have `pub fn typ(&self) -> &Typ` that returns `self.exp.typ()`.
-- `Def<N, Exp>` must derive its type from the expression instead of storing a separate type.
-- `Def<N, Exp>` must convert into `Exp` by returning its defining expression.
-- Converting `&Def<N, Exp>` into `Exp` must clone the expression while preserving the identities of its symbols.
-- `Def<N, Exp>` must convert into `Typ` as `Typ::One` of its defining expression.
-- Application of `Def<N, Exp>` must use the defining expression as the function or argument.
-- Definitions must not introduce function parameters or independent constructors.
-- Must represent aliases such as `One = Succ Zero`.
-- The `def!` macro must construct `Def<Nym, Exp>`.
-- Renderers must distinguish symbol declarations (`Zero : Nat`) from definitions (`One = Succ Zero`).
+- `From<Def<N, Exp>> for Exp` must return the owned `exp` field.
+- `From<&Def<N, Exp>> for Exp` must return `exp.clone()`.
+- `From<Def<N, Exp>> for Typ` must return `Typ::One(Exp::from(def))`.
+- `From<&Def<N, Exp>> for Typ` must return `Typ::One(Exp::from(def))`.
+- For `A: Into<Exp>`, `<Def<N, Exp> as Of<A>>::of(&self, arg)` must return the result of `self.exp.of(arg)`.
+- Must not implement a conversion from `Def<N, Exp>` into `Sym` or `SymRc`.
+- Must have [def! macro constructor](#macro-constructor).
+
+### macro def
+
+- `name` must be a Rust identifier.
+- `def!(name = exp)` must expand to `let name = $crate::Def::<$crate::Nym, $crate::Exp>::new(stringify!(name), exp);`.
+- `def!(name = exp; nym)` must expand to `let name = $crate::Def::<$crate::Nym, $crate::Exp>::new(nym, exp);`.
+- Each form must introduce an immutable Rust binding named `name` with type `Def<Nym, Exp>` in the invocation's scope.
+- A supplied `exp` must implement `Into<Exp>`.
+- A supplied `nym` must implement `Into<Nym>`.
 
 ## type Constructors
 
 - Must be an alias for `Option<Vec<SymRc>>`.
-- Constructor references must preserve the identities of the symbols used in expressions.
-- `None` means that the symbol does not need constructors.
-- `Some(vec![])` means that the symbol has no constructors.
 
 ## enum Typ
 
+- Must pass [CTR](#compiler-type-requirements).
 - Must have exactly the following variants:
-  - `Top`,
+  - `Top`
   - `One(Exp)`
   - `Fun(DuoVec<SymRc>)`
 - Must have methods:
   - `pub fn last(&self) -> &Self`
+- Must have [typ! macro constructor](#macro-constructor).
+- Must have [top! macro constructor](#macro-constructor).
+
+### macro typ
+
+- `typ!()` must expand to `$crate::Typ::top()`.
+- `typ!(exp)` must expand to `$crate::Typ::one(exp)`.
+- `typ!(param => typ)` must expand to `$crate::Typ::fun(&param, typ)`.
+- Each form must be an expression with result type `Typ`.
+- A supplied `exp` must implement `Into<Exp>`.
+- `param` must be an identifier bound to a value of type `SymRc`.
+- A supplied `typ` must implement `Into<Typ>`.
+
+### macro top
+
+- Must accept only the empty operand list.
+- `top!()` must expand to `$crate::Typ::top()`.
+- Its expansion must be an expression with result type `Typ`.
 
 ## enum Exp
 
+- Must pass [CTR](#compiler-type-requirements).
 - Must have exactly the following variants:
   - `Sol(SymRc)`
   - `App(ExpBox, ExpBox, TypBox)`
 - Must have methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
+- Must have [exp! macro constructor](#macro-constructor).
+
+### macro exp
+
+- Must accept at least one expression operand.
+- `exp!(value)` must expand to `$crate::Exp::from(value.clone())`.
+- For the one-operand form, `value.clone()` must be a valid expression whose result implements `Into<Exp>`.
+- `exp!(fun, arg)` must call `$crate::Exp::app(fun, arg)` exactly once.
+- For the two-operand form, `fun` and `arg` must implement `Into<Exp>`.
+- If that call returns `Ok(exp)`, the two-operand form must return `exp`.
+- If that call returns `Err(error)`, the two-operand form must panic with a message containing `should pass the type check` and the `Debug` representation of `error`.
+- For three or more operands, `exp!(first, second, rest...)` must expand recursively to `$crate::exp!($crate::exp!(first, second), rest...)`.
+- Operand evaluation must stop if an earlier application panics.
+- Each successful form must be an expression with result type `Exp`.
+
+## impl Render for PlainRenderer
+
+- For `render_sym(sym)`, let `name = sym.nym().short.en.singular.to_string()` and `typ = self.render_typ_inner(sym.typ())`.
+- `render_sym(sym)` must return `Some(format!("{name} : {typ}"))`.
+- For `render_def(def)`, let `name = def.nym().short.en.singular.to_string()` and `exp = self.render_exp_inner(def.exp(), false, false)`.
+- `render_def(def)` must return `Some(format!("{name} = {exp}"))`.
 
 ## struct DuoVec
 
-- Must wrap a `Vec<T>` containing at least two elements.
+- Must be declared as a tuple struct with one private field of type `Vec<T>`.
+- Invariant: `self.0.len() >= 2`.
 - Must have methods:
   - `pub fn first(&self) -> &T`
   - `pub fn last(&self) -> &T`
+- `first()` must return a reference to the first element of `self.0`.
+- `last()` must return a reference to the last element of `self.0`.
 
 ## .mise/tasks/spec/fix.sh
 
-- Must run `cargo build --release --manifest-path spec/Cargo.toml` to build the `spec` package
-- Must run `cargo fix` to check the primary package using the rustc wrapper from the `spec` package
-  - Must set env vars:
-    - `RUSTC_WORKSPACE_WRAPPER` (set it to the path to `spec` package main binary, which should be already built)
+- Must execute `cargo build --release --manifest-path spec/Cargo.toml` with the repository root as its working directory.
+- Must execute `cargo fix --package baselang --lib` with the repository root as its working directory after the build command succeeds.
+- Must set `RUSTC_WORKSPACE_WRAPPER` for the `cargo fix` process to the absolute path of the `spec` executable produced by the build command.
+- Must not execute `cargo fix` if the build command fails.
+- If either command fails, must exit with a nonzero status.
 
 ## Constructor of type X
 
 - Must be a [sym](#struct-sym).
-- Must satisfy `sym.typ().last() == X`.
+- For `X: &Typ`, must satisfy `sym.typ().last().alpha_eq(X)`.
 
 Examples:
 
@@ -139,7 +224,10 @@ Examples:
 ## Constructor of sym S
 
 - Must be a [sym](#struct-sym).
-- Must satisfy `sym.typ().last().head() == S`.
+- For `S: &SymRc`, `sym.typ().last()` must be `Typ::One(exp)`.
+- Define `head(Exp::Sol(s)) = s`.
+- Define `head(Exp::App(fun, _, _)) = head(fun)`.
+- Must satisfy `Rc::ptr_eq(head(exp), S)`.
 
 Examples:
 
@@ -149,22 +237,26 @@ Examples:
 
 ## Smart application
 
-Algorithm:
-
-- Find the first parameter that unifies with the argument
-- Fill that parameter
-- Fill preceding parameters recursively, working backwards, based on the unifications that were already performed
-  - Fill parameters of type `^_^` from unifications
-  - Fill parameters of other types either from unifications or from a map of canonical values of these types (similar to typeclasses)
+- Must accept an ordered parameter sequence, an argument expression, a unification operation, and a lookup operation for canonical values indexed by type.
+- The unification operation must return either a substitution satisfying its input constraints or a failure.
+- Must select the lowest parameter index whose type unifies with the argument's type.
+- Must assign the argument to the selected parameter.
+- Must apply the resulting substitution to the types of all remaining parameters.
+- Must process parameters preceding the selected parameter in decreasing index order.
+- If the current substitution assigns an expression to a preceding parameter, must use that expression.
+- If a preceding parameter has type `Typ::Top` and the substitution does not assign it an expression, must report failure.
+- If a preceding parameter has a type other than `Typ::Top` and the substitution does not assign it an expression, must request a canonical value for that substituted type.
+- Must report failure if the canonical-value lookup returns no value.
+- Must validate every inserted argument using the same application check as an explicitly supplied argument.
+- Must report failure if no parameter type unifies with the supplied argument's type.
 
 Examples:
 
 ```baselang
-F : (T : ^_^) -> (x : T)
+Bool : ^_^
+True : Bool
+F : (T : ^_^) -> (x : T) -> ^_^
 
-// It is always valid to specify all arguments:
 A1 : F Bool True
-
-// It is valid to specify `True` because it is matched with x = True (which implies T = Bool):
-A2 : F True 
+A2 : F True
 ```
