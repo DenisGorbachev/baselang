@@ -3,7 +3,6 @@ use Exp::Sol;
 use Typ::*;
 use std::rc::Rc;
 
-/// [`Typ`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Sym`] must not derive them.
 /// [`Typ`] may be compared semantically via [`AlphaEq`].
 #[derive(Clone, Debug)]
 pub enum Typ {

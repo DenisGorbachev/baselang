@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 /// This type should be wrapped in [`Rc`] because earlier symbols need to be referenced by later symbols
 ///
-/// [`Sym`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because every symbol is unique: it is equal only to itself. Compare symbols through [`SymRc`] identity with [`Rc::ptr_eq`].
+/// Compare symbols through [`SymRc`] identity with [`Rc::ptr_eq`].
 #[derive(Getters, Clone, Debug)]
 pub struct Sym {
     /// Names of this sym.

@@ -4,7 +4,6 @@ use Exp::*;
 use Typ::*;
 use std::rc::Rc;
 
-/// [`Exp`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Sym`] must not derive them.
 /// [`Exp`] may be compared semantically via [`AlphaEq`].
 #[derive(Clone, Debug)]
 pub enum Exp {

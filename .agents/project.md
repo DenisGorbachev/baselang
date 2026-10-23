@@ -91,6 +91,7 @@ Alias: CSR.
   - `constructors: Constructors`
 - Must pass [CSR](#compiler-struct-requirements), except its field types must be the concrete types specified above instead of type parameters.
 - Must not implement `PartialEq`, `Eq`, or `Hash`.
+  - Rationale: every symbol is unique, it is equal only to itself.
 - Must have [sym! macro constructor](#macro-constructor).
 
 ### macro sym
