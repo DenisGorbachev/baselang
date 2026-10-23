@@ -1,5 +1,3 @@
-#[allow(dead_code)]
-pub use Form::*;
 use strum::Display;
 
 /// The variants of [`Form`] must be isomorphic to the fields of [`Nym`](crate::Nym)

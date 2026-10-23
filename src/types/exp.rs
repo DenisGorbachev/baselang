@@ -1,5 +1,7 @@
-use crate::{AlphaEq, Fun, InvalidApplicationError, Of, One, Top, TypBox, Var, alpha_eq_exp};
+use crate::{AlphaEq, InvalidApplicationError, Of, TypBox, Var, alpha_eq_exp};
 use crate::{Typ, VarRc};
+use Exp::*;
+use Typ::*;
 use std::rc::Rc;
 
 /// [`Exp`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Var`] must not derive them.
@@ -16,9 +18,6 @@ pub enum Exp {
     /// [`TypBox`] is a cached type of this expression (calculated in [`Exp::app`])
     App(/* fun */ ExpBox, /* arg */ ExpBox, /* typ */ TypBox),
 }
-
-use Exp::App;
-pub use Exp::Sol;
 
 pub type ExpRc = Rc<Exp>;
 pub type ExpBox = Box<Exp>;

@@ -1,4 +1,5 @@
-use crate::{Top, VarRc, exp, module, typ, var};
+use crate::{Typ, VarRc, exp, module, typ, var};
+use Typ::*;
 
 module!(
     /// The identity type.

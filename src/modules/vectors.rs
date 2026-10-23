@@ -1,4 +1,5 @@
-use crate::{Nats, Top, VarRc, exp, module, typ, var};
+use crate::{Nats, Typ, VarRc, exp, module, typ, var};
+use Typ::*;
 
 module!(
     pub struct Vectors {

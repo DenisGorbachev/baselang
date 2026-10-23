@@ -41,21 +41,20 @@ Alias: CTR.
 #### pub fn new
 
 - Must have args:
-  - `fun`
-  - `arg`
+  - `fun: F`
+  - `arg: A`
+- Must return `Result<Self, F::Err>`.
 - Must require `F: Apply<Arg = A, Typ = T>`.
 - Must compute `typ` by calling `fun.apply(&arg)`.
-- Must return `Result<Self, F::Err>`, propagating application errors directly.
-- Must preserve the validated fields behind getters.
 
 ## struct Var
 
 A struct that represents a variable.
 
-- Must have at least the following fields:
+- Must have fields:
   - `nym: Nym`
   - `value: Value`
-- Must have at least the following functions:
+- Must have functions:
   - `pub fn typ(&self) -> &Typ`
     - Must match on `self.value`
 
@@ -79,7 +78,7 @@ An enum that represents a type of the variable.
   - `Top`,
   - `One(Exp)`
   - `Fun(DuoVec<VarRc>)`
-- Must have at least the following methods:
+- Must have methods:
   - `pub fn last(&self) -> &Self`
 
 ## enum Exp
@@ -89,14 +88,14 @@ An enum that represents an expression.
 - Must have exactly the following variants:
   - `Sol(VarRc)`
   - `App(ExpBox, ExpBox, TypBox)`
-- Must have at least the following methods:
+- Must have methods:
   - `pub fn app(fun: impl Into<Exp>, arg: impl Into<Exp>) -> Result<Self, InvalidApplicationError>`
 
 ## struct DuoVec
 
 A newtype for `Vec` that has at least two elements.
 
-- Must have at least the following methods:
+- Must have methods:
   - `pub fn first(&self) -> &T`
   - `pub fn last(&self) -> &T`
 

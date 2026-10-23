@@ -13,8 +13,8 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 ## Core Concepts
 
-* **Types**: Represented by [`Typ`], which can be top-level types [`Top`], expression types [`One`], function types [`Fun`].
-* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`] or applications [`App`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.App).
+* **Types**: Represented by [`Typ`], which can be top-level types [`Top`](https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Top), expression types [`One`](https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.One), function types [`Fun`](https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Fun).
+* **Expressions**: Represented by [`Exp`], which can be variables [`Sol`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.Sol) or applications [`App`](https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.App).
 * **Variables**: Represented by [`Var`], which have names and types.
 * **Modules**: Collections of related variables, like [`Bools`], [`Lists`], and [`Nats`].
 * **Type Checking**: Enforced at construction time to ensure type-safety across the language.
@@ -27,12 +27,8 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 [`Bools`]: https://docs.rs/baselang/latest/baselang/struct.Bools.html
 [`Exp`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html
-[`Fun`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Fun
 [`Lists`]: https://docs.rs/baselang/latest/baselang/struct.Lists.html
 [`Nats`]: https://docs.rs/baselang/latest/baselang/struct.Nats.html
-[`One`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.One
-[`Sol`]: https://docs.rs/baselang/latest/baselang/enum.Exp.html#variant.Sol
-[`Top`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html#variant.Top
 [`Typ`]: https://docs.rs/baselang/latest/baselang/enum.Typ.html
 [`Var`]: https://docs.rs/baselang/latest/baselang/struct.Var.html
 

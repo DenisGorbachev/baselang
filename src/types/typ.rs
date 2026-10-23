@@ -2,6 +2,7 @@ use crate::types::exp::Exp;
 use crate::types::var::{Var, VarRc};
 use crate::{AlphaEq, alpha_eq_typ};
 use Exp::Sol;
+use Typ::*;
 use std::rc::Rc;
 
 /// [`Typ`] must not derive [`Eq`], [`PartialEq`], [`Hash`] because [`Var`] must not derive them.
@@ -17,8 +18,6 @@ pub enum Typ {
     /// Must wrap [`Typ`] in [`Box`] to avoid "recursive type" error
     Fun(/* param */ VarRc, /* typ */ TypBox),
 }
-
-pub use Typ::*;
 
 pub type TypRc = Rc<Typ>;
 pub type TypBox = Box<Typ>;
