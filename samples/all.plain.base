@@ -5,7 +5,6 @@
  * - "^_^" means "unknown type"
  * - "_" means "unknown var name" (allows to declare anonymous vars)
  * - Whitespace is insignificant
- * - Application is "smart" (see concepts.md)
  */
 
 // Booleans
@@ -25,12 +24,11 @@ Eq : (T : ^_^) -> (left : T) -> (right : T) -> ^_^
 Eq.Refl : (T : ^_^) -> (input : T) -> Eq T input input
 
 // Repeated application of `Neg Bool` returns the initial argument
-// Note that it uses "smart application": `Neg` requires `T` as the first argument, but `T` is inferred from `x`
 // The proof relies on reduction of Neg
 // The theorem is written as a relation (like in Twelf)
-NegNegBoolEq : (x : Bool) -> Eq x (Neg (Neg x)) -> ^_^
-NegNegBoolEq.True : NegNegBoolEq True (Eq.Refl True)
-NegNegBoolEq.False : NegNegBoolEq False (Eq.Refl False)
+NegNegBoolEq : (x : Bool) -> Eq Bool x (Neg Bool (Neg Bool x)) -> ^_^
+NegNegBoolEq.True : NegNegBoolEq True (Eq.Refl Bool True)
+NegNegBoolEq.False : NegNegBoolEq False (Eq.Refl Bool False)
 
 // Every identifier that begins with "@" is a compiler builtin
 // @CheckTheorem checks that the relation is total in standard mode (all parameters except the last are inputs, the last parameter is an output)
@@ -67,7 +65,7 @@ Vector.Append :
   (len_b : Nat) ->
   (a : Vector T len_a) ->
   (b : Vector T len_b) ->
-  (result : Vector T (Add len_a len_b)) -> // append preserves lengths
+  (result : Vector T (Add Nat len_a len_b)) -> // append preserves lengths
   ^_^
 
 Vector.Append.Nil :
@@ -83,9 +81,9 @@ Vector.Append.Cons :
   (head : T) ->
   (tail : Vector T len_a) ->
   (b : Vector T len_b) ->
-  (result : Vector T (Add len_a len_b)) ->
+  (result : Vector T (Add Nat len_a len_b)) ->
   (proof : Vector.Append T len_a len_b tail b result) ->
-  Vector.Append T (Succ len_a) len_b (Vector.Cons T len_a head tail) b (Vector.Cons T (Add len_a len_b) head result)
+  Vector.Append T (Succ len_a) len_b (Vector.Cons T len_a head tail) b (Vector.Cons T (Add Nat len_a len_b) head result)
 
 // Notice that Double uses Add, which is not total in all types, but is total in Nat
 // Double itself is total in Nat

@@ -38,7 +38,6 @@ title = "Baselang"
 readme = { }
 
 [workspace.dependencies]
-aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "a3263585b3055d0c6ea503260b44ef6eaa58e57b", default-features = false }
 clap = { version = "4.5.11", features = ["derive"] }
 derive-new = "0.7.0"
 derive_getters = { package = "derive-getters", version = "0.5.0", features = ["auto_copy_getters"] }
@@ -93,5 +92,4 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [dev-dependencies]
-aist-core.workspace = true
 pretty_assertions.workspace = true

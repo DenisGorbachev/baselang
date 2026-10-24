@@ -14,9 +14,6 @@ pub trait Of<T> {
 
     /// Applies `self` to `rhs`, treating `rhs` as the `index` arg
     fn of_at(&self, rhs: T, index: usize) -> Result<Exp, InvalidApplicationError>;
-
-    /// Applies `self` to `rhs`, trying to find the right index for `rhs`
-    fn of_smart(&self, rhs: T) -> Option<Exp>;
 }
 
 pub fn assert_impl_of<Fun, Arg>(fun: &Fun, arg: Arg)

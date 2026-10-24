@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use thiserror::Error;
 
-#[doc = "Invariant: `self.iter().take(2).count() == 2`; iteration yields the prefix followed by the tail."]
+/// Invariant: `self.iter().take(2).count() == 2`; iteration yields the prefix followed by the tail.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DuoVec<T> {
     prefix: [T; 2],

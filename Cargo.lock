@@ -3,15 +3,6 @@
 version = 4
 
 [[package]]
-name = "aist-core"
-version = "0.1.0"
-source = "git+https://github.com/DenisGorbachev/aist?rev=a3263585b3055d0c6ea503260b44ef6eaa58e57b#a3263585b3055d0c6ea503260b44ef6eaa58e57b"
-dependencies = [
- "errgonomic",
- "thiserror",
-]
-
-[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -65,7 +56,6 @@ dependencies = [
 name = "baselang"
 version = "0.1.0"
 dependencies = [
- "aist-core",
  "clap",
  "derive-getters",
  "derive-new",

@@ -62,7 +62,6 @@ pub fn declarations(report: &mut ContractReport, root: &Path) {
         "must_preserve_parser_contract",
         "must_preserve_macros_contract",
         "must_preserve_rendering_contract",
-        "must_preserve_smart_application_contract",
     ]
     .into_iter()
     .for_each(|name| contract.test_fn(report, name));

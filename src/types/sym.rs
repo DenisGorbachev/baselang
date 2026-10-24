@@ -128,10 +128,6 @@ impl<A: Into<Exp>> Of<A> for SymRc {
     fn of_at(&self, _rhs: A, _index: usize) -> Result<Exp, InvalidApplicationError> {
         todo!()
     }
-
-    fn of_smart(&self, _rhs: A) -> Option<Exp> {
-        todo!()
-    }
 }
 
 #[macro_export]

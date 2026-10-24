@@ -26,21 +26,6 @@ fn must_return_err_for_incorrect_application() {
 
 #[test]
 #[ignore]
-fn must_return_ok_for_smart_application() -> Result<(), MustReturnOkForSmartApplicationError> {
-    use MustReturnOkForSmartApplicationError::*;
-    let prelude = handle!(TestPrelude::new(), NewFailed);
-    let cons = prelude.list.cons;
-    let zero = prelude.nat.zero;
-    let cons_bool_yes = cons
-        .of_smart(zero)
-        .expect("should find the argument position automatically");
-    let rendering = RENDERER.render_exp(&cons_bool_yes).unwrap();
-    assert_eq!(rendering, "(cons nat zero) : list nat");
-    Ok(())
-}
-
-#[test]
-#[ignore]
 fn must_assert_impl_of() -> Result<(), MustAssertImplOfError> {
     use MustAssertImplOfError::*;
     let prelude = handle!(TestPrelude::new(), NewFailed);
@@ -57,12 +42,6 @@ fn must_assert_impl_of() -> Result<(), MustAssertImplOfError> {
 // }
 #[derive(Error, Debug)]
 pub enum MustRenderAppError {
-    #[error("failed to construct the test prelude")]
-    NewFailed { source: TestPreludeNewError },
-}
-
-#[derive(Error, Debug)]
-pub enum MustReturnOkForSmartApplicationError {
     #[error("failed to construct the test prelude")]
     NewFailed { source: TestPreludeNewError },
 }
