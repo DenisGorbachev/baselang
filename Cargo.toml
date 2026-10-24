@@ -1,5 +1,5 @@
 [workspace]
-members = ["aist", "spec"]
+members = ["spec"]
 resolver = "3"
 
 [workspace.package]
@@ -38,26 +38,19 @@ title = "Baselang"
 readme = { }
 
 [workspace.dependencies]
-aist = { path = "aist" }
+aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "05d961793aee501659cf0ea6499ad572d80a42ca" }
+baselang = { path = "." }
 clap = { version = "4.5.11", features = ["derive"] }
 derive-new = "0.7.0"
 derive_getters = { package = "derive-getters", version = "0.5.0", features = ["auto_copy_getters"] }
 derive_more = "2.1.1"
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
-facet = { version = "0.44.3", features = ["reflect"] }
-facet-pretty = "0.44.4"
-futures = "0.3.32"
 itertools = "0.15.0"
 non-empty-str = "0.13.0"
 pretty_assertions = { version = "1.4.1", features = ["unstable"] }
-rustc-hash = "2.1.2"
-smallvec = "1.15.1"
 #standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.28.0", features = ["derive"] }
-stub-macro = "0.3.0"
-stub_macro_0_2 = { package = "stub-macro", version = "0.2.1" }
 #subtype = { git = "https://github.com/DenisGorbachev/subtype" }
-tempfile = "3.27.0"
 thiserror = "2.0.18"
 tokio = "1.50.0"
 

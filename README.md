@@ -70,7 +70,6 @@ Options:
 
 ## Other packages
 
-* [`aist`](aist/README.md)
 * [`spec`](spec/README.md)
 
 ## Gratitude

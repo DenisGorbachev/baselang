@@ -3,7 +3,7 @@ name = "spec"
 version = "0.1.0"
 publish = false
 edition = "2024"
-rust-version = "1.93.0"
+rust-version = "1.98"
 description = "Specification for Baselang"
 
 [package.metadata.details]
@@ -11,15 +11,9 @@ title = ""
 readme.generate = false
 
 [dependencies]
-aist.workspace = true
-errgonomic.workspace = true
-futures.workspace = true
-tempfile.workspace = true
+aist-core.workspace = true
+baselang.workspace = true
 thiserror.workspace = true
-tokio = { workspace = true, features = ["fs", "rt"] }
-stub_macro_0_2.workspace = true
-facet.workspace = true
-facet-pretty.workspace = true
 
 [lints]
 workspace = true

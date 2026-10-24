@@ -24,7 +24,6 @@ fd = "10.4.2"
 
 [env]
 SHUCK_CACHE_DIR = "{{config_root}}/.cache"
-RUSTC_BOOTSTRAP = "spec"
 
 [hooks]
 postinstall = { task = "git:install-hooks" }
