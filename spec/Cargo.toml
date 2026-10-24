@@ -2,13 +2,13 @@
 resolver = "3"
 
 [workspace.dependencies]
-aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "a3263585b3055d0c6ea503260b44ef6eaa58e57b" }
-aist-codex = { git = "https://github.com/DenisGorbachev/aist", rev = "a3263585b3055d0c6ea503260b44ef6eaa58e57b" }
+aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "b2fd3e26b40a4a4a7841aa0a709e7e0cbcfeb75b" }
+aist-codex = { git = "https://github.com/DenisGorbachev/aist", rev = "b2fd3e26b40a4a4a7841aa0a709e7e0cbcfeb75b" }
 clap = { version = "4.6.6", features = ["derive", "env"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 futures = "0.3.34"
 thiserror = "2.0.21"
-tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "sync"] }
 
 [workspace.lints.rust]
 redundant_imports = "deny"
@@ -23,7 +23,7 @@ name = "spec"
 version = "0.1.0"
 publish = false
 edition = "2024"
-rust-version = "1.98"
+rust-version = "1.99"
 description = "External specification checks for Baselang"
 
 [package.metadata.details]

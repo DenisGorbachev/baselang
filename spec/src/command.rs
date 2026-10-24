@@ -1,5 +1,4 @@
-use crate::check;
-use aist_core::ContractReportWriteError;
+use crate::{Report, SpecReport, WriteReportError, check, write_report};
 use clap::Parser;
 use errgonomic::handle;
 use std::io::{self, stdout};
@@ -21,14 +20,12 @@ impl Command {
     pub async fn run(self) -> Result<ExitCode, CommandRunError> {
         use CommandRunError::*;
         let root = handle!(self.project_root.canonicalize(), CanonicalizeFailed, path: self.project_root);
-        let report = check(&root);
-        #[cfg(feature = "aist-codex")]
-        let report = {
-            let mut report = report;
-            handle!(self.review.run(&root, &mut report).await, RunFailed);
-            report
+        let report = SpecReport {
+            structure: check(&root),
+            #[cfg(feature = "aist-codex")]
+            invariants: self.review.run(&root).await,
         };
-        handle!(report.write(stdout().lock()), WriteFailed);
+        handle!(write_report(&report, stdout().lock()), WriteReportFailed);
         Ok(if report.passed() { ExitCode::SUCCESS } else { ExitCode::FAILURE })
     }
 }
@@ -38,8 +35,5 @@ pub enum CommandRunError {
     #[error("failed to resolve project root '{path}'", path = path.display())]
     CanonicalizeFailed { source: io::Error, path: PathBuf },
     #[error("failed to print specification report")]
-    WriteFailed { source: ContractReportWriteError },
-    #[cfg(feature = "aist-codex")]
-    #[error("failed to review semantic invariants")]
-    RunFailed { source: crate::InvariantReviewsRunError },
+    WriteReportFailed { source: WriteReportError },
 }

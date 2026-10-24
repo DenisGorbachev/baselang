@@ -1,12 +1,13 @@
+use crate::{InvariantReviewsReport, check_requirement, check_type_invariants};
 use aist_codex::{CargoReviewOptions, CargoReviewSnapshotError, CodexReviewer, ReviewRequest, cargo_review_snapshot};
-use aist_core::ContractReport;
 use clap::Parser;
 use errgonomic::handle;
-use futures::{StreamExt, pin_mut};
+use futures::join;
 use std::num::{NonZeroU64, NonZeroUsize};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use thiserror::Error;
+use tokio::sync::Semaphore;
 
 #[derive(Parser, Debug)]
 #[command(flatten_help = true)]
@@ -30,7 +31,7 @@ pub struct InvariantReviews {
 }
 
 impl InvariantReviews {
-    pub async fn run(self, root: &Path, report: &mut ContractReport) -> Result<(), InvariantReviewsRunError> {
+    pub async fn run(self, root: &Path) -> Result<InvariantReviewsReport, InvariantReviewsRunError> {
         use InvariantReviewsRunError::*;
         let reviewer = CodexReviewer {
             executable: self.codex,
@@ -46,30 +47,23 @@ impl InvariantReviews {
             ..CargoReviewOptions::default()
         };
         let snapshot = handle!(cargo_review_snapshot(root, "baselang", &options, reviewer.timeout).await, CargoReviewSnapshotFailed);
-        let requests = [
-            "App", "Sym", "Rewrite", "Scope", "Theory", "Typ", "Exp", "DuoVec",
-        ]
-        .into_iter()
-        .map(|name| ReviewRequest {
-            id: format!("{name}.invariants"),
-            question: format!("In package baselang, type {name} must explicitly state every semantic invariant as a predicate over its fields or specified method results. Every constructor, conversion, and deserializer returning {name} must establish all its invariants. Every public mutator must preserve all invariants on success and error. Public fields and mutable access are allowed only if every available assignment or mutation preserves all invariants. Inspect all relevant implementations and dependencies; explain any missing invariant declarations."),
-        })
-        .chain([ReviewRequest {
+        let semaphore = Semaphore::new(self.review_concurrency.get());
+        let apply_request = ReviewRequest {
             id: "Apply.validity".into(),
             question: "Every implementation F of baselang::Apply must specify a validity predicate V_F(fun, arg, typ). F::apply must return Ok(typ) exactly when a typ satisfying V_F(self, arg, typ) exists, and its returned typ must satisfy that predicate; it must return Err when no valid typ exists. Inspect implementations, declared predicates, and dependent type checking logic.".into(),
-        }]);
-        let reviews = reviewer.check_many(&snapshot, requests, self.review_concurrency);
-        pin_mut!(reviews);
-        while let Some((request, result)) = reviews.next().await {
-            match result {
-                Ok(review) => match review.verdict.into_result() {
-                    Ok(()) => report.require(format!("LLM.{}", request.id), true),
-                    Err(error) => report.error(format!("LLM.{}", request.id), error),
-                },
-                Err(error) => report.error(format!("LLM.{}", request.id), error),
-            }
-        }
-        Ok(())
+        };
+        let (app, sym, rewrite, scope, theory, typ, exp, duo_vec, apply) = join!(check_type_invariants(&reviewer, &snapshot, &semaphore, "App"), check_type_invariants(&reviewer, &snapshot, &semaphore, "Sym"), check_type_invariants(&reviewer, &snapshot, &semaphore, "Rewrite"), check_type_invariants(&reviewer, &snapshot, &semaphore, "Scope"), check_type_invariants(&reviewer, &snapshot, &semaphore, "Theory"), check_type_invariants(&reviewer, &snapshot, &semaphore, "Typ"), check_type_invariants(&reviewer, &snapshot, &semaphore, "Exp"), check_type_invariants(&reviewer, &snapshot, &semaphore, "DuoVec"), check_requirement(&reviewer, &snapshot, &semaphore, apply_request),);
+        Ok(InvariantReviewsReport {
+            app,
+            sym,
+            rewrite,
+            scope,
+            theory,
+            typ,
+            exp,
+            duo_vec,
+            apply,
+        })
     }
 }
 

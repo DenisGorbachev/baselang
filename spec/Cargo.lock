@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "aist-codex"
 version = "0.1.0"
-source = "git+https://github.com/DenisGorbachev/aist?rev=a3263585b3055d0c6ea503260b44ef6eaa58e57b#a3263585b3055d0c6ea503260b44ef6eaa58e57b"
+source = "git+https://github.com/DenisGorbachev/aist?rev=b2fd3e26b40a4a4a7841aa0a709e7e0cbcfeb75b#b2fd3e26b40a4a4a7841aa0a709e7e0cbcfeb75b"
 dependencies = [
  "cargo_metadata",
  "clap",
@@ -23,21 +23,22 @@ dependencies = [
 [[package]]
 name = "aist-core"
 version = "0.1.0"
-source = "git+https://github.com/DenisGorbachev/aist?rev=a3263585b3055d0c6ea503260b44ef6eaa58e57b#a3263585b3055d0c6ea503260b44ef6eaa58e57b"
+source = "git+https://github.com/DenisGorbachev/aist?rev=b2fd3e26b40a4a4a7841aa0a709e7e0cbcfeb75b#b2fd3e26b40a4a4a7841aa0a709e7e0cbcfeb75b"
 dependencies = [
  "anyhow",
  "cargo_metadata",
  "errgonomic",
- "quote",
  "ra_ap_hir",
  "ra_ap_ide_db",
  "ra_ap_load-cargo",
  "ra_ap_proc_macro_api",
  "ra_ap_project_model",
+ "ra_ap_span",
  "ra_ap_syntax",
+ "ra_ap_syntax-bridge",
+ "ra_ap_tt",
  "ra_ap_vfs",
  "serde",
- "syn 2.0.119",
  "thiserror",
  "toml",
 ]
