@@ -78,3 +78,6 @@ pub use positivity_edge::*;
 
 mod positivity;
 pub use positivity::*;
+
+mod duo_vec;
+pub use duo_vec::*;

@@ -1,4 +1,4 @@
-use baselang::{AlphaEq, Exp};
+use crate::{AlphaEq, Exp};
 use std::rc::Rc;
 
 pub fn same_exp(left: &Exp, right: &Exp) -> bool {

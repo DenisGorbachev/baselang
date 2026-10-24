@@ -1,10 +1,9 @@
 use aist_core::{ContractReport, RustContract, WorkspaceInfo, check_workspace_dependencies, observe};
 use std::path::Path;
 
-pub fn declarations(report: &mut ContractReport) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-    check_workspace_dependencies(report, &root, &["derive_getters"]);
-    let workspace = observe!(report, WorkspaceInfo::try_from(root.as_path()));
+pub fn declarations(report: &mut ContractReport, root: &Path) {
+    check_workspace_dependencies(report, root, &["derive_getters"]);
+    let workspace = observe!(report, WorkspaceInfo::try_from(root));
     let contract = observe!(report, RustContract::new(&workspace, "baselang"));
     [
         "pub struct App<F, A, T> { fun: F, arg: A, typ: T }",
@@ -20,11 +19,11 @@ pub fn declarations(report: &mut ContractReport) {
         "pub trait Parse { type Error; fn parse(&mut self, input: &str) -> Result<Theory, Self::Error>; }",
         "pub type Rewrites = HashMap<NonNull<Sym>, Vec<Rewrite>>;",
         "pub type Constructors = HashMap<NonNull<Sym>, Vec<SymRc>>;",
-        "pub enum Typ { Top, One(Exp), Fun(DuoVec<SymRc>) }",
         "pub type TypRc = Rc<Typ>;",
         "pub enum Exp { Sol(SymRc), App(ExpBox, ExpBox, TypBox) }",
         "pub type ExpRc = Rc<Exp>;",
-        "pub struct DuoVec<T>(Vec<T>);",
+        "pub type DuoVecRc<T> = Rc<DuoVec<T>>;",
+        "pub struct DuoVec<T> { prefix: [T; 2], tail: Vec<T> }",
         "#[macro_export] macro_rules! sym { ($name:ident) => { let $name = $crate::Sym::<$crate::Nym, $crate::Typ>::new_top_rc(stringify!($name)); }; ($name:ident: $typ:expr) => { let $name = $crate::Sym::<$crate::Nym, $crate::Typ>::new_rc(stringify!($name), $typ); }; ($name:ident: $typ:expr; $nym:expr) => { let $name = $crate::Sym::<$crate::Nym, $crate::Typ>::new_rc($nym, $typ); }; }",
         "#[macro_export] macro_rules! typ { () => { $crate::Typ::top() }; ($exp:expr) => { $crate::Typ::one($exp) }; ($sym:ident => $typ:expr) => { $crate::Typ::fun(&$sym, $typ) }; }",
         "#[macro_export] macro_rules! top { () => { $crate::Typ::top() }; }",
@@ -32,6 +31,7 @@ pub fn declarations(report: &mut ContractReport) {
     ]
     .into_iter()
     .for_each(|expected| contract.declaration(report, expected));
+    contract.enum_declaration(report, "pub enum Typ { Top, One(Exp), Fun }", &["Fun"]);
     contract.forbids_traits(report, "Sym", &["PartialEq", "Eq", "Hash"]);
     [
         ("App", "fn new(fun: F, arg: A) -> Result<Self, F::Err>;"),
@@ -51,4 +51,19 @@ pub fn declarations(report: &mut ContractReport) {
     ]
     .into_iter()
     .for_each(|(owner, expected)| contract.method(report, owner, expected));
+    [
+        "must_preserve_application_contract",
+        "must_preserve_registration_contract",
+        "must_preserve_rewrites_contract",
+        "must_preserve_rollback_contract",
+        "must_preserve_normalization_contract",
+        "must_preserve_constructors_contract",
+        "must_preserve_theory_contract",
+        "must_preserve_parser_contract",
+        "must_preserve_macros_contract",
+        "must_preserve_rendering_contract",
+        "must_preserve_smart_application_contract",
+    ]
+    .into_iter()
+    .for_each(|name| contract.test_fn(report, name));
 }

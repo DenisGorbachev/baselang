@@ -1,6 +1,6 @@
+use crate::{AlphaEq, App, Exp, Scope, Sym, SymRc, Typ};
 use crate::{ProbeApply, ProbeApplyApplyError};
 use aist_core::{CallProbe, ContractReport, observe};
-use baselang::{AlphaEq, App, Exp, Scope, Sym, SymRc, Typ};
 use std::ptr::{self, NonNull};
 use std::rc::Rc;
 

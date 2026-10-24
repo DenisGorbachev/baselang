@@ -1,13 +1,15 @@
 # Baselang executable specification
 
-Run `mise --cd ~/workspace/baselang run spec:check` from any directory.
+Run `mise --cd ~/workspace/baselang run spec:check` from any directory. The spec has its own Cargo workspace, lockfile, and Rust toolchain. It does not link to Baselang.
 
-The executable reports every observed predicate and returns a nonzero exit status for a violation, panic, missing declaration, failed operation, or unverified universal obligation. It does not modify the implementation. Rebuild it after changing Baselang so that structural inspection and executed code describe the same revision.
+`src/declarations.rs` inspects the separately supplied Baselang project through rust-analyzer. It requires declaration shapes, generic defaults, aliases, derives, method signatures, hygienic macro expansions, and specific test function names. The `Typ::Fun` field representation is intentionally unconstrained.
 
-`src/declarations.rs` specifies declaration shapes, generic defaults, aliases, derives, signatures, and hygienic macro expansions. These are syntax contracts over the library declarations loaded by rust-analyzer, including macro expansions. They intentionally prescribe canonical declarations; they do not establish semantic equivalence between arbitrarily different Rust programs.
+Behavioral checks live in Baselang's `src/tests/contracts` and run with Baselang's tests. They cover application, registration, rewrites, rollback, normalization, parsing, theory validation, rendering, and macro evaluation. The smart application contract is explicitly ignored until `Exp::of_smart` is implemented. Requiring a test declaration does not establish that the test passes or is enabled.
 
-The other modules define executable equations and finite witnesses for application, registration, rewrites, normalization, parsing, theory validation, rendering, and macro evaluation. `src/scope_invariants.rs` defines scope predicates over bindings, rule types, and constructor indexes. Reports retain underlying errors and identify failed equations.
+`DuoVec<T>` stores a two-element prefix and a vector tail. Its invariant is `self.iter().take(2).count() == 2`. The prefix and tail remain private. `first()` and `last()` return references without a panic branch. Conversion from a short vector returns its original elements in the error.
 
-Finite witnesses are not universal proofs. The report explicitly leaves universal invariant preservation, the validity relation of every `Apply` implementation, and the missing `DuoVec` invariant unverified. Missing behavior must produce a failure rather than an empty successful report. Existing Baselang mismatches remain visible; the specification is not weakened to fit them.
+Semantic invariant reviews are behind the implicit `aist-codex` feature and are disabled by default. Review the implementation in the aist repository before enabling them, as recorded in Cargo.toml. They check invariant declarations and preservation across constructors, conversions, deserializers, public mutation, and mutable aliases, plus the validity contract of `Apply`. An LLM judgment is not a machine-checked proof. Default structural checks do not claim to verify these obligations.
 
-Reusable report aggregation, probes, source inspection, declaration comparison, and Cargo checks live in `aist-core` in the standalone aist repository. The deprecated compiler wrapper is replaced by a normal executable; there is no automatic fix operation.
+When explicitly enabled, the runner requires a model, cache directory, maximum cache age, and review timeout. It reports failed and inconclusive reviews as failures. `--help` lists the available settings. Cache identity includes captured source, dependency features, compilation context, and review settings; see [aist-codex](../../aist/packages/aist-codex/README.md) for invalidation boundaries and external-input requirements.
+
+Reports retain underlying errors and return a nonzero exit status for violations or failed operations. Reusable reporting, source inspection, and declaration comparison live in `aist-core`. Codex execution, snapshots, and caching live in `aist-codex`.

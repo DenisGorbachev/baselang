@@ -1,5 +1,5 @@
+use crate::{Scope, Sym, Typ};
 use aist_core::{ContractReport, observe};
-use baselang::{Scope, Sym, Typ};
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
 

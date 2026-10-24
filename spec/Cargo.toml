@@ -1,10 +1,30 @@
+[workspace]
+resolver = "3"
+
+[workspace.dependencies]
+aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "a3263585b3055d0c6ea503260b44ef6eaa58e57b" }
+aist-codex = { git = "https://github.com/DenisGorbachev/aist", rev = "a3263585b3055d0c6ea503260b44ef6eaa58e57b" }
+clap = { version = "4.6.6", features = ["derive", "env"] }
+errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
+futures = "0.3.34"
+thiserror = "2.0.21"
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
+
+[workspace.lints.rust]
+redundant_imports = "deny"
+unused_import_braces = "deny"
+
+[workspace.lints.clippy]
+absolute_paths = "deny"
+arithmetic_side_effects = "deny"
+
 [package]
 name = "spec"
 version = "0.1.0"
 publish = false
 edition = "2024"
 rust-version = "1.98"
-description = "Specification for Baselang"
+description = "External specification checks for Baselang"
 
 [package.metadata.details]
 title = ""
@@ -12,8 +32,13 @@ readme.generate = false
 
 [dependencies]
 aist-core.workspace = true
-baselang.workspace = true
+# TODO: Review aist-codex before enabling its feature and running LLM checks.
+aist-codex = { workspace = true, optional = true }
+clap.workspace = true
+errgonomic.workspace = true
+futures.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true

@@ -1,6 +1,6 @@
+use crate::{Nym, Scope, ScopeInsertSymError, Sym, SymRc, Typ};
 use crate::{same_scope, scope_invariants};
 use aist_core::{ContractReport, observe};
-use baselang::{Nym, Scope, ScopeInsertSymError, Sym, SymRc, Typ};
 use std::rc::Rc;
 
 pub fn registration(report: &mut ContractReport) {

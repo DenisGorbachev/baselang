@@ -1,5 +1,5 @@
+use crate::Apply;
 use aist_core::CallProbe;
-use baselang::Apply;
 use std::ptr::NonNull;
 use std::rc::Rc;
 use thiserror::Error;

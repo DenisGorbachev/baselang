@@ -1,6 +1,6 @@
 use crate::{BOOLS, same_exp};
+use crate::{Of, PlainParser};
 use aist_core::{ContractReport, observe};
-use baselang::{Of, PlainParser};
 
 pub fn smart_application(report: &mut ContractReport) {
     [

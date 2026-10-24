@@ -70,7 +70,7 @@ Options:
 
 ## Other packages
 
-* [`spec`](spec/README.md)
+This workspace has no other packages.
 
 ## Gratitude
 

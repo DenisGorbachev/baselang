@@ -1,6 +1,6 @@
+use crate::Scope;
 use crate::same_exp;
 use aist_core::{iter_eq_by, maps_eq_by};
-use baselang::Scope;
 use std::rc::Rc;
 
 pub fn same_scope(left: &Scope, right: &Scope) -> bool {

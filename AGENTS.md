@@ -2310,7 +2310,7 @@ age = { type = "age", recipients = [
 
 ```toml
 [workspace]
-members = ["spec"]
+exclude = ["spec"]
 resolver = "3"
 
 [workspace.package]
@@ -2349,8 +2349,7 @@ title = "Baselang"
 readme = { }
 
 [workspace.dependencies]
-aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "05d961793aee501659cf0ea6499ad572d80a42ca" }
-baselang = { path = "." }
+aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "a3263585b3055d0c6ea503260b44ef6eaa58e57b", default-features = false }
 clap = { version = "4.5.11", features = ["derive"] }
 derive-new = "0.7.0"
 derive_getters = { package = "derive-getters", version = "0.5.0", features = ["auto_copy_getters"] }
@@ -2405,102 +2404,8 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [dev-dependencies]
-pretty_assertions.workspace = true
-```
-
-### spec/Cargo.toml
-
-```toml
-[package]
-name = "spec"
-version = "0.1.0"
-publish = false
-edition = "2024"
-rust-version = "1.98"
-description = "Specification for Baselang"
-
-[package.metadata.details]
-title = ""
-readme.generate = false
-
-[dependencies]
 aist-core.workspace = true
-baselang.workspace = true
-thiserror.workspace = true
-
-[lints]
-workspace = true
-```
-
-### spec/src/lib.rs
-
-```rust
-use aist_core::ContractReport;
-
-pub fn check() -> ContractReport {
-    let mut report = ContractReport::default();
-    report.run("structure", declarations);
-    report.run("application", application);
-    report.run("registration", registration);
-    report.run("rewrites", rewrites);
-    report.run("rollback", rollback);
-    report.run("normalization", normalization);
-    report.run("constructors", constructors);
-    report.run("theory", theory);
-    report.run("parser", parser);
-    report.run("macros", macros);
-    report.run("rendering", rendering);
-    report.run("smart application", smart_application);
-    report.unverified("CTR/universal preservation", "for every constructor, conversion, deserializer and public mutation: invariant(pre) implies invariant(post), on both Ok and Err; finite executions do not prove this quantification");
-    report.unverified("Apply/universal validity", "for every implementation F and every fun and arg: apply(fun, arg) = Ok(typ) iff some typ satisfies V_F(fun, arg, typ), and every returned typ satisfies V_F");
-    report.unverified("DuoVec/invariant preservation", "self.0.len() >= 2; first() and last() reference the corresponding endpoints; every constructor and mutation must preserve this predicate");
-    report
-}
-
-mod declarations;
-pub use declarations::*;
-mod application;
-pub use application::*;
-mod registration;
-pub use registration::*;
-mod rewrites;
-pub use rewrites::*;
-mod normalization;
-pub use normalization::*;
-mod theory;
-pub use theory::*;
-mod parser;
-pub use parser::*;
-mod macros;
-pub use macros::*;
-mod rendering;
-pub use rendering::*;
-mod smart_application;
-pub use smart_application::*;
-mod scope_invariants;
-pub use scope_invariants::*;
-mod constants;
-pub use constants::*;
-mod probe_apply;
-pub use probe_apply::*;
-mod constructors;
-pub use constructors::*;
-mod rollback;
-pub use rollback::*;
-mod same_scope;
-pub use same_scope::*;
-mod same_exp;
-pub use same_exp::*;
-```
-
-### spec/src/main.rs
-
-```rust
-use std::process::ExitCode;
-
-fn main() -> ExitCode {
-    spec::check().print()
-}
+pretty_assertions.workspace = true
 ```
 
 ### src/lib.rs

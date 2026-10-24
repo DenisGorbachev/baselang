@@ -1,6 +1,6 @@
 use crate::{BOOLS, NATS, same_scope, scope_invariants};
+use crate::{Exp, PlainParser, Scope, Sym, SymRc, Theory, TheoryNewError, Typ};
 use aist_core::{ContractReport, observe};
-use baselang::{Exp, PlainParser, Scope, Sym, SymRc, Theory, TheoryNewError, Typ};
 
 pub fn theory(report: &mut ContractReport) {
     let parser = PlainParser::default();

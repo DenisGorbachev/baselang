@@ -1,6 +1,6 @@
+use crate::{AlphaEq, Exp, PlainParser, Rewrite, ScopeInsertRewriteError, Sym, SymRc, Typ};
 use crate::{BOOLS, same_exp, same_scope, scope_invariants};
 use aist_core::{ContractReport, observe};
-use baselang::{AlphaEq, Exp, PlainParser, Rewrite, ScopeInsertRewriteError, Sym, SymRc, Typ};
 use std::rc::Rc;
 
 pub fn rewrites(report: &mut ContractReport) {

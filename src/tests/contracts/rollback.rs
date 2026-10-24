@@ -1,6 +1,6 @@
 use crate::{BOOLS, NATS, same_exp, same_scope};
+use crate::{PlainParser, Rewrite, ScopeInsertRewriteError, ScopeInsertSymError, Sym, SymRc, Typ};
 use aist_core::{ContractReport, observe};
-use baselang::{PlainParser, Rewrite, ScopeInsertRewriteError, ScopeInsertSymError, Sym, SymRc, Typ};
 use std::rc::Rc;
 
 pub fn rollback(report: &mut ContractReport) {

@@ -1,5 +1,5 @@
+use crate::{AlphaEq, Exp, Nym, SymRc, Typ, exp, sym, top, typ};
 use aist_core::{ContractReport, EvaluationProbe, panic_message};
-use baselang::{AlphaEq, Exp, Nym, SymRc, Typ, exp, sym, top, typ};
 use std::panic::catch_unwind;
 use std::rc::Rc;
 

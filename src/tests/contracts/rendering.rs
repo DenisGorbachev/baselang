@@ -1,6 +1,6 @@
 use crate::BOOLS;
+use crate::{PlainParser, PlainRenderer, Render, Rewrite};
 use aist_core::{ContractReport, observe};
-use baselang::{PlainParser, PlainRenderer, Render, Rewrite};
 
 pub fn rendering(report: &mut ContractReport) {
     let parser = PlainParser::default();

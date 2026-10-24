@@ -1,6 +1,6 @@
+use crate::{AlphaEq, PlainParser, Rewrite, Typ};
 use crate::{NATS, scope_invariants};
 use aist_core::{ContractReport, observe};
-use baselang::{AlphaEq, PlainParser, Rewrite, Typ};
 use std::rc::Rc;
 
 pub fn constructors(report: &mut ContractReport) {

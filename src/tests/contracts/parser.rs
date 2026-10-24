@@ -1,6 +1,6 @@
 use crate::{BOOLS, same_exp, same_scope};
+use crate::{Parse, PlainParser, PlainParserParseScopeError, PlainParserParseScopeLineError};
 use aist_core::{ContractReport, observe};
-use baselang::{Parse, PlainParser, PlainParserParseScopeError, PlainParserParseScopeLineError};
 
 pub fn parser(report: &mut ContractReport) {
     let mut parser = PlainParser::default();

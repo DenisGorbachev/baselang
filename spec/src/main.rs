@@ -1,5 +1,9 @@
+use clap::Parser;
+use errgonomic::exit_result;
+use spec::Command;
 use std::process::ExitCode;
 
-fn main() -> ExitCode {
-    spec::check().print()
+#[tokio::main]
+async fn main() -> ExitCode {
+    exit_result(Command::parse().run().await)
 }

@@ -1,6 +1,6 @@
 use crate::{BOOLS, NATS, same_exp, scope_invariants};
+use crate::{Exp, PlainParser, Rewrite};
 use aist_core::{ContractReport, observe};
-use baselang::{Exp, PlainParser, Rewrite};
 use std::rc::Rc;
 
 pub fn normalization(report: &mut ContractReport) {
