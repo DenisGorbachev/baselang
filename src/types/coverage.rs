@@ -1,5 +1,5 @@
-use crate::{ContextInstantiation, Exp, Normalizer, PlainRenderer, Rewrite, Scope, ScopeExpandPatternError, ScopeNormalizeTypError, ScopeParametersError, ScopeSaturateError, SymRc, Unifier, UnifierExpError, UnifierTypError};
-use errgonomic::{ErrVec, handle, handle_iter};
+use crate::{ContextInstantiation, Exp, Normalizer, PlainRenderer, Rewrite, Scope, ScopeExpandPatternError, ScopeNormalizeTypError, ScopeParametersError, ScopeSaturateError, SymRc, Typ, Unifier, UnifierExpError, UnifierTypError};
+use errgonomic::{ErrVec, handle, handle_bool, handle_iter};
 use std::rc::Rc;
 use thiserror::Error;
 
@@ -85,14 +85,10 @@ impl<'a> Coverage<'a> {
             .any(|empty| empty);
             return Ok((!empty).then_some(goals));
         };
-        let typ = handle!(self.scope.normalize_typ(split.typ()), NormalizeTypFailed);
-        let Some(head) = typ.head() else { return Ok(Some(goals)) };
-        if !self.scope.is_registered(head) {
+        let Some(constructors) = handle!(self.constructors(split.typ()), ConstructorsFailed) else {
             return Ok(Some(goals));
-        }
-        let mut branches = self
-            .scope
-            .constructors_of(head)
+        };
+        let mut branches = constructors
             .iter()
             .map(|constructor| self.branch(&rules, &goals, &split, constructor));
         let result = branches.find_map(|result| match result {
@@ -177,10 +173,18 @@ impl<'a> Coverage<'a> {
 
     pub fn uninhabited(&self, sym: &SymRc) -> Result<bool, CoverageUninhabitedError> {
         use CoverageUninhabitedError::*;
-        let typ = handle!(self.scope.normalize_typ(sym.typ()), NormalizeTypFailed);
-        Ok(typ
-            .head()
-            .is_some_and(|head| self.scope.is_registered(head) && self.scope.constructors_of(head).is_empty()))
+        Ok(handle!(self.constructors(sym.typ()), ConstructorsFailed).is_some_and(<[SymRc]>::is_empty))
+    }
+
+    pub fn constructors(&self, typ: &Typ) -> Result<Option<&[SymRc]>, CoverageConstructorsError> {
+        use CoverageConstructorsError::*;
+        let typ = handle!(self.scope.normalize_typ(typ), NormalizeTypFailed);
+        let Some(head) = typ.head() else { return Ok(None) };
+        handle_bool!(!self.scope.rewrites_of(head).is_empty(), TypeUndeterminedInvalid, typ);
+        Ok(self
+            .scope
+            .is_registered(head)
+            .then(|| self.scope.constructors_of(head)))
     }
 }
 
@@ -208,8 +212,8 @@ pub enum CoverageMissingError {
     CompatibleFailed { source: ErrVec<CoverageCompatibleError> },
     #[error("failed to determine whether an argument type is empty")]
     UninhabitedFailed { source: ErrVec<CoverageUninhabitedError> },
-    #[error("failed to normalize the split argument's type")]
-    NormalizeTypFailed { source: ScopeNormalizeTypError },
+    #[error("failed to determine the split argument's constructors")]
+    ConstructorsFailed { source: CoverageConstructorsError },
     #[error("failed to check a constructor case")]
     BranchFailed { source: Box<CoverageBranchError> },
 }
@@ -234,6 +238,14 @@ pub enum CoverageBranchError {
 
 #[derive(Error, Debug)]
 pub enum CoverageUninhabitedError {
+    #[error("failed to determine the argument's constructors")]
+    ConstructorsFailed { source: CoverageConstructorsError },
+}
+
+#[derive(Error, Debug)]
+pub enum CoverageConstructorsError {
     #[error("failed to normalize the argument type")]
     NormalizeTypFailed { source: ScopeNormalizeTypError },
+    #[error("type '{typ}' is blocked on a defined symbol; its constructor set and emptiness are unknown", typ = PlainRenderer::default().render_typ_inner(typ))]
+    TypeUndeterminedInvalid { typ: Box<Typ> },
 }

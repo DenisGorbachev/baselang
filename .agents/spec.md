@@ -304,9 +304,13 @@ Neg Bool.False => Bool.True
 - Constructor classification and argument-pattern validity must use the finalized rewrite-rule set.
 - A later defining rule must trigger revalidation of earlier patterns containing its head symbol.
 - Coverage checking must refine dependent argument types when splitting an argument into constructor cases.
-- Constructor cases whose result types cannot unify with the refined argument type must be excluded.
-- A type equation blocked on a defined symbol must not be classified as an impossible constructor case.
+- Constructor cases must be excluded only when their result types are proven impossible to unify with the refined argument type.
+- Structural unification may decompose applications only when their heads are registered symbols without defining rules.
+- An occurs check proves impossibility only when the variable occurs beneath registered symbols without defining rules.
+- A type equation blocked on a defined symbol or an unknown function application must not be classified as an impossible constructor case.
 - Validation must reject blocked type equations when it cannot establish coverage or non-overlap.
+- A normalized argument type headed by a defined symbol has an unresolved constructor set.
+- An unresolved constructor set must not be treated as empty when splitting cases or proving an argument type uninhabited.
 - Theory checks run at the end of the single pass:
   - Typing under the finalized rewrite-rule set.
   - Argument-pattern validity after unfolding zero-argument definitions.

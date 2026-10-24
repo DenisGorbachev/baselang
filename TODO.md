@@ -50,6 +50,7 @@ Keep unfinished tasks in this file until they are completed. Preserve explicitly
     * Preserve rejection when a required type equation cannot be established.
   * Extend indexed coverage checking for indices containing stuck rewrites.
     * Example: for `C : (b : Bool) -> P (Neg b)`, recognize that `C False` inhabits `P True` and requires coverage.
+    * Refine the context when an argument type remains headed by a defined family, without treating an unresolved constructor set as empty.
     * Require evidence of coverage or constructor-case impossibility for accepted definitions.
     * Treat stronger inference as an acceptance improvement while retaining the existing soundness checks.
   * Function-valued pattern variables are unsupported.

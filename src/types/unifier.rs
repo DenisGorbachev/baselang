@@ -1,7 +1,8 @@
-use crate::{Exp, Scope, ScopeNormalizeError, ScopeNormalizeTypError, Substitution, Sym, SymRc, Typ};
+use crate::{Exp, PlainRenderer, Scope, ScopeNormalizeError, ScopeNormalizeTypError, Substitution, Sym, SymRc, Typ};
 use errgonomic::{handle, handle_bool};
 use std::collections::HashSet;
 use std::ptr::NonNull;
+use std::rc::Rc;
 use thiserror::Error;
 
 pub struct Unifier<'a> {
@@ -33,6 +34,18 @@ impl<'a> Unifier<'a> {
         }
     }
 
+    pub fn is_rigid(&self, sym: &SymRc) -> bool {
+        self.scope.is_registered(sym) && self.scope.rewrites_of(sym).is_empty()
+    }
+
+    pub fn occurs_rigidly(&self, sym: &SymRc, exp: &Exp) -> bool {
+        use Exp::*;
+        match exp {
+            Sol(other) => Rc::ptr_eq(sym, other),
+            App(fun, arg, _) => self.is_rigid(exp.head()) && (self.occurs_rigidly(sym, fun) || self.occurs_rigidly(sym, arg)),
+        }
+    }
+
     pub fn exp(&mut self, left: &Exp, right: &Exp) -> Result<bool, UnifierExpError> {
         use Exp::*;
         use UnifierExpError::*;
@@ -48,14 +61,7 @@ impl<'a> Unifier<'a> {
         };
         if let Some((sym, value)) = binding {
             if value.contains_sym(sym) {
-                handle_bool!(
-                    value
-                        .symbols()
-                        .any(|head| !self.scope.rewrites_of(head).is_empty()),
-                    EquationUndeterminedInvalid,
-                    left,
-                    right
-                );
+                handle_bool!(!self.occurs_rigidly(sym, value), EquationUndeterminedInvalid, left, right);
                 return Ok(false);
             }
             if !handle!(self.typ(sym.typ(), value.typ()), TypFailed) {
@@ -65,7 +71,7 @@ impl<'a> Unifier<'a> {
                 .insert(NonNull::from(sym.as_ref()), self.resolve(value));
             return Ok(true);
         }
-        handle_bool!(!self.scope.rewrites_of(left.head()).is_empty() || !self.scope.rewrites_of(right.head()).is_empty(), EquationUndeterminedInvalid, left, right);
+        handle_bool!(!self.is_rigid(left.head()) || !self.is_rigid(right.head()), EquationUndeterminedInvalid, left, right);
         match (&left, &right) {
             (App(left_fun, left_arg, _), App(right_fun, right_arg, _)) => {
                 let fun = handle!(self.exp(left_fun, right_fun), ExpFunFailed);
@@ -103,7 +109,7 @@ impl<'a> Unifier<'a> {
 
 #[derive(Error, Debug)]
 pub enum UnifierExpError {
-    #[error("unification is blocked on a defined symbol; this equation is not proven impossible")]
+    #[error("unification cannot establish whether '{left}' and '{right}' are equal or impossible to equate", left = PlainRenderer::default().render_exp_inner(left, false, false), right = PlainRenderer::default().render_exp_inner(right, false, false))]
     EquationUndeterminedInvalid { left: Box<Exp>, right: Box<Exp> },
     #[error("failed to normalize the left unification operand")]
     NormalizeLeftFailed { source: ScopeNormalizeError },
