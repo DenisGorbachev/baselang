@@ -19,9 +19,9 @@ pub fn declarations(root: &Path) -> Result<Declarations, DeclarationsError> {
             declaration: contract.declaration("pub struct Sym<N = Nym, T = Typ> { nym: N, typ: T }"),
             rc_alias: contract.declaration("pub type SymRc<N = Nym, T = Typ> = Rc<Sym<N, T>>;"),
             getters: contract.require_derive("Sym", "Getters"),
-            partial_eq: contract.forbids_traits("Sym", &["PartialEq"]),
-            eq: contract.forbids_traits("Sym", &["Eq"]),
-            hash: contract.forbids_traits("Sym", &["Hash"]),
+            partial_eq: contract.forbids_traits("Sym", &["core::cmp::PartialEq"]),
+            eq: contract.forbids_traits("Sym", &["core::cmp::Eq"]),
+            hash: contract.forbids_traits("Sym", &["core::hash::Hash"]),
         },
         rewrite: RewriteChecks {
             declaration: contract.declaration("pub struct Rewrite<P = Vec<Exp>, E = Exp> { pub patterns: P, pub body: E }"),

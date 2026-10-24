@@ -35,6 +35,7 @@ impl InvariantReviews {
         use InvariantReviewsRunError::*;
         let reviewer = CodexReviewer {
             executable: self.codex,
+            policy_root: root.to_path_buf(),
             model: self.model,
             reasoning_effort: self.reasoning_effort,
             cache_directory: self.cache_directory,
