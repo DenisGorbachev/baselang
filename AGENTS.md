@@ -899,7 +899,7 @@ Alias: CSR.
 - Must have exactly one field `scope: S`.
 - `Theory::new(scope: Scope)` must return `Result<Self, TheoryNewError>`.
 - Construction must validate all declarations and rules against the supplied scope's complete rule set.
-- Validation must check bindings, cached expression types, pattern validity, rule result types, overlap, structural termination, and constructor-pattern coverage.
+- Validation must check bindings, cached expression types, pattern validity, rule result types, overlap, structural termination, strict positivity, and constructor-pattern coverage.
 - Successful construction must establish all of these validation predicates as invariants.
 - Failed construction must return an error owning the rejected scope.
 

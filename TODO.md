@@ -1,5 +1,7 @@
 # TODO
 
+Keep unfinished tasks in this file until they are completed. Preserve explicitly unsupported features as status items.
+
 * Update positioning
   * Most people don't have a problem with making decisions, but they do have a problem with persuading other people about correctness of their decisions.
 * Process knowledge
@@ -17,6 +19,7 @@
   * Define function computation.
   * Specify how non-term types participate in applications such as `List (Nat -> Nat)` under unrestricted `Type` substitution.
 * DCL: Distinguish declaration categories.
+  * Define each category through predicates over declarations, bindings, and rewrite rules.
   * Specify inductive type declarations.
   * Specify constructor declarations.
   * Specify function declarations.
@@ -28,7 +31,6 @@
 * IND: Specify inductive definitions.
   * Define parameters.
   * Define indices.
-  * Define strict positivity.
   * Define dependent eliminators.
   * Define elimination from the empty type.
   * Define eliminator computation rules.
@@ -43,8 +45,17 @@
   * Specify conversion under binders.
   * Specify function extensionality.
 * RWT: Extend dependent rewriting.
-  * Resolve type equations blocked on defined symbols during coverage and overlap checking.
-  * Support function-valued pattern variables with explicit termination evidence.
+  * Extend dependent type equation solving to accept more valid definitions.
+    * Example: solve `Neg b ≡ True` by considering `b = False` when `Neg` is Boolean negation.
+    * Preserve rejection when a required type equation cannot be established.
+  * Extend indexed coverage checking for indices containing stuck rewrites.
+    * Example: for `C : (b : Bool) -> P (Neg b)`, recognize that `C False` inhabits `P True` and requires coverage.
+    * Require evidence of coverage or constructor-case impossibility for accepted definitions.
+    * Treat stronger inference as an acceptance improvement while retaining the existing soundness checks.
+  * Function-valued pattern variables are unsupported.
+    * Example: reject `Apply f x => f x` for `Apply : (Nat -> Nat) -> Nat -> Nat` because the pattern binds a function-valued `f`.
+    * Example: reject `Keep f => f` for `Keep : (Nat -> Nat) -> Nat -> Nat` for the same reason.
+    * `AddZ => Add Zero` is a supported definition by partial application and binds no pattern variable.
   * Specify impossible cases.
   * Specify overlap checking after index refinement.
   * Support termination evidence beyond structural size-change analysis.

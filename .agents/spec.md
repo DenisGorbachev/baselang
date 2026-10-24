@@ -17,6 +17,14 @@ The semantic check tries to find a proof of `Bullshit` (a built-in type with no 
 - This specification uses explicit arrow syntax.
 - Renderers may produce output that cannot be parsed back.
 
+## Formal rules
+
+- Language meaning must be specified by explicit formation, binding, typing, reduction, and proof rules over elaborated syntax.
+- Declaration classification must be derived from declarations and the finalized rewrite-rule set.
+- Proof checking must use only declared premises and derivations justified by the language's inference rules.
+- Names and explanatory prose must not grant a declaration axiom status or proof status.
+- A required admissibility condition that the compiler cannot establish must cause rejection.
+
 ## Canonical notation
 
 - `name : T` declares a name with type `T`.
@@ -143,6 +151,35 @@ Eq : (T : Type) -> (a : T) -> (b : T) -> Type
 - Adding a symbol's first defining rule removes that symbol from all constructor sets in that scope.
 - Constructor membership must be recomputed when changes to defining rules change a registered symbol's terminal type's normal form.
 
+### Strict positivity
+
+- Finalized constructor sets must satisfy the following strict-positivity check.
+- Constructor types must be normalized before analyzing occurrences.
+- Each argument type in a constructor's telescope is a field type.
+- An occurrence at the root of a field type is strictly positive.
+- Within a function type occurring inside a field type, every occurrence in its domain is non-strict.
+- Occurrences in that function type's codomain inherit the enclosing occurrence status.
+- Within an application, the head inherits the enclosing occurrence status.
+- An application argument inherits strict positivity only if the enclosing occurrence is strict and the head's corresponding parameter is certified strictly positive.
+- Parameters of symbols with defining rules must not be certified strictly positive by this check.
+- A parameter position of a symbol without defining rules may remain certified only if every constructor satisfies all of these conditions:
+  - Its result argument at that position is one of the constructor's parameter symbols.
+  - That parameter symbol does not occur in any other result argument.
+  - Every occurrence of that parameter symbol in constructor field types is strict.
+- Parameter certification must use the greatest fixed point obtained by initially certifying parameters of symbols without defining rules and repeatedly removing certifications that fail these conditions.
+- Each occurrence of a registered symbol `G` in a constructor field of family `F` creates a dependency from `F` to `G` with that occurrence's strictness.
+- A dependency cycle containing any non-strict edge must be rejected.
+- This check must include cycles spanning multiple families.
+- A non-strict occurrence inside another function domain must remain non-strict.
+
+The following constructor is invalid because `Bad` occurs in the domain of a function stored by `Mk`:
+
+```baselang
+Nat : Type
+Bad : Type
+Mk : (Bad -> Nat) -> Bad
+```
+
 ### Addition as a relation
 
 ```baselang
@@ -215,6 +252,7 @@ Increment => Add One
 - Any symbol with defining rules remaining in an expanded argument pattern is rejected.
 - An argument-pattern identifier that does not resolve to a declared constant introduces a rule-local variable.
 - A pattern variable's type is inferred from the function signature and enclosing symbol applications.
+- A pattern variable whose normalized type is a function type is unsupported and must be rejected.
 - Ambiguous pattern-variable types are rejected.
 - Each pattern variable must occur exactly once outside forced constructor arguments on the left-hand side.
 - A constructor argument is forced when unifying the constructor's result type with the expected pattern type determines that argument.
@@ -243,7 +281,6 @@ The argument pattern `One` expands to `Step Zero`. Adding `F (Step Zero) => Zero
 - Recursive calls must decrease under a well-founded relation.
 - The implementation must establish structural termination by size-change analysis of calls between defined symbols.
 - Every idempotent cycle in the composed size-change graph must contain a strict decrease on its diagonal.
-- Calling or returning a function-valued pattern variable requires termination evidence beyond this structural check.
 - The implementation must reject definitions when this check cannot establish termination.
 - The entire right-hand side need not be syntactically smaller than the left-hand side.
 - A total function with rule arity `k` must have an applicable rule for every well-typed closed tuple of `k` arguments after normalization in the finalized theory.

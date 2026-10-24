@@ -69,3 +69,12 @@ pub use termination::*;
 
 mod context_instantiation;
 pub use context_instantiation::*;
+
+mod constructor_declaration;
+pub use constructor_declaration::*;
+
+mod positivity_edge;
+pub use positivity_edge::*;
+
+mod positivity;
+pub use positivity::*;

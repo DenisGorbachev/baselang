@@ -1,4 +1,4 @@
-use crate::{Coverage, CoverageCheckError, Exp, Rewrite, Scope, ScopeCheckRewriteError, ScopeConvertibleError, ScopeExpandPatternError, ScopeInferError, ScopeNormalizeError, ScopeNormalizeTypError, ScopeSaturateError, Substitution, Sym, SymRc, Termination, TerminationCheckError, Typ, Unifier, UnifierExpError, UnifierTypError};
+use crate::{Coverage, CoverageCheckError, Exp, Positivity, PositivityCheckError, PositivityNewError, Rewrite, Scope, ScopeCheckRewriteError, ScopeConvertibleError, ScopeExpandPatternError, ScopeInferError, ScopeNormalizeError, ScopeNormalizeTypError, ScopeSaturateError, Substitution, Sym, SymRc, Termination, TerminationCheckError, Typ, Unifier, UnifierExpError, UnifierTypError};
 use errgonomic::{ErrVec, handle, handle_bool, handle_iter};
 use std::collections::HashSet;
 use std::ptr::NonNull;
@@ -26,6 +26,8 @@ impl<'a> Validator<'a> {
         );
         handle_iter!(self.scope.bindings().values().map(|sym| self.rules(sym)), RulesFailed);
         handle!(Termination::new(self.scope).check(), CheckTerminationFailed);
+        let mut positivity = handle!(Positivity::new(self.scope), PositivityNewFailed);
+        handle!(positivity.check(), CheckPositivityFailed);
         handle_iter!(
             self.scope
                 .bindings()
@@ -137,6 +139,9 @@ impl<'a> Validator<'a> {
         if let Exp::Sol(sym) = pattern
             && !self.scope.is_registered(sym)
         {
+            let typ = handle!(self.scope.normalize_typ(sym.typ()), NormalizeTypFailed);
+            let sym_owned = sym.clone();
+            handle_bool!(matches!(typ, Typ::Fun(..)), FunctionVariableUnsupportedInvalid, sym: sym_owned);
             let sym_owned = sym.clone();
             handle_bool!(!seen.insert(NonNull::from(sym.as_ref())), VariableRepeatedInvalid, sym: sym_owned);
             return Ok(());
@@ -193,6 +198,10 @@ impl<'a> Validator<'a> {
 
 #[derive(Error, Debug)]
 pub enum ValidatorValidateError {
+    #[error("failed to prepare strict positivity checking")]
+    PositivityNewFailed { source: PositivityNewError },
+    #[error("strict positivity could not be established")]
+    CheckPositivityFailed { source: PositivityCheckError },
     #[error("invalid declarations")]
     DeclarationFailed { source: ErrVec<ValidatorDeclarationError> },
     #[error("invalid rewrite rules")]
@@ -265,6 +274,10 @@ pub enum ValidatorRuleError {
 
 #[derive(Error, Debug)]
 pub enum ValidatorPatternError {
+    #[error("failed to normalize a pattern variable's type")]
+    NormalizeTypFailed { source: ScopeNormalizeTypError },
+    #[error("function-valued pattern variable '{name}' is unsupported", name = sym.nym().identifier())]
+    FunctionVariableUnsupportedInvalid { sym: SymRc },
     #[error("pattern variable '{name}' occurs more than once outside forced arguments", name = sym.nym().identifier())]
     VariableRepeatedInvalid { sym: SymRc },
     #[error("pattern head '{name}' is not a registered symbol", name = head.nym().identifier())]

@@ -1,6 +1,7 @@
 use crate::{AlphaEq, Exp, Substitution, Sym, SymRc, alpha_eq_typ};
 use Exp::Sol;
 use Typ::*;
+use std::iter::successors;
 use std::ptr::NonNull;
 use std::rc::Rc;
 
@@ -21,6 +22,17 @@ pub type TypRc = Rc<Typ>;
 pub type TypBox = Box<Typ>;
 
 impl Typ {
+    pub fn parameters(&self) -> impl Iterator<Item = &SymRc> {
+        successors(Some(self), |typ| match typ {
+            Fun(_, body) => Some(body.as_ref()),
+            _ => None,
+        })
+        .filter_map(|typ| match typ {
+            Fun(param, _) => Some(param),
+            _ => None,
+        })
+    }
+
     pub fn instantiate(&self, substitution: &Substitution) -> Self {
         match self {
             Top => Top,
