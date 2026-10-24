@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "aist-codex"
 version = "0.1.0"
-source = "git+https://github.com/DenisGorbachev/aist?rev=feb48feb4b552284a47f0131612d0a6fa93f3cd2#feb48feb4b552284a47f0131612d0a6fa93f3cd2"
+source = "git+https://github.com/DenisGorbachev/aist?rev=3a8851d1abdd5c0b9e8f2ec7bae8a7fee8842fb5#3a8851d1abdd5c0b9e8f2ec7bae8a7fee8842fb5"
 dependencies = [
  "cargo_metadata",
  "clap",
@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "aist-core"
 version = "0.1.0"
-source = "git+https://github.com/DenisGorbachev/aist?rev=feb48feb4b552284a47f0131612d0a6fa93f3cd2#feb48feb4b552284a47f0131612d0a6fa93f3cd2"
+source = "git+https://github.com/DenisGorbachev/aist?rev=3a8851d1abdd5c0b9e8f2ec7bae8a7fee8842fb5#3a8851d1abdd5c0b9e8f2ec7bae8a7fee8842fb5"
 dependencies = [
  "anyhow",
  "cargo_metadata",

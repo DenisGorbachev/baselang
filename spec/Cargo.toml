@@ -2,8 +2,8 @@
 resolver = "3"
 
 [workspace.dependencies]
-aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "feb48feb4b552284a47f0131612d0a6fa93f3cd2" }
-aist-codex = { git = "https://github.com/DenisGorbachev/aist", rev = "feb48feb4b552284a47f0131612d0a6fa93f3cd2" }
+aist-core = { git = "https://github.com/DenisGorbachev/aist", rev = "3a8851d1abdd5c0b9e8f2ec7bae8a7fee8842fb5" }
+aist-codex = { git = "https://github.com/DenisGorbachev/aist", rev = "3a8851d1abdd5c0b9e8f2ec7bae8a7fee8842fb5" }
 clap = { version = "4.6.6", features = ["derive", "env"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 futures = "0.3.34"
