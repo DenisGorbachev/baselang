@@ -36,7 +36,7 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 
 <!-- crate documentation end -->
 
-## Installation
+### Installation
 
 Install as executable:
 
@@ -50,7 +50,7 @@ Install as library dependency in your package:
 cargo add baselang
 ```
 
-## Usage
+### Usage
 
 ```shell
 Baselang is a language for describing how things work.
@@ -68,10 +68,10 @@ Options:
   -V, --version  Print version
 ```
 
-## Other packages
+### Other packages
 
 This workspace has no other packages.
 
-## Gratitude
+### Gratitude
 
 Like the project? [⭐ Star this repo](https://github.com/DenisGorbachev/baselang) on GitHub!
