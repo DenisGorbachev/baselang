@@ -3,19 +3,19 @@ Baselang is a language for describing how things work.
 
 This crate provides an embedded domain-specific language (eDSL) for modeling and type-checking concepts in a way that's both precise and expressive.
 
-# Core Concepts
+## Core Concepts
 
-* **Types**: Represented by [`Typ`], which can be top-level types [`Top`](Typ::Top), expression types [`One`](Typ::One), function types [`Fun`](Typ::Fun).
-* **Expressions**: Represented by [`Exp`], which can be symbols [`Sol`](Exp::Sol) or applications [`App`](Exp::App).
-* **Symbols and rewrites**: [`Sym`] introduces an identity with a type; [`Scope`] associates symbols with [`Rewrite`] rules.
-* **Modules**: Collections of related symbols, like [`Bools`], [`Lists`], and [`Nats`].
-* **Type Checking**: Enforced at construction time to ensure type-safety across the language.
+- **Types**: Represented by [`Typ`], which can be top-level types [`Top`](Typ::Top), expression types [`One`](Typ::One), function types [`Fun`](Typ::Fun).
+- **Expressions**: Represented by [`Exp`], which can be symbols [`Sol`](Exp::Sol) or applications [`App`](Exp::App).
+- **Symbols and rewrites**: [`Sym`] introduces an identity with a type; [`Scope`] associates symbols with [`Rewrite`] rules.
+- **Modules**: Collections of related symbols, like [`Bools`], [`Lists`], and [`Nats`].
+- **Type Checking**: Enforced at construction time to ensure type-safety across the language.
 
-# Features
+## Features
 
-* Static type checking at compile time and runtime
-* Composable modules that model foundational concepts
-* Macros for concise expression construction
+- Static type checking at compile time and runtime
+- Composable modules that model foundational concepts
+- Macros for concise expression construction
 */
 
 #![cfg_attr(not(test), deny(unused_crate_dependencies))]
