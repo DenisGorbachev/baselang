@@ -8,11 +8,11 @@ Long contexts can hold more precise specifications.
 
 ## Notes
 
-* Language is a set of rules for describing reality.
-* Language is a set of rules for modelling physical objects.
-* Language is a set of rules for painting with words.
+- Language is a set of rules for describing reality.
+- Language is a set of rules for modelling physical objects.
+- Language is a set of rules for painting with words.
 
 Implications:
 
-* Language splits the descriptions into "right" and "wrong"
-  * For example, "Mary had a little lamb" is "right", while "Mary a had little lamb" is "wrong" in English language.
+- Language splits the descriptions into "right" and "wrong"
+  - For example, "Mary had a little lamb" is "right", while "Mary a had little lamb" is "wrong" in English language.

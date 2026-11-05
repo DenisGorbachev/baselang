@@ -8,21 +8,21 @@ Baselang fights human slop, too. If you disagree with a human, you can use Basel
 
 Baselang is based on a novel flavor of a type theory. It's similar to Lean with one important difference:
 
-* In Lean, you can only define types and constructors (2 levels max):
-  * `Animal : Type`
-  * `Cat : Animal`
-  * (that's it, no more levels)
-* In Baselang, you can define types, constructors, constructors of constructors, etc (no limits):
-  * `Animal : Type`
-  * `Cat : Animal`
-  * `Garfield : Cat`
+- In Lean, you can only define types and constructors (2 levels max):
+  - `Animal : Type`
+  - `Cat : Animal`
+  - (that's it, no more levels)
+- In Baselang, you can define types, constructors, constructors of constructors, etc (no limits):
+  - `Animal : Type`
+  - `Cat : Animal`
+  - `Garfield : Cat`
 
 That means you can define deep hierarchies, but that's only a part of the difference. The other part is that you can pass `Garfield` as argument to any function that expects `x : Animal` (because `Garfield : Cat` and `Cat : Animal`). In general, a lower-level term is accepted in a place where a higher-level term is expected.
 
 Notes:
 
-* The hierarchy can't have cycles (so `A : B` and `B : A` is invalid)
-* The type can be closed to prevent adding constructors (so `Empty : Type` can be truly empty)
+- The hierarchy can't have cycles (so `A : B` and `B : A` is invalid)
+- The type can be closed to prevent adding constructors (so `Empty : Type` can be truly empty)
 
 Technical details:
 
