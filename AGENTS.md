@@ -1611,6 +1611,9 @@ strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
 tokio = "1.50.0"
 
+[workspace.lints.cargo]
+unused_dependencies = "deny"
+
 [workspace.lints.rust]
 redundant_imports = "deny"
 unused_import_braces = "deny"
@@ -1678,8 +1681,6 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 - Composable modules that model foundational concepts
 - Macros for concise expression construction
 */
-
-#![cfg_attr(not(test), deny(unused_crate_dependencies))]
 
 use tokio as _;
 

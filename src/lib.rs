@@ -18,8 +18,6 @@ This crate provides an embedded domain-specific language (eDSL) for modeling and
 - Macros for concise expression construction
 */
 
-#![cfg_attr(not(test), deny(unused_crate_dependencies))]
-
 use tokio as _;
 
 mod types;
