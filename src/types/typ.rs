@@ -224,7 +224,6 @@ macro_rules! top {
 mod tests {
     use super::*;
     use crate::{Equality, InvalidApplicationError, Of, exp, sym};
-    use pretty_assertions::assert_matches;
 
     #[test]
     fn must_compare_types_up_to_alpha_equivalence() {
@@ -257,8 +256,8 @@ mod tests {
         let refl_t_a = exp!(&refl_t, &a);
         let refl_t_b = exp!(&refl_t, &b);
 
-        assert_matches!(refl_t.of(&t), Err(InvalidApplicationError { .. }), "`refl t t` is a type error because it's not the case that `t : t`");
-        assert_matches!(refl_t.of(&u), Err(InvalidApplicationError { .. }), "`refl t u` is a type error because it's not the case that `u : t`");
+        assert!(matches!(refl_t.of(&t), Err(InvalidApplicationError { .. })), "`refl t t` is a type error because it's not the case that `t : t`");
+        assert!(matches!(refl_t.of(&u), Err(InvalidApplicationError { .. })), "`refl t u` is a type error because it's not the case that `u : t`");
 
         assert!(refl_t_a.typ().alpha_eq(&Typ::from(eq_t_a_a)), "`refl t a : eq t a a`");
         assert!(refl_t_b.typ().alpha_eq(&Typ::from(eq_t_b_b)), "`refl t b : eq t b b`");

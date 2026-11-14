@@ -47,7 +47,7 @@ derive_more = "2.1.1"
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
 itertools = "0.15.0"
 non-empty-str = "0.13.0"
-pretty_assertions = { version = "1.4.1", features = ["unstable"] }
+pretty_assertions = "1.4.1"
 #standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.28.0", features = ["derive"] }
 #subtype = { git = "https://github.com/DenisGorbachev/subtype" }
