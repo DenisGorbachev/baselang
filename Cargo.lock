@@ -195,8 +195,8 @@ checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
 name = "errgonomic"
-version = "0.5.3"
-source = "git+https://github.com/DenisGorbachev/errgonomic#c79252804f2cf607170bfd1b366bee0ff1df8b32"
+version = "0.6.0"
+source = "git+https://github.com/DenisGorbachev/errgonomic#c7c245e72df273e5317968da81a83b8c19dbfbce"
 dependencies = [
  "cfg-if",
  "shlex",
